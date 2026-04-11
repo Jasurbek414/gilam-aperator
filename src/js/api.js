@@ -68,8 +68,7 @@ const Api = {
       path: '/api/socket.io',
       extraHeaders: {
         Authorization: `Bearer ${this.config.token}`
-      },
-      transports: ['websocket', 'polling']
+      }
     });
 
     this.socket.on('connect', () => {
