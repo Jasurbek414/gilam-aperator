@@ -150,7 +150,7 @@ body {
   overflow: hidden;
   min-height: 0;
 }
-.tab-content.active { display: flex; flex-direction: column; }
+.tab-content.active { display: flex; flex-direction: column; overflow: auto; }
 
 .content-wrap {
   flex: 1;
@@ -797,7 +797,9 @@ select.crm-input option { background: var(--bg-1); color: var(--t1); }
 .settings-scroll {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
+  min-height: 0;
 }
 .settings-container {
   max-width: 580px;
@@ -805,6 +807,7 @@ select.crm-input option { background: var(--bg-1); color: var(--t1); }
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding-bottom: 24px;
 }
 
 /* Profile Card */
