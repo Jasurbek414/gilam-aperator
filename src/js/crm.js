@@ -4,11 +4,14 @@
 
 const CRM = {
   allContacts: [],
+  services: [],
   searchTimeout: null,
+  activeCallId: null, // WebSocket orqali keladigan call id
   
   init() {
     this.bindEvents();
     this.renderSmsHistory();
+    this.loadServices();
   },
 
   async loadContacts(query = '') {
@@ -23,6 +26,25 @@ const CRM = {
       this.renderContacts(this.allContacts);
     } catch (err) {
       console.error('Load contacts error:', err);
+    }
+  },
+
+  async loadServices() {
+    if (!window.Api.config.currentUser?.companyId) return;
+    try {
+      this.services = await window.Api.request(`/services/company/${window.Api.config.currentUser.companyId}`) || [];
+      const select = Utils.$('quick-order-product');
+      if (select) {
+        select.innerHTML = '<option value="">Xizmat tanlang</option>';
+        this.services.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = `${s.name} (${s.price} s'om)`;
+          select.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.error('Load services error:', err);
     }
   },
 
@@ -262,56 +284,85 @@ const CRM = {
     const name = Utils.$('quick-crm-name')?.value?.trim();
     const phone = Utils.$('quick-crm-phone')?.value?.trim();
     const address = Utils.$('quick-crm-address')?.value?.trim();
-    const product = Utils.$('quick-order-product')?.value?.trim();
-    const qty = Utils.$('quick-order-qty')?.value || '1';
-    const price = Utils.$('quick-order-price')?.value?.trim();
+    
+    const serviceId = Utils.$('quick-order-product')?.value;
+    const qty = parseInt(Utils.$('quick-order-qty')?.value || '1');
     const note = Utils.$('quick-crm-note')?.value?.trim();
-    const campaignId = Utils.$('quick-crm-campaign')?.value;
+    
+    // Kampaniya majburiy emas, backend o'zi aniqlab oladi agar topilsa
 
     if (!phone) {
       Utils.showToast('Telefon raqam kerak!', 'warning');
       return;
     }
-
-    const orderData = {
-      customerName: name || 'Noaniq',
-      phone: phone,
-      address: address,
-      product: product,
-      quantity: parseInt(qty),
-      price: price,
-      note: note,
-      campaignId: campaignId,
-      companyId: window.Api?.config?.currentUser?.companyId,
-      operatorId: window.Api?.config?.currentUser?.id,
-      operatorName: window.Api?.config?.currentUser?.fullName,
-      status: 'new',
-      createdAt: new Date().toISOString(),
-    };
-
-    // Buyurtmalarni localStorage ga saqlash
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    orders.unshift(orderData);
-    localStorage.setItem('orders', JSON.stringify(orders));
-
-    // API ga ham yuborishga urinish
-    try {
-      await window.Api.request('/orders', {
-        method: 'POST',
-        body: JSON.stringify(orderData),
-      });
-    } catch (e) {
-      console.log('[CRM] Order saved locally (API unavailable)');
+    if (!serviceId) {
+      Utils.showToast('Xizmatni tanlang!', 'warning');
+      return;
     }
 
-    Utils.showToast("Buyurtma saqlandi!", 'success');
-    
-    // Formani tozalash
-    ['quick-order-product', 'quick-order-price', 'quick-crm-note'].forEach(id => {
-      const el = Utils.$(id);
-      if (el) el.value = '';
-    });
-    if (Utils.$('quick-order-qty')) Utils.$('quick-order-qty').value = '1';
+    try {
+      let customerId = null;
+      // 1. Mijozni qidirish yoki yaratish
+      const existing = this.allContacts.find(c => c.phone1 === phone || c.phone2 === phone);
+      if (existing) {
+        customerId = existing.id;
+      } else {
+        const newCust = await window.Api.request('/customers', {
+          method: 'POST',
+          body: JSON.stringify({
+            fullName: name || 'Noma\\'lum',
+            phone1: phone,
+            address: address || undefined,
+            companyId: window.Api.config.currentUser.companyId,
+          })
+        });
+        customerId = newCust.id;
+        this.loadContacts(); // update lists
+      }
+
+      // 2. Buyurtma yaratish
+      const orderData = {
+        companyId: window.Api.config.currentUser.companyId,
+        customerId: customerId,
+        operatorId: window.Api.config.currentUser.id,
+        notes: note,
+        items: [
+          {
+            serviceId: serviceId,
+            quantity: qty,
+            notes: note
+          }
+        ]
+      };
+
+      const newOrder = await window.Api.request('/orders', {
+        method: 'POST',
+        body: JSON.stringify(orderData)
+      });
+      
+      Utils.showToast("Buyurtma saqlandi!", 'success');
+      
+      // 3. Agar hozir suhbat bo'layotgan bo'lsa, statusni complete qilishga ID ni uzatib qo'yamiz
+      // Lekin aslida sessiya tugaganda sip-client.js completeCall chaqiradi.
+      // Biz qo'shimcha ma'lumot qoldirishimiz mumkin:
+      this.lastCreatedOrderId = newOrder.id;
+
+      // Local list uchun 
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      orders.unshift({ ...orderData, createdAt: new Date().toISOString() });
+      localStorage.setItem('orders', JSON.stringify(orders));
+      
+      // Formani tozalash
+      ['quick-order-product', 'quick-order-price', 'quick-crm-note'].forEach(id => {
+        const el = Utils.$(id);
+        if (el) el.value = '';
+      });
+      if (Utils.$('quick-order-qty')) Utils.$('quick-order-qty').value = '1';
+
+    } catch (e) {
+      console.error('[CRM] Buyurtma xatosi:', e);
+      Utils.showToast('Buyurtma xatosi: ' + e.message, 'error');
+    }
   }
 };
 

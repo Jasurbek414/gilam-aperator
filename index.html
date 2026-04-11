@@ -231,8 +231,10 @@
                   <div style="margin-bottom:12px;">
                     <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:block;">Buyurtma</label>
                     <div style="display:flex; gap:8px; margin-bottom:8px;">
-                      <input type="text" id="quick-order-product" placeholder="Mahsulot nomi" autocomplete="off"
+                      <select id="quick-order-product" 
                         style="flex:2; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
+                        <option value="">Xizmat tanlang</option>
+                      </select>
                       <input type="number" id="quick-order-qty" placeholder="Soni" min="1" value="1"
                         style="width:70px; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none; text-align:center;">
                       <input type="text" id="quick-order-price" placeholder="Narx" autocomplete="off"
@@ -575,6 +577,7 @@
     <source src="assets/ringtone.mp3" type="audio/mpeg">
   </audio>
 
+  <script src="node_modules/socket.io-client/dist/socket.io.js"></script>
   <script src="src/js/utils.js"></script>
   <script src="src/js/api.js"></script>
   <script src="src/js/ui.js"></script>

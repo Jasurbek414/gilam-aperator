@@ -49,7 +49,76 @@ const Api = {
     return data.user;
   },
 
+  socket: null,
+
+  connectSocket() {
+    if (this.socket) return;
+    if (!this.config.currentUser) return;
+    
+    const socketUrl = `${this.config.API_BASE}/calls`;
+    console.log('[API] Connecting WebSocket to:', socketUrl);
+    
+    const ioClient = window.io || (typeof io !== 'undefined' ? io : null);
+    if (!ioClient) {
+      console.warn('[API] Socket.io client topilmadi');
+      return;
+    }
+
+    this.socket = ioClient(socketUrl, {
+      extraHeaders: {
+        Authorization: `Bearer ${this.config.token}`
+      },
+      transports: ['websocket', 'polling']
+    });
+
+    this.socket.on('connect', () => {
+      console.log('[API] WebSocket ulangan (Calls namespace)');
+      this.socket.emit('operator:join', {
+        operatorId: this.config.currentUser.id,
+        companyId: this.config.currentUser.companyId
+      });
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('[API] WebSocket uzildi');
+    });
+
+    this.socket.on('call:incoming', (data) => {
+      console.log('[API/Socket] Kiruvchi qo\\'ng\\'iroq:', data);
+      if (window.CRM && data.call) {
+        window.CRM.activeCallId = data.call.id;
+      }
+    });
+
+    this.socket.on('call:updated', (data) => {
+      console.log('[API/Socket] Qo\\'ng\\'iroq yangilandi:', data);
+    });
+
+    this.socket.on('call:taken', (data) => {
+      console.log('[API/Socket] Qo\\'ng\\'iroqni boshqa operator oldi:', data);
+      if (window.UI) {
+        const incomingEl = window.UI.$('incoming-call-overlay');
+        if (incomingEl) incomingEl.style.display = 'none';
+      }
+      if (window.SipClient && window.SipClient.currentSession) {
+        // Aslida boshqa operator olsa, bizning session ham automatically fail/terminated bo'ladi (sip server tomonidan)
+        // Shuning uchun bu yerda faqat UI ni bekitish kifoya qilishi mumkin
+      }
+    });
+  },
+
+  disconnectSocket() {
+    if (this.socket) {
+      if (this.config.currentUser) {
+        this.socket.emit('operator:leave', { operatorId: this.config.currentUser.id });
+      }
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  },
+
   logout() {
+    this.disconnectSocket();
     this.config.token = null;
     this.config.currentUser = null;
     localStorage.removeItem('token');

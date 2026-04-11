@@ -237,6 +237,12 @@ const SipClient = {
 
     session.on('accepted', () => {
       console.log('[SIP] Call accepted / established');
+
+      // Backend API: Qo'ng'iroqqa javob berildi
+      if (window.CRM && window.CRM.activeCallId && window.Api?.config?.token) {
+        window.Api.request(`/calls/${window.CRM.activeCallId}/answer`, { method: 'PUT' }).catch(console.warn);
+      }
+
       const label = Utils.$('call-status-label');
       if (label) label.textContent = 'Suhbat';
       window.UI.startCallTimer();
@@ -250,6 +256,20 @@ const SipClient = {
 
     session.on('ended', (data) => {
       console.log('[SIP] Call ended:', data.cause);
+      
+      // Backend API: Qo'ng'iroq yakunlandi
+      if (window.CRM && window.CRM.activeCallId && window.Api?.config?.token) {
+        // Aslida order qilingan bo'lsa, order_id ni ham yuborish kerak.
+        // Bu joyda faqat callni yopamiz. (Agar buyurtma saqlangan bo'lsa, u order ni qanday bog'lash crm.js da).
+        window.Api.request(`/calls/${window.CRM.activeCallId}/complete`, { 
+          method: 'PUT',
+          body: JSON.stringify({ notes: Utils.$('quick-crm-note')?.value || '' })
+        }).catch(console.warn);
+        
+        // Qo'ng'iroq tugadi, ID ni tozalaymiz
+        window.CRM.activeCallId = null;
+      }
+
       this._cleanupCall();
       if (window.CRM) window.CRM.onCallEnded();
       Utils.showToast("Qo'ng'iroq tugadi", 'info');
@@ -257,6 +277,13 @@ const SipClient = {
 
     session.on('failed', (data) => {
       console.log('[SIP] Call failed:', data.cause);
+
+      // Backend API: Qo'ng'iroq javobsiz / xato bilan tugadi
+      if (session.direction === 'incoming' && window.CRM && window.CRM.activeCallId && window.Api?.config?.token) {
+        window.Api.request(`/calls/${window.CRM.activeCallId}/miss`, { method: 'PUT' }).catch(console.warn);
+        window.CRM.activeCallId = null;
+      }
+
       this._cleanupCall();
       Utils.showToast(`Qo'ng'iroq xatosi: ${data.cause || 'Noma\'lum'}`, 'error');
     });

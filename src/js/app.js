@@ -55,6 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function startApp(user) {
   window.UI.showScreen('app');
 
+  // WebSocket ga ulanish
+  if (window.Api && window.Api.connectSocket) {
+    window.Api.connectSocket();
+  }
+
   // Operator info
   const nameEl = Utils.$('operator-name');
   if (nameEl) nameEl.textContent = user.fullName || user.phone || 'Operator';
