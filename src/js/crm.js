@@ -310,7 +310,7 @@ const CRM = {
         const newCust = await window.Api.request('/customers', {
           method: 'POST',
           body: JSON.stringify({
-            fullName: name || 'Noma\\'lum',
+            fullName: name || "Noma'lum",
             phone1: phone,
             address: address || undefined,
             companyId: window.Api.config.currentUser.companyId,

@@ -84,18 +84,18 @@ const Api = {
     });
 
     this.socket.on('call:incoming', (data) => {
-      console.log('[API/Socket] Kiruvchi qo\\'ng\\'iroq:', data);
+      console.log("[API/Socket] Kiruvchi qo'ng'iroq:", data);
       if (window.CRM && data.call) {
         window.CRM.activeCallId = data.call.id;
       }
     });
 
     this.socket.on('call:updated', (data) => {
-      console.log('[API/Socket] Qo\\'ng\\'iroq yangilandi:', data);
+      console.log("[API/Socket] Qo'ng'iroq yangilandi:", data);
     });
 
     this.socket.on('call:taken', (data) => {
-      console.log('[API/Socket] Qo\\'ng\\'iroqni boshqa operator oldi:', data);
+      console.log("[API/Socket] Qo'ng'iroqni boshqa operator oldi:", data);
       if (window.UI) {
         const incomingEl = window.UI.$('incoming-call-overlay');
         if (incomingEl) incomingEl.style.display = 'none';
