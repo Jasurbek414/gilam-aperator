@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gilam Operator</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body>
+  <!-- TITLE BAR -->
+  <div id="titlebar">
+    <div class="titlebar-drag">
+      <div class="titlebar-logo">
+        <span class="logo-icon">📞</span>
+        <span class="logo-text">Gilam Operator</span>
+        <span id="sip-indicator" class="sip-dot offline" title="SIP ulanmagan"></span>
+      </div>
+    </div>
+    <div class="titlebar-controls">
+      <button class="tb-btn" id="btn-minimize" title="Kichraytirish">
+        <span class="material-icons-round">remove</span>
+      </button>
+      <button class="tb-btn" id="btn-maximize" title="Kattalashtirish">
+        <span class="material-icons-round">crop_square</span>
+      </button>
+      <button class="tb-btn tb-close" id="btn-close" title="Yopish">
+        <span class="material-icons-round">close</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="screen active">
+    <div class="login-bg-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+    </div>
+    <div class="login-container glass-panel">
+      <div class="login-header">
+        <div class="login-logo">
+           <svg viewBox="0 0 24 24" width="40" height="40" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="logo-svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+        </div>
+        <h1>Gilam Operator</h1>
+        <p class="login-subtitle">Dispetcher tizimiga kirish</p>
+      </div>
+      <form id="login-form">
+        <div class="input-wrapper">
+          <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          <input type="text" id="login-phone" placeholder="Telefon raqam" autocomplete="tel" required>
+        </div>
+        <div class="input-wrapper">
+          <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <input type="password" id="login-password" placeholder="Parol" autocomplete="current-password" required>
+        </div>
+        <div id="login-error" class="error-message" style="display:none;"></div>
+        <button type="submit" class="btn-login-submit" id="btn-login">
+          Kirish
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP SCREEN -->
+  <div id="app-screen" class="screen">
+    <!-- TAB BAR -->
+    <div id="tab-bar">
+      <button class="tab active" data-tab="dialer">
+        <span class="material-icons-round">dialpad</span>
+        <span class="tab-label">Dialer</span>
+      </button>
+      <button class="tab" data-tab="lines">
+        <span class="material-icons-round">phone_in_talk</span>
+        <span class="tab-label">Liniyalar</span>
+      </button>
+      <button class="tab" data-tab="calls">
+        <span class="material-icons-round">history</span>
+        <span class="tab-label">Tarix</span>
+      </button>
+      <button class="tab" data-tab="contacts">
+        <span class="material-icons-round">contacts</span>
+        <span class="tab-label">Kontaktlar</span>
+      </button>
+      <button class="tab" data-tab="sms">
+        <span class="material-icons-round">sms</span>
+        <span class="tab-label">SMS</span>
+      </button>
+      <button class="tab" data-tab="settings">
+        <span class="material-icons-round">settings</span>
+        <span class="tab-label">Sozlamalar</span>
+      </button>
+    </div>
+
+    <!-- DIALER TAB -->
+    <div class="tab-content active" id="tab-dialer">
+      <!-- SIP Status Bar -->
+      <div id="sip-status-bar">
+        <div class="sip-status-left">
+          <span id="sip-status-dot" class="status-dot offline"></span>
+          <span id="sip-status-text">Ulanmagan</span>
+        </div>
+        <div class="sip-status-right">
+          <span id="sip-extension-text">—</span>
+        </div>
+      </div>
+
+      <!-- Number Display -->
+      <div class="dialer-display">
+        <input type="text" id="dial-number" placeholder="Raqam kiriting..." autocomplete="off">
+        <button id="btn-clear-number" class="btn-icon" title="Tozalash">
+          <span class="material-icons-round">backspace</span>
+        </button>
+      </div>
+
+      <!-- Active Campaign Info -->
+      <div id="active-campaign-info" style="display:none;">
+        <div class="campaign-badge">
+          <span class="material-icons-round">campaign</span>
+          <span id="campaign-name-badge">—</span>
+        </div>
+      </div>
+
+      <!-- Customer Lookup Result -->
+      <div id="customer-lookup" style="display:none;">
+        <div class="customer-card">
+          <div class="customer-avatar">
+            <span class="material-icons-round">person</span>
+          </div>
+          <div class="customer-info">
+            <span class="customer-name" id="lookup-name">—</span>
+            <span class="customer-phone" id="lookup-phone">—</span>
+            <span class="customer-address" id="lookup-address">—</span>
+          </div>
+          <button class="btn-icon" id="btn-create-order" title="Buyurtma yaratish">
+            <span class="material-icons-round">add_shopping_cart</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dialpad -->
+      <div class="dialpad">
+        <button class="dial-key" data-key="1"><span class="key-num">1</span></button>
+        <button class="dial-key" data-key="2"><span class="key-num">2</span><span class="key-letters">ABC</span></button>
+        <button class="dial-key" data-key="3"><span class="key-num">3</span><span class="key-letters">DEF</span></button>
+        <button class="dial-key" data-key="4"><span class="key-num">4</span><span class="key-letters">GHI</span></button>
+        <button class="dial-key" data-key="5"><span class="key-num">5</span><span class="key-letters">JKL</span></button>
+        <button class="dial-key" data-key="6"><span class="key-num">6</span><span class="key-letters">MNO</span></button>
+        <button class="dial-key" data-key="7"><span class="key-num">7</span><span class="key-letters">PQRS</span></button>
+        <button class="dial-key" data-key="8"><span class="key-num">8</span><span class="key-letters">TUV</span></button>
+        <button class="dial-key" data-key="9"><span class="key-num">9</span><span class="key-letters">WXYZ</span></button>
+        <button class="dial-key" data-key="*"><span class="key-num">*</span></button>
+        <button class="dial-key" data-key="0"><span class="key-num">0</span><span class="key-letters">+</span></button>
+        <button class="dial-key" data-key="#"><span class="key-num">#</span></button>
+      </div>
+
+      <!-- Call Button -->
+      <div class="call-actions">
+        <button id="btn-call" class="btn-call">
+          <span class="material-icons-round">call</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ACTIVE CALL OVERLAY -->
+    <div id="active-call-overlay" style="display:none;">
+      <div class="call-overlay-bg"></div>
+      <div class="call-overlay-content">
+        <div class="call-status-label" id="call-status-label">Qo'ng'iroq qilinmoqda...</div>
+        <div class="call-target-number" id="call-target-display">—</div>
+        <div class="call-target-name" id="call-target-name"></div>
+        <div class="call-timer" id="call-timer">00:00</div>
+        <div class="call-wave">
+          <div class="wave-ring"></div>
+          <div class="wave-ring delay-1"></div>
+          <div class="wave-ring delay-2"></div>
+          <div class="call-avatar">
+            <span class="material-icons-round">person</span>
+          </div>
+        </div>
+        <div class="call-overlay-actions">
+          <button class="btn-call-action" id="btn-mute" title="Ovozni o'chirish">
+            <span class="material-icons-round">mic</span>
+            <span class="action-label">Mute</span>
+          </button>
+          <button class="btn-call-action" id="btn-hold" title="Kutishda">
+            <span class="material-icons-round">pause</span>
+            <span class="action-label">Hold</span>
+          </button>
+          <button class="btn-call-action" id="btn-transfer" title="Transfer">
+            <span class="material-icons-round">phone_forwarded</span>
+            <span class="action-label">Transfer</span>
+          </button>
+          <button class="btn-call-hangup" id="btn-hangup">
+            <span class="material-icons-round">call_end</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INCOMING CALL OVERLAY -->
+    <div id="incoming-call-overlay" style="display:none;">
+      <div class="incoming-overlay-bg"></div>
+      <div class="incoming-overlay-content">
+        <div class="incoming-label">Kiruvchi qo'ng'iroq</div>
+        <div class="incoming-caller" id="incoming-caller-number">+998 90 xxx xx xx</div>
+        <div class="incoming-caller-name" id="incoming-caller-name"></div>
+        <div class="incoming-campaign" id="incoming-campaign-name"></div>
+        <div class="incoming-wave">
+          <div class="wave-ring incoming-ring"></div>
+          <div class="wave-ring incoming-ring delay-1"></div>
+          <div class="wave-ring incoming-ring delay-2"></div>
+          <div class="call-avatar incoming-avatar">
+            <span class="material-icons-round">person</span>
+          </div>
+        </div>
+        <div class="incoming-actions">
+          <button class="btn-reject" id="btn-reject-call">
+            <span class="material-icons-round">call_end</span>
+          </button>
+          <button class="btn-answer" id="btn-answer-call">
+            <span class="material-icons-round">call</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINES TAB -->
+    <div class="tab-content" id="tab-lines">
+      <div class="tab-header">
+        <h2>Kampaniya Liniyalari</h2>
+        <button class="btn-icon-sm" id="btn-refresh-lines" title="Yangilash">
+          <span class="material-icons-round">refresh</span>
+        </button>
+      </div>
+      <div id="lines-list" class="lines-list">
+        <div class="empty-state">
+          <span class="material-icons-round">phone_disabled</span>
+          <p>Liniyalar yuklanmoqda...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALLS HISTORY TAB -->
+    <div class="tab-content" id="tab-calls">
+      <div class="tab-header">
+        <h2>Qo'ng'iroqlar tarixi</h2>
+        <button class="btn-icon-sm" id="btn-refresh-calls" title="Yangilash">
+          <span class="material-icons-round">refresh</span>
+        </button>
+      </div>
+      <div class="calls-filters">
+        <button class="filter-btn active" data-filter="all">Barchasi</button>
+        <button class="filter-btn" data-filter="INCOMING">Kiruvchi</button>
+        <button class="filter-btn" data-filter="OUTGOING">Chiquvchi</button>
+        <button class="filter-btn" data-filter="MISSED">Javobsiz</button>
+      </div>
+      <div id="calls-list" class="calls-list">
+        <div class="empty-state">
+          <span class="material-icons-round">history</span>
+          <p>Qo'ng'iroqlar tarixi bo'sh</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACTS TAB -->
+    <div class="tab-content" id="tab-contacts">
+      <div class="tab-header">
+        <h2>Mijozlar</h2>
+        <button class="btn-icon-sm" id="btn-add-contact" title="Yangi mijoz">
+          <span class="material-icons-round">person_add</span>
+        </button>
+      </div>
+      <div class="search-bar">
+        <span class="material-icons-round">search</span>
+        <input type="text" id="contacts-search" placeholder="Qidirish (ism, telefon)..." autocomplete="off">
+      </div>
+      <div id="contacts-list" class="contacts-list">
+        <div class="empty-state">
+          <span class="material-icons-round">people</span>
+          <p>Mijozlar ro'yxati bo'sh</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SMS TAB -->
+    <div class="tab-content" id="tab-sms">
+      <div class="tab-header">
+        <h2>SMS xabarlar</h2>
+      </div>
+      <div class="sms-compose">
+        <div class="form-group">
+          <input type="text" id="sms-to" placeholder="Qabul qiluvchi raqam" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <textarea id="sms-text" placeholder="Xabar matni..." rows="3"></textarea>
+        </div>
+        <button class="btn-primary btn-sm" id="btn-send-sms">
+          <span class="material-icons-round">send</span>
+          Yuborish
+        </button>
+      </div>
+      <div id="sms-list" class="sms-list">
+        <div class="empty-state">
+          <span class="material-icons-round">sms</span>
+          <p>SMS xabarlar bo'sh</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="tab-content" id="tab-settings">
+      <div class="tab-header">
+        <h2>Sozlamalar</h2>
+      </div>
+      <div class="settings-content">
+        <!-- User Info -->
+        <div class="settings-section">
+          <h3>Operator ma'lumotlari</h3>
+          <div class="settings-card">
+            <div class="setting-row">
+              <span class="setting-label">Ism:</span>
+              <span class="setting-value" id="settings-name">—</span>
+            </div>
+            <div class="setting-row">
+              <span class="setting-label">Telefon:</span>
+              <span class="setting-value" id="settings-phone">—</span>
+            </div>
+            <div class="setting-row">
+              <span class="setting-label">Rol:</span>
+              <span class="setting-value" id="settings-role">—</span>
+            </div>
+            <div class="setting-row">
+              <span class="setting-label">Kompaniya:</span>
+              <span class="setting-value" id="settings-company">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIP Settings -->
+        <div class="settings-section">
+          <h3>SIP sozlamalari</h3>
+          <div class="settings-card">
+            <div class="setting-row">
+              <span class="setting-label">Holat:</span>
+              <span class="setting-value" id="settings-sip-status">Ulanmagan</span>
+            </div>
+            <div class="setting-row">
+              <span class="setting-label">Server:</span>
+              <span class="setting-value" id="settings-sip-server">—</span>
+            </div>
+            <div class="setting-row">
+              <span class="setting-label">Extension:</span>
+              <span class="setting-value" id="settings-sip-ext">—</span>
+            </div>
+          </div>
+          <button class="btn-secondary btn-sm" id="btn-sip-reconnect">
+            <span class="material-icons-round">sync</span>
+            SIP qayta ulash
+          </button>
+        </div>
+
+        <!-- Audio Settings -->
+        <div class="settings-section">
+          <h3>Audio</h3>
+          <div class="settings-card">
+            <div class="form-group">
+              <label>Mikrofon</label>
+              <select id="audio-input">
+                <option>Standart</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Dinamik</label>
+              <select id="audio-output">
+                <option>Standart</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Qo'ng'iroq ovozi</label>
+              <select id="audio-ring">
+                <option>Standart</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logout -->
+        <div class="settings-section">
+          <button class="btn-danger" id="btn-logout">
+            <span class="material-icons-round">logout</span>
+            Chiqish
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Operator Info Bar -->
+    <div id="operator-bar">
+      <div class="operator-info">
+        <span class="material-icons-round">person</span>
+        <span id="operator-name">Operator</span>
+      </div>
+      <div class="operator-status">
+        <span id="operator-status-text">Online</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW CUSTOMER MODAL -->
+  <div id="modal-new-customer" class="modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Yangi mijoz qo'shish</h3>
+        <button class="btn-icon" id="btn-close-customer-modal">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <form id="form-new-customer">
+        <div class="form-group">
+          <label>To'liq ism</label>
+          <input type="text" id="new-customer-name" placeholder="Ism familiya" required>
+        </div>
+        <div class="form-group">
+          <label>Telefon 1</label>
+          <input type="text" id="new-customer-phone1" placeholder="+998..." required>
+        </div>
+        <div class="form-group">
+          <label>Telefon 2</label>
+          <input type="text" id="new-customer-phone2" placeholder="+998... (ixtiyoriy)">
+        </div>
+        <div class="form-group">
+          <label>Manzil</label>
+          <textarea id="new-customer-address" placeholder="Manzil" rows="2"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="btn-cancel-customer">Bekor</button>
+          <button type="submit" class="btn-primary">Saqlash</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATIONS -->
+  <div id="toast-container"></div>
+
+  <!-- AUDIO -->
+  <audio id="ringtone" loop preload="auto">
+    <source src="assets/ringtone.mp3" type="audio/mpeg">
+  </audio>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
