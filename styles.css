@@ -79,20 +79,24 @@ body {
 .tb-close:hover { background: var(--red); color: #fff; }
 
 /* ═══ LAYOUT — SIDEBAR + CONTENT ═══════════════════════════════════════ */
-.screen { display: none; flex: 1; overflow: hidden; min-height: 0; }
-.screen.active { display: flex; flex-direction: column; }
-
-#app-screen {
-  display: none;
-}
-#app-screen.active {
+#app-root {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
+
+.screen { display: none; flex: 1; min-height: 0; }
+.screen.active { display: flex; flex-direction: column; }
+
+#app-screen { display: none; }
+#app-screen.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
 .app-main-row {
   display: flex;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* ═══ SIDEBAR NAV ══════════════════════════════════════════════════════ */
@@ -144,20 +148,35 @@ body {
 }
 
 /* ═══ CONTENT AREA ═════════════════════════════════════════════════════ */
-.tab-content {
-  display: none;
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
-}
-.tab-content.active { display: flex; flex-direction: column; overflow: auto; }
-
 .content-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+}
+
+.tab-content {
+  display: none;
+  flex: 1;
+  min-height: 0;
+}
+.tab-content.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollable tabs — individual tab inner containers handle scroll */
+#tab-settings.active,
+#tab-calls.active,
+#tab-contacts.active,
+#tab-lines.active,
+#tab-sms.active {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* Dialer tab — no scroll, fill space */
+#tab-dialer.active {
   overflow: hidden;
 }
 
