@@ -189,7 +189,7 @@ body {
 }
 
 .dialer-panel {
-  width: 280px;
+  width: 272px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -200,26 +200,25 @@ body {
 .crm-side {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* SIP Bar */
+/* SIP Bar — 34px */
 .sip-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 8px 14px;
+  height: 34px;
   font-size: 11px;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 .sip-bar-left { display: flex; align-items: center; gap: 6px; }
-.sip-dot-inline {
-  width: 6px; height: 6px; border-radius: 50%;
-  display: inline-block;
-}
+.sip-dot-inline { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 .sip-dot-inline.online { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,.5); }
 .sip-dot-inline.offline { background: var(--red); box-shadow: 0 0 4px rgba(239,68,68,.4); }
 #sip-status-text { color: var(--t3); font-weight: 500; }
@@ -233,12 +232,13 @@ body {
 .status-dot.online { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,.5); }
 .status-dot.offline { background: var(--red); box-shadow: 0 0 4px rgba(239,68,68,.4); }
 
-/* Dial Input */
+/* Dial Input — 44px */
 .dial-input-wrap {
   display: flex;
   align-items: center;
-  padding: 8px 14px;
-  gap: 4px;
+  padding: 6px 14px;
+  height: 44px;
+  flex-shrink: 0;
 }
 .dial-input {
   flex: 1;
@@ -247,34 +247,33 @@ body {
   color: var(--t1);
   font-size: 22px;
   font-weight: 300;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-align: center;
   outline: 0;
-  padding: 8px 0;
+  padding: 0;
   font-family: 'Inter', monospace;
 }
-.dial-input::placeholder { color: var(--t3); font-weight: 300; font-size: 16px; letter-spacing: .02em; }
+.dial-input::placeholder { color: var(--t3); font-weight: 300; font-size: 15px; letter-spacing: .02em; }
 .dial-clear {
-  width: 32px; height: 32px; border: 0; border-radius: 50%;
+  width: 28px; height: 28px; border: 0; border-radius: 50%;
   background: 0; color: var(--t3); display: flex; align-items: center;
   justify-content: center; transition: var(--tr); cursor: pointer;
 }
 .dial-clear:hover { color: var(--red); background: var(--red-bg); }
-.dial-clear .material-icons-round { font-size: 18px; }
+.dial-clear .material-icons-round { font-size: 16px; }
 
-/* Dialpad */
+/* Dialpad — centered, no flex grow */
 .dialpad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  padding: 4px 20px;
-  flex: 1;
-  align-content: center;
+  gap: 5px;
+  padding: 6px 24px;
+  margin: auto 0;
 }
 .dial-key {
-  aspect-ratio: 1.3;
-  border: 0;
-  border-radius: var(--r);
+  height: 48px;
+  border: 1px solid rgba(255,255,255,.04);
+  border-radius: 8px;
   background: var(--bg-2);
   color: var(--t1);
   display: flex;
@@ -284,31 +283,31 @@ body {
   gap: 0;
   transition: var(--tr);
   cursor: pointer;
-  border: 1px solid transparent;
 }
 .dial-key:hover { background: var(--bg-3); border-color: var(--border-h); }
-.dial-key:active { background: var(--accent-bg); transform: scale(.95); }
-.dk-num { font-size: 20px; font-weight: 500; line-height: 1.1; }
-.dk-sub { font-size: 8px; letter-spacing: 2px; color: var(--t3); font-weight: 600; }
+.dial-key:active { background: var(--accent-bg); transform: scale(.96); }
+.dk-num { font-size: 18px; font-weight: 500; line-height: 1.1; }
+.dk-sub { font-size: 7px; letter-spacing: 2px; color: var(--t3); font-weight: 600; }
 
-/* Call btn */
+/* Call btn — 60px area */
 .dial-actions {
   display: flex;
   justify-content: center;
-  padding: 12px 20px 16px;
+  padding: 8px 20px 12px;
+  flex-shrink: 0;
 }
 .btn-call {
-  width: 54px; height: 54px; border-radius: 50%; border: 0;
+  width: 48px; height: 48px; border-radius: 50%; border: 0;
   background: var(--green);
   color: #fff;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 16px rgba(34,197,94,.35);
+  box-shadow: 0 2px 14px rgba(34,197,94,.3);
   transition: var(--tr);
   cursor: pointer;
 }
-.btn-call:hover { transform: scale(1.06); box-shadow: 0 4px 24px rgba(34,197,94,.45); }
+.btn-call:hover { transform: scale(1.06); box-shadow: 0 4px 20px rgba(34,197,94,.4); }
 .btn-call:active { transform: scale(.94); }
-.btn-call .material-icons-round { font-size: 24px; }
+.btn-call .material-icons-round { font-size: 22px; }
 
 /* ═══ CRM SECTIONS ═════════════════════════════════════════════════════ */
 .crm-section {
