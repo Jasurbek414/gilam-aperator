@@ -117,7 +117,9 @@ const SipClient = {
     const configuration = {
       sockets: [socket],
       uri: sipUri,
-      password: acc.password,
+      // Asterisk PBX da 101 uchun default parol "a1234567a" qilib o'rnatilgan (SipBridgeGateways'ga qarang). 
+      // Agar front-endda xato (operator123, 101) terilsa avtomatik to'g'irlab yuboramiz.
+      password: (acc.extension === '101' && (acc.password === 'operator123' || acc.password === '101')) ? 'a1234567a' : acc.password,
       display_name: acc.name || acc.extension,
       register: true,
       register_expires: 300,
