@@ -8,7 +8,7 @@
 const { ipcRenderer } = require('electron');
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
-let API_BASE = localStorage.getItem('serverUrl') || 'https://gilam.ecos.uz';
+let API_BASE = localStorage.getItem('serverUrl') || 'http://localhost:3000';
 let token = localStorage.getItem('token') || null;
 let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 let campaigns = [];
@@ -127,7 +127,7 @@ $('login-form').addEventListener('submit', async (e) => {
     return;
   }
   
-  API_BASE = 'https://gilam.ecos.uz';
+  API_BASE = 'http://localhost:3000';
   localStorage.setItem('serverUrl', API_BASE);
   
   const btn = $('btn-login');
