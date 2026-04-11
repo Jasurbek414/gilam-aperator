@@ -188,13 +188,14 @@
                  <span class="material-icons-round">edit_note</span> Yangi mijoz / Tezkor qayd
               </div>
               <div class="quick-crm">
-                 <div style="display:flex; gap:12px;">
-                    <input type="text" id="quick-crm-name" placeholder="Mijoz to'liq ismi..." style="flex:1;">
-                    <input type="text" id="quick-crm-phone" placeholder="Telefon: +998..." style="flex:1;">
+                 <div class="crm-input-group">
+                    <input type="text" id="quick-crm-name" placeholder="Mijoz to'liq ismi..." autocomplete="off">
+                    <input type="text" id="quick-crm-phone" placeholder="Telefon: +998..." autocomplete="off">
                  </div>
+                 <input type="text" id="quick-crm-address" placeholder="Manzil (Qayerdan qo'ng'iroq qilyapti?)" autocomplete="off">
                  <textarea id="quick-crm-note" placeholder="Gaplashish jarayonidagi ehtiyojlar, takliflar yoki shikoyatlarni tezkor yozib oling..." rows="3"></textarea>
-                 <button class="btn-primary btn-sm" onclick="alert('Qayd muvaffaqiyatli saqlandi!')">
-                   <span class="material-icons-round">save</span> Mijozni Saqlash
+                 <button class="btn-primary" onclick="alert('Qayd muvaffaqiyatli saqlandi!')" style="padding: 12px; border-radius: 10px; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                   <span class="material-icons-round" style="font-size: 18px;">save</span> Mijozni Saqlash
                  </button>
               </div>
            </div>

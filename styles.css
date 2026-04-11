@@ -624,6 +624,11 @@ body {
   flex-direction: column;
   gap: 14px;
 }
+.crm-input-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
 .quick-crm input, .quick-crm textarea {
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.1);
