@@ -963,32 +963,45 @@ body {
 }
 
 .incoming-label {
-  font-size: 16px;
-  color: var(--green);
-  font-weight: 600;
-  margin-bottom: 16px;
+  font-size: 20px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 24px;
   animation: fadeIn 0.5s ease-out;
 }
 
+.incoming-line-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 24px;
+  border-radius: 30px;
+  font-size: 16px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 20px var(--accent-glow);
+  font-weight: 500;
+}
+.incoming-line-badge .material-icons-round { font-size: 20px; }
+.incoming-line-badge strong { font-weight: 800; }
+
 .incoming-caller {
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 700;
   margin-bottom: 6px;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
 }
 
 .incoming-caller-name {
-  font-size: 14px;
-  color: var(--accent-hover);
-  margin-bottom: 4px;
+  font-size: 18px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
 }
 
 .incoming-campaign {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-muted);
-  padding: 4px 12px;
-  background: var(--accent-light);
-  border-radius: var(--radius-xl);
   display: inline-block;
   margin-bottom: 24px;
 }
