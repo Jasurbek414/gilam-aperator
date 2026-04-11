@@ -1,0 +1,168 @@
+<!-- ═══ CONTENT TABS ════════════════════════════════════════════════════ -->
+
+<!-- LINES TAB -->
+<div class="tab-content" id="tab-lines">
+  <div class="list-container-centered">
+    <div class="tab-header">
+      <h2>Kampaniya Liniyalari</h2>
+      <button class="btn-icon-sm" id="btn-refresh-lines" title="Yangilash">
+        <span class="material-icons-round">refresh</span>
+      </button>
+    </div>
+    <div id="lines-list" class="lines-list">
+      <div class="empty-state">
+        <span class="material-icons-round">phone_disabled</span>
+        <p>Liniyalar yuklanmoqda...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALLS HISTORY TAB -->
+<div class="tab-content" id="tab-calls">
+  <div class="list-container-centered">
+    <div class="tab-header">
+      <h2>Qo'ng'iroqlar tarixi</h2>
+      <button class="btn-icon-sm" id="btn-refresh-calls" title="Yangilash">
+        <span class="material-icons-round">refresh</span>
+      </button>
+    </div>
+    <div class="calls-filters">
+      <button class="filter-btn active" data-filter="all">Barchasi</button>
+      <button class="filter-btn" data-filter="INCOMING">Kiruvchi</button>
+      <button class="filter-btn" data-filter="OUTGOING">Chiquvchi</button>
+      <button class="filter-btn" data-filter="MISSED">Javobsiz</button>
+    </div>
+    <div id="calls-list" class="calls-list">
+      <div class="empty-state">
+        <span class="material-icons-round">history</span>
+        <p>Qo'ng'iroqlar tarixi bo'sh</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACTS TAB -->
+<div class="tab-content" id="tab-contacts">
+  <div class="list-container-centered">
+    <div class="tab-header">
+      <h2>Mijozlar</h2>
+      <button class="btn-icon-sm" id="btn-add-contact" title="Yangi mijoz">
+        <span class="material-icons-round">person_add</span>
+      </button>
+    </div>
+    <div class="search-bar">
+      <span class="material-icons-round">search</span>
+      <input type="text" id="contacts-search" placeholder="Qidirish (ism, telefon)..." autocomplete="off">
+    </div>
+    <div id="contacts-list" class="contacts-list">
+      <div class="empty-state">
+        <span class="material-icons-round">people</span>
+        <p>Mijozlar ro'yxati bo'sh</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SMS TAB -->
+<div class="tab-content" id="tab-sms">
+  <div class="list-container-centered">
+    <div class="tab-header">
+      <h2>SMS xabarlar</h2>
+    </div>
+    <div class="sms-compose">
+      <div class="form-group">
+        <input type="text" id="sms-to" placeholder="Qabul qiluvchi raqam" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <textarea id="sms-text" placeholder="Xabar matni..." rows="3"></textarea>
+      </div>
+      <button class="btn-primary btn-sm" id="btn-send-sms">
+        <span class="material-icons-round">send</span>
+        Yuborish
+      </button>
+    </div>
+    <div id="sms-list" class="sms-list">
+      <div class="empty-state">
+        <span class="material-icons-round">sms</span>
+        <p>SMS xabarlar bo'sh</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS TAB -->
+<div class="tab-content" id="tab-settings">
+  <div class="list-container-centered">
+    <div class="tab-header">
+      <h2>Sozlamalar</h2>
+    </div>
+    <div class="settings-content">
+      <!-- User Info -->
+      <div class="settings-section">
+        <h3>Operator ma'lumotlari</h3>
+        <div class="settings-card">
+          <div class="setting-row">
+            <span class="setting-label">Ism:</span>
+            <span class="setting-value" id="settings-name">—</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Telefon:</span>
+            <span class="setting-value" id="settings-phone">—</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Rol:</span>
+            <span class="setting-value" id="settings-role">—</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Kompaniya:</span>
+            <span class="setting-value" id="settings-company">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIP Settings -->
+      <div class="settings-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h3>SIP Liniyalar (Raqamlar)</h3>
+          <button class="btn-primary btn-sm" onclick="document.getElementById('modal-add-sip').style.display='flex'" style="display: flex; align-items: center; gap: 5px;">
+            <span class="material-icons-round" style="font-size:18px;">add</span> Yangi Liniya
+          </button>
+        </div>
+        <div class="settings-card" id="sip-accounts-list">
+          <div class="empty-state" style="padding: 20px;">
+            <span class="material-icons-round">headset_off</span>
+            <p>Mavjud SIP raqamlar topilmadi</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audio Settings -->
+      <div class="settings-section">
+        <h3>Audio</h3>
+        <div class="settings-card">
+          <div class="form-group">
+            <label>Mikrofon</label>
+            <select id="audio-input"><option>Standart</option></select>
+          </div>
+          <div class="form-group">
+            <label>Dinamik</label>
+            <select id="audio-output"><option>Standart</option></select>
+          </div>
+          <div class="form-group">
+            <label>Qo'ng'iroq ovozi</label>
+            <select id="audio-ring"><option>Standart</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logout -->
+      <div class="settings-section">
+        <button class="btn-danger" id="btn-logout">
+          <span class="material-icons-round">logout</span>
+          Chiqish
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

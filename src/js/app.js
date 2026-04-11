@@ -7,7 +7,30 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[App] Starting Gilam Operator...');
 
-  // Initialize all modules
+  // ═══ PHASE 1: KOMPONENTLARNI YUKLASH ═══════════════════════════════
+  const root = document.getElementById('app-root');
+  
+  // Asosiy tuzilmaviy elementlarni yaratish
+  window.ComponentLoader.load('titlebar', root);
+  window.ComponentLoader.load('login', root);
+  
+  // App screen — barcha tablar va overlay'lar shu ichida
+  const appScreen = document.createElement('div');
+  appScreen.id = 'app-screen';
+  appScreen.className = 'screen';
+  root.appendChild(appScreen);
+  
+  window.ComponentLoader.load('tab-bar', appScreen);
+  window.ComponentLoader.load('tab-dialer', appScreen);
+  window.ComponentLoader.load('call-overlays', appScreen);
+  window.ComponentLoader.load('tabs-content', appScreen);
+  window.ComponentLoader.load('operator-bar', appScreen);
+  
+  // Modallar — app-screen dan tashqarida (global overlay)
+  window.ComponentLoader.load('modals', root);
+
+  // ═══ PHASE 2: MODULLARNI BOSHLASH ══════════════════════════════════
+  // Komponentlar DOM da bo'lgandan keyin init() chaqiriladi
   window.UI.init();
   window.SipClient.init();
   window.CRM.init();

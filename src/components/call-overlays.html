@@ -1,0 +1,89 @@
+<!-- ═══ CALL OVERLAYS ═══════════════════════════════════════════════════ -->
+
+<!-- ACTIVE CALL OVERLAY -->
+<div id="active-call-overlay" style="display:none;">
+  <div class="call-overlay-bg"></div>
+  <div class="call-overlay-content">
+    <div class="call-status-label" id="call-status-label">Qo'ng'iroq qilinmoqda...</div>
+    <div class="call-target-number" id="call-target-display">—</div>
+    <div class="call-target-name" id="call-target-name"></div>
+    <div class="call-timer" id="call-timer">00:00</div>
+    <div class="call-wave">
+      <div class="wave-ring"></div>
+      <div class="wave-ring delay-1"></div>
+      <div class="wave-ring delay-2"></div>
+      <div class="call-avatar">
+        <span class="material-icons-round">person</span>
+      </div>
+    </div>
+
+    <!-- Recording indicator -->
+    <div id="recording-indicator" style="display:none; text-align:center; margin-bottom:10px;">
+      <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 14px; background:rgba(239,68,68,0.15); border-radius:20px; font-size:12px; color:var(--red); font-weight:600;">
+        <span class="material-icons-round" style="font-size:14px; animation: pulse 1s infinite;">fiber_manual_record</span>
+        REC
+      </span>
+    </div>
+
+    <!-- Volume Control -->
+    <div style="display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:16px; padding:0 30px;">
+      <span class="material-icons-round" style="font-size:18px; color:var(--text-muted);">volume_down</span>
+      <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" 
+        style="flex:1; max-width:200px; accent-color:var(--accent); height:4px; cursor:pointer;">
+      <span class="material-icons-round" style="font-size:18px; color:var(--text-muted);">volume_up</span>
+    </div>
+
+    <div class="call-overlay-actions">
+      <button class="btn-call-action" id="btn-mute" title="Mikrofon">
+        <span class="material-icons-round">mic</span>
+        <span class="action-label">Mute</span>
+      </button>
+      <button class="btn-call-action" id="btn-hold" title="Kutishda">
+        <span class="material-icons-round">pause</span>
+        <span class="action-label">Hold</span>
+      </button>
+      <button class="btn-call-action" id="btn-record" title="Yozib olish">
+        <span class="material-icons-round">fiber_manual_record</span>
+        <span class="action-label">Yozish</span>
+      </button>
+      <button class="btn-call-action" id="btn-transfer" title="Transfer">
+        <span class="material-icons-round">phone_forwarded</span>
+        <span class="action-label">Transfer</span>
+      </button>
+      <button class="btn-call-hangup" id="btn-hangup">
+        <span class="material-icons-round">call_end</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- INCOMING CALL OVERLAY -->
+<div id="incoming-call-overlay" style="display:none;">
+  <div class="incoming-overlay-bg"></div>
+  <div class="incoming-overlay-content">
+    <div class="incoming-label">Kiruvchi qo'ng'iroq</div>
+    <div class="incoming-line-badge">
+      <span class="material-icons-round">headset_mic</span>
+      <span>Liniya: </span><strong id="incoming-line-name">—</strong>
+    </div>
+    <div class="incoming-caller" id="incoming-caller-number">+998 90 xxx xx xx</div>
+    <div class="incoming-caller-name" id="incoming-caller-name"></div>
+    <div class="incoming-campaign" id="incoming-campaign-name"></div>
+    <div class="incoming-wave">
+      <div class="wave-ring incoming-ring"></div>
+      <div class="wave-ring incoming-ring delay-1"></div>
+      <div class="wave-ring incoming-ring delay-2"></div>
+      <div class="call-avatar incoming-avatar">
+        <span class="material-icons-round">person</span>
+      </div>
+    </div>
+    <div class="incoming-actions">
+      <button class="btn-reject" id="btn-reject-call">
+        <span class="material-icons-round">call_end</span>
+      </button>
+      <button class="btn-answer" id="btn-answer-call">
+        <span class="material-icons-round">call</span>
+      </button>
+    </div>
+  </div>
+</div>
