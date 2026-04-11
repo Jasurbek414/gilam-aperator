@@ -10,23 +10,37 @@ document.addEventListener('DOMContentLoaded', () => {
   // ═══ PHASE 1: KOMPONENTLARNI YUKLASH ═══════════════════════════════
   const root = document.getElementById('app-root');
   
-  // Asosiy tuzilmaviy elementlarni yaratish
   window.ComponentLoader.load('titlebar', root);
   window.ComponentLoader.load('login', root);
   
-  // App screen — barcha tablar va overlay'lar shu ichida
+  // App screen = main row + statusbar (column)
   const appScreen = document.createElement('div');
   appScreen.id = 'app-screen';
   appScreen.className = 'screen';
   root.appendChild(appScreen);
   
-  window.ComponentLoader.load('tab-bar', appScreen);
-  window.ComponentLoader.load('tab-dialer', appScreen);
-  window.ComponentLoader.load('call-overlays', appScreen);
-  window.ComponentLoader.load('tabs-content', appScreen);
+  // Main row = sidebar + content (horizontal)
+  const mainRow = document.createElement('div');
+  mainRow.className = 'app-main-row';
+  appScreen.appendChild(mainRow);
+  
+  // Sidebar navigation
+  window.ComponentLoader.load('tab-bar', mainRow);
+  
+  // Content wrapper
+  const contentWrap = document.createElement('div');
+  contentWrap.id = 'content-wrap';
+  contentWrap.className = 'content-wrap';
+  mainRow.appendChild(contentWrap);
+  
+  window.ComponentLoader.load('tab-dialer', contentWrap);
+  window.ComponentLoader.load('tabs-content', contentWrap);
+  
+  // Operator bar — app-screen ning pastida
   window.ComponentLoader.load('operator-bar', appScreen);
   
-  // Modallar — app-screen dan tashqarida (global overlay)
+  // Overlays va modallar — root darajada (fixed position)
+  window.ComponentLoader.load('call-overlays', root);
   window.ComponentLoader.load('modals', root);
 
   // ═══ PHASE 2: MODULLARNI BOSHLASH ══════════════════════════════════

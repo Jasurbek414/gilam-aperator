@@ -1,164 +1,125 @@
 <!-- ═══ DIALER TAB ══════════════════════════════════════════════════════ -->
 <div class="tab-content active" id="tab-dialer">
-  <div class="workspace-grid">
-    <div class="dialer-side">
-      <div class="dialer-container">
-        <!-- SIP Status + Number Display (compact) -->
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px 6px;">
-          <div id="sip-status-bar" style="display:flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); font-size:11px;">
-            <span id="sip-status-dot" class="status-dot offline"></span>
-            <span id="sip-status-text" style="color:var(--text-secondary); font-weight:500;">SIP Ulanmagan</span>
-          </div>
-          <span id="sip-extension-text" style="font-size:11px; color:var(--text-muted); font-family:monospace;">—</span>
+  <div class="dialer-layout">
+    <!-- LEFT: Dialer -->
+    <div class="dialer-panel">
+      <!-- SIP Status -->
+      <div class="sip-bar">
+        <div class="sip-bar-left">
+          <span id="sip-status-dot" class="sip-dot-inline offline"></span>
+          <span id="sip-status-text">SIP Ulanmagan</span>
         </div>
+        <span id="sip-extension-text" class="sip-ext">—</span>
+      </div>
 
-        <!-- Number Display -->
-        <div class="dialer-display">
-          <input type="text" id="dial-number" placeholder="Raqam kiriting..." autocomplete="off">
-        </div>
+      <!-- Number Input -->
+      <div class="dial-input-wrap">
+        <input type="text" id="dial-number" class="dial-input" placeholder="Raqam kiriting" autocomplete="off" spellcheck="false">
+        <button id="btn-clear-number" class="dial-clear" title="Tozalash">
+          <span class="material-icons-round">backspace</span>
+        </button>
+      </div>
 
-        <!-- Active Campaign Info -->
-        <div id="active-campaign-info" style="display:none;">
-          <div class="campaign-badge">
-            <span class="material-icons-round">campaign</span>
-            <span id="campaign-name-badge">—</span>
-          </div>
-        </div>
+      <!-- Dialpad Grid -->
+      <div class="dialpad">
+        <button class="dial-key" data-key="1"><span class="dk-num">1</span></button>
+        <button class="dial-key" data-key="2"><span class="dk-num">2</span><span class="dk-sub">ABC</span></button>
+        <button class="dial-key" data-key="3"><span class="dk-num">3</span><span class="dk-sub">DEF</span></button>
+        <button class="dial-key" data-key="4"><span class="dk-num">4</span><span class="dk-sub">GHI</span></button>
+        <button class="dial-key" data-key="5"><span class="dk-num">5</span><span class="dk-sub">JKL</span></button>
+        <button class="dial-key" data-key="6"><span class="dk-num">6</span><span class="dk-sub">MNO</span></button>
+        <button class="dial-key" data-key="7"><span class="dk-num">7</span><span class="dk-sub">PQRS</span></button>
+        <button class="dial-key" data-key="8"><span class="dk-num">8</span><span class="dk-sub">TUV</span></button>
+        <button class="dial-key" data-key="9"><span class="dk-num">9</span><span class="dk-sub">WXYZ</span></button>
+        <button class="dial-key" data-key="*"><span class="dk-num">✱</span></button>
+        <button class="dial-key" data-key="0"><span class="dk-num">0</span><span class="dk-sub">+</span></button>
+        <button class="dial-key" data-key="#"><span class="dk-num">#</span></button>
+      </div>
 
-        <!-- Customer Lookup Result -->
-        <div id="customer-lookup" style="display:none;">
-          <div class="customer-card">
-            <div class="customer-avatar">
-              <span class="material-icons-round">person</span>
-            </div>
-            <div class="customer-info">
-              <span class="customer-name" id="lookup-name">—</span>
-              <span class="customer-phone" id="lookup-phone">—</span>
-              <span class="customer-address" id="lookup-address">—</span>
-            </div>
-            <button class="btn-icon" id="btn-create-order" title="Buyurtma yaratish">
-              <span class="material-icons-round">add_shopping_cart</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Dialpad -->
-        <div class="dialpad">
-          <button class="dial-key" data-key="1"><span class="key-num">1</span></button>
-          <button class="dial-key" data-key="2"><span class="key-num">2</span><span class="key-letters">ABC</span></button>
-          <button class="dial-key" data-key="3"><span class="key-num">3</span><span class="key-letters">DEF</span></button>
-          <button class="dial-key" data-key="4"><span class="key-num">4</span><span class="key-letters">GHI</span></button>
-          <button class="dial-key" data-key="5"><span class="key-num">5</span><span class="key-letters">JKL</span></button>
-          <button class="dial-key" data-key="6"><span class="key-num">6</span><span class="key-letters">MNO</span></button>
-          <button class="dial-key" data-key="7"><span class="key-num">7</span><span class="key-letters">PQRS</span></button>
-          <button class="dial-key" data-key="8"><span class="key-num">8</span><span class="key-letters">TUV</span></button>
-          <button class="dial-key" data-key="9"><span class="key-num">9</span><span class="key-letters">WXYZ</span></button>
-          <button class="dial-key" data-key="*"><span class="key-num">*</span></button>
-          <button class="dial-key" data-key="0"><span class="key-num">0</span><span class="key-letters">+</span></button>
-          <button class="dial-key" data-key="#"><span class="key-num">#</span></button>
-        </div>
-
-        <!-- Call Actions -->
-        <div class="call-actions">
-          <div class="call-spacer"></div>
-          <button id="btn-call" class="btn-call" title="Qo'ng'iroq qilish">
-            <span class="material-icons-round">call</span>
-          </button>
-          <button id="btn-clear-number" class="btn-clear-bottom" title="Tozalash">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
-              <line x1="18" y1="9" x2="12" y2="15"></line>
-              <line x1="12" y1="9" x2="18" y2="15"></line>
-            </svg>
-          </button>
-        </div>
+      <!-- Call Button -->
+      <div class="dial-actions">
+        <button id="btn-call" class="btn-call" title="Qo'ng'iroq">
+          <span class="material-icons-round">call</span>
+        </button>
       </div>
     </div>
-    
-    <div class="dashboard-side">
-      <!-- Qo'ng'iroqlar Tarixi -->
-      <div class="dashboard-card">
-        <div class="dashboard-header">
-          <span class="material-icons-round">history</span> So'nggi qo'ng'iroqlar
-        </div>
-        <div id="dashboard-calls-list" class="calls-list" style="max-height:180px; overflow-y:auto;">
-          <p style="padding:15px; color:var(--text-muted); font-size:12px; text-align:center;">Hozircha qo'ng'iroqlar yo'q</p>
+
+    <!-- RIGHT: CRM Panel -->
+    <div class="crm-side">
+      <!-- Active Campaign -->
+      <div id="active-campaign-info" style="display:none;">
+        <div class="campaign-badge"><span class="material-icons-round">campaign</span><span id="campaign-name-badge">—</span></div>
+      </div>
+
+      <!-- Customer Lookup -->
+      <div id="customer-lookup" style="display:none;">
+        <div class="customer-card">
+          <div class="customer-avatar"><span class="material-icons-round">person</span></div>
+          <div class="customer-info">
+            <span class="customer-name" id="lookup-name">—</span>
+            <span class="customer-phone" id="lookup-phone">—</span>
+            <span class="customer-address" id="lookup-address">—</span>
+          </div>
         </div>
       </div>
-      
-      <!-- Mijoz va Buyurtma Paneli -->
-      <div class="dashboard-card" id="crm-panel">
-        <!-- Panel Header with toggle -->
-        <div class="dashboard-header" style="cursor:pointer; user-select:none;" onclick="window.CRM.toggleQuickPanel()">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span class="material-icons-round">person_add</span> 
+
+      <!-- Recent Calls -->
+      <div class="crm-section">
+        <div class="crm-section-header">
+          <span class="material-icons-round">history</span>
+          <span>So'nggi qo'ng'iroqlar</span>
+        </div>
+        <div id="dashboard-calls-list" class="crm-section-body">
+          <div class="empty-mini">Hozircha qo'ng'iroqlar yo'q</div>
+        </div>
+      </div>
+
+      <!-- Quick CRM -->
+      <div class="crm-section">
+        <div class="crm-section-header crm-toggle" onclick="window.CRM.toggleQuickPanel()">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="material-icons-round">assignment</span>
             <span>Mijoz & Buyurtma</span>
           </div>
-          <span class="material-icons-round" id="crm-panel-arrow" style="font-size:20px; transition:transform 0.3s;">expand_more</span>
+          <span class="material-icons-round" id="crm-panel-arrow" style="font-size:18px;transition:transform .25s;">expand_more</span>
         </div>
 
-        <!-- Incoming Call Banner (avtomatik ko'rinadi) -->
-        <div id="crm-call-banner" style="display:none; padding:8px 14px; background:rgba(99,102,241,0.1); border-bottom:1px solid rgba(99,102,241,0.15);">
-          <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
-            <span class="material-icons-round" style="font-size:16px; color:var(--accent);">ring_volume</span>
-            <span style="color:var(--text-secondary);">Liniya:</span>
-            <strong id="crm-call-line" style="color:var(--accent);">—</strong>
-            <span style="color:var(--text-muted);">|</span>
-            <span style="color:var(--text-secondary);">Raqam:</span>
-            <strong id="crm-call-number" style="color:white;">—</strong>
+        <!-- Call Banner -->
+        <div id="crm-call-banner" class="crm-banner" style="display:none;">
+          <span class="material-icons-round" style="font-size:14px;color:var(--accent);">ring_volume</span>
+          <span>Liniya: <strong id="crm-call-line">—</strong></span>
+          <span style="opacity:.3;">|</span>
+          <span>Raqam: <strong id="crm-call-number">—</strong></span>
+        </div>
+
+        <div id="crm-panel-body" class="crm-form" style="display:none;">
+          <div class="crm-row">
+            <input type="text" id="quick-crm-name" class="crm-input" placeholder="Ism familiya">
+            <input type="text" id="quick-crm-phone" class="crm-input" placeholder="+998...">
           </div>
-        </div>
+          <input type="text" id="quick-crm-address" class="crm-input" placeholder="Manzil (tuman, ko'cha, uy)">
+          <select id="quick-crm-campaign" class="crm-input">
+            <option value="">Kampaniya tanlang...</option>
+          </select>
 
-        <!-- CRM Form (yig'ilgan holda) -->
-        <div id="crm-panel-body" style="display:none;">
-          <div style="padding:14px;">
-            <!-- Mijoz ma'lumotlari -->
-            <div style="margin-bottom:12px;">
-              <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:block;">Mijoz ma'lumotlari</label>
-              <div style="display:flex; gap:8px; margin-bottom:8px;">
-                <input type="text" id="quick-crm-name" placeholder="Ism familiya" autocomplete="off"
-                  style="flex:1; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
-                <input type="text" id="quick-crm-phone" placeholder="+998..." autocomplete="off"
-                  style="flex:1; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
-              </div>
-              <input type="text" id="quick-crm-address" placeholder="Manzil (tuman, ko'cha, uy)" autocomplete="off"
-                style="width:100%; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none; margin-bottom:8px;">
-              
-              <!-- Kampaniya (liniya) tanlash -->
-              <select id="quick-crm-campaign" 
-                style="width:100%; padding:9px 12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
-                <option value="">Kampaniya tanlang...</option>
-              </select>
-            </div>
+          <div class="crm-divider"></div>
 
-            <!-- Buyurtma -->
-            <div style="margin-bottom:12px;">
-              <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:block;">Buyurtma</label>
-              <div style="display:flex; gap:8px; margin-bottom:8px;">
-                <select id="quick-order-product" 
-                  style="flex:2; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
-                  <option value="">Xizmat tanlang</option>
-                </select>
-                <input type="number" id="quick-order-qty" placeholder="Soni" min="1" value="1"
-                  style="width:70px; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none; text-align:center;">
-                <input type="text" id="quick-order-price" placeholder="Narx" autocomplete="off"
-                  style="width:90px; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
-              </div>
-              <textarea id="quick-crm-note" placeholder="Izoh, eslatma..." rows="2"
-                style="width:100%; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none; resize:none; font-family:inherit;"></textarea>
-            </div>
+          <div class="crm-row">
+            <select id="quick-order-product" class="crm-input" style="flex:2;">
+              <option value="">Xizmat tanlang</option>
+            </select>
+            <input type="number" id="quick-order-qty" class="crm-input" placeholder="Soni" min="1" value="1" style="width:72px;">
+            <input type="text" id="quick-order-price" class="crm-input" placeholder="Narx" style="width:90px;">
+          </div>
+          <textarea id="quick-crm-note" class="crm-input" placeholder="Izoh..." rows="2" style="resize:none;"></textarea>
 
-            <!-- Actions -->
-            <div style="display:flex; gap:8px;">
-              <button class="btn-secondary btn-sm" onclick="window.CRM.saveQuickCustomer()" 
-                style="flex:1; padding:10px; border-radius:8px; font-size:12px; display:flex; align-items:center; justify-content:center; gap:5px;">
-                <span class="material-icons-round" style="font-size:16px;">person_add</span> Mijoz saqlash
-              </button>
-              <button class="btn-primary btn-sm" onclick="window.CRM.saveQuickOrder()" 
-                style="flex:1; padding:10px; border-radius:8px; font-size:12px; display:flex; align-items:center; justify-content:center; gap:5px;">
-                <span class="material-icons-round" style="font-size:16px;">shopping_cart</span> Buyurtma
-              </button>
-            </div>
+          <div class="crm-row" style="gap:8px;">
+            <button class="btn btn-ghost" onclick="window.CRM.saveQuickCustomer()">
+              <span class="material-icons-round">person_add</span> Mijoz
+            </button>
+            <button class="btn btn-accent" onclick="window.CRM.saveQuickOrder()">
+              <span class="material-icons-round">shopping_cart</span> Buyurtma
+            </button>
           </div>
         </div>
       </div>
