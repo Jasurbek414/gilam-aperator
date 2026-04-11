@@ -163,6 +163,155 @@ const CRM = {
         <div class="sms-item-text" style="font-size:13px; color:var(--text-main);">${sms.text}</div>
       </div>
     `).join('');
+  },
+
+  // ═══ QUICK CRM PANEL ═══════════════════════════════════════════════════
+  toggleQuickPanel() {
+    const body = Utils.$('crm-panel-body');
+    const arrow = Utils.$('crm-panel-arrow');
+    if (!body) return;
+    
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+    
+    // Kampaniya selectni yangilash
+    if (!isOpen) this._populateCampaigns();
+  },
+
+  // Qo'ng'iroq kelganda avtomatik ochilish
+  onCallStarted(phoneNumber, lineName) {
+    const body = Utils.$('crm-panel-body');
+    const arrow = Utils.$('crm-panel-arrow');
+    const banner = Utils.$('crm-call-banner');
+    const phoneInput = Utils.$('quick-crm-phone');
+    const lineLabel = Utils.$('crm-call-line');
+    const numLabel = Utils.$('crm-call-number');
+
+    // Panelni ochish
+    if (body) body.style.display = 'block';
+    if (arrow) arrow.style.transform = 'rotate(180deg)';
+    
+    // Banner ko'rsatish
+    if (banner) banner.style.display = 'block';
+    if (lineLabel) lineLabel.textContent = lineName || '-';
+    if (numLabel) numLabel.textContent = phoneNumber || '-';
+    
+    // Telefon raqamni avtomatik to'ldirish
+    if (phoneInput) phoneInput.value = phoneNumber || '';
+    
+    // Kampaniyani tanlash
+    this._populateCampaigns(lineName);
+  },
+
+  onCallEnded() {
+    const banner = Utils.$('crm-call-banner');
+    if (banner) banner.style.display = 'none';
+  },
+
+  _populateCampaigns(autoSelect) {
+    const select = Utils.$('quick-crm-campaign');
+    if (!select) return;
+    
+    const accounts = window.SipClient?.sipAccounts || [];
+    select.innerHTML = '<option value="">Kampaniya tanlang...</option>';
+    
+    accounts.forEach(acc => {
+      const opt = document.createElement('option');
+      opt.value = acc.id;
+      opt.textContent = `${acc.name} (${acc.extension})`;
+      if (autoSelect && acc.name === autoSelect) opt.selected = true;
+      select.appendChild(opt);
+    });
+  },
+
+  // ═══ SAVE CUSTOMER ══════════════════════════════════════════════════════
+  async saveQuickCustomer() {
+    const name = Utils.$('quick-crm-name')?.value?.trim();
+    const phone = Utils.$('quick-crm-phone')?.value?.trim();
+    const address = Utils.$('quick-crm-address')?.value?.trim();
+
+    if (!name || !phone) {
+      Utils.showToast('Ism va telefon kerak!', 'warning');
+      return;
+    }
+
+    const data = {
+      fullName: name,
+      phone1: phone,
+      address: address || undefined,
+      companyId: window.Api?.config?.currentUser?.companyId,
+    };
+
+    try {
+      await window.Api.request('/customers', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      Utils.showToast("Mijoz muvaffaqiyatli saqlandi!", 'success');
+      // Formani tozalash (telefon qolsin)
+      if (Utils.$('quick-crm-name')) Utils.$('quick-crm-name').value = '';
+      if (Utils.$('quick-crm-address')) Utils.$('quick-crm-address').value = '';
+    } catch (err) {
+      Utils.showToast('Saqlashda xatolik: ' + err.message, 'error');
+    }
+  },
+
+  // ═══ SAVE ORDER ═════════════════════════════════════════════════════════
+  async saveQuickOrder() {
+    const name = Utils.$('quick-crm-name')?.value?.trim();
+    const phone = Utils.$('quick-crm-phone')?.value?.trim();
+    const address = Utils.$('quick-crm-address')?.value?.trim();
+    const product = Utils.$('quick-order-product')?.value?.trim();
+    const qty = Utils.$('quick-order-qty')?.value || '1';
+    const price = Utils.$('quick-order-price')?.value?.trim();
+    const note = Utils.$('quick-crm-note')?.value?.trim();
+    const campaignId = Utils.$('quick-crm-campaign')?.value;
+
+    if (!phone) {
+      Utils.showToast('Telefon raqam kerak!', 'warning');
+      return;
+    }
+
+    const orderData = {
+      customerName: name || 'Noaniq',
+      phone: phone,
+      address: address,
+      product: product,
+      quantity: parseInt(qty),
+      price: price,
+      note: note,
+      campaignId: campaignId,
+      companyId: window.Api?.config?.currentUser?.companyId,
+      operatorId: window.Api?.config?.currentUser?.id,
+      operatorName: window.Api?.config?.currentUser?.fullName,
+      status: 'new',
+      createdAt: new Date().toISOString(),
+    };
+
+    // Buyurtmalarni localStorage ga saqlash
+    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+    orders.unshift(orderData);
+    localStorage.setItem('orders', JSON.stringify(orders));
+
+    // API ga ham yuborishga urinish
+    try {
+      await window.Api.request('/orders', {
+        method: 'POST',
+        body: JSON.stringify(orderData),
+      });
+    } catch (e) {
+      console.log('[CRM] Order saved locally (API unavailable)');
+    }
+
+    Utils.showToast("Buyurtma saqlandi!", 'success');
+    
+    // Formani tozalash
+    ['quick-order-product', 'quick-order-price', 'quick-crm-note'].forEach(id => {
+      const el = Utils.$(id);
+      if (el) el.value = '';
+    });
+    if (Utils.$('quick-order-qty')) Utils.$('quick-order-qty').value = '1';
   }
 };
 

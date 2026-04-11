@@ -99,20 +99,18 @@
       <div class="workspace-grid">
         <div class="dialer-side">
           <div class="dialer-container">
-          <!-- SIP Status Bar -->
-      <div id="sip-status-bar">
-        <div class="sip-status-left">
+          <!-- SIP Status + Number Display (compact) -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px 6px;">
+        <div id="sip-status-bar" style="display:flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); font-size:11px;">
           <span id="sip-status-dot" class="status-dot offline"></span>
-          <span id="sip-status-text">Ulanmagan</span>
+          <span id="sip-status-text" style="color:var(--text-secondary); font-weight:500;">SIP Ulanmagan</span>
         </div>
-        <div class="sip-status-right">
-          <span id="sip-extension-text">—</span>
-        </div>
+        <span id="sip-extension-text" style="font-size:11px; color:var(--text-muted); font-family:monospace;">—</span>
       </div>
 
       <!-- Number Display -->
       <div class="dialer-display">
-        <input type="text" id="dial-number" placeholder="Raqam..." autocomplete="off">
+        <input type="text" id="dial-number" placeholder="Raqam kiriting..." autocomplete="off">
       </div>
 
       <!-- Active Campaign Info -->
@@ -174,29 +172,88 @@
         </div> <!-- /dialer-side -->
         
         <div class="dashboard-side">
+           <!-- Qo'ng'iroqlar Tarixi -->
            <div class="dashboard-card">
               <div class="dashboard-header">
-                 <span class="material-icons-round">history</span> Tezkor Qo'ng'iroqlar Tarixi
+                 <span class="material-icons-round">history</span> So'nggi qo'ng'iroqlar
               </div>
-              <div id="dashboard-calls-list" class="calls-list">
-                 <p style="padding:15px; color:#aaa; font-size:13px; text-align:center;">Yuklanmoqda...</p>
+              <div id="dashboard-calls-list" class="calls-list" style="max-height:180px; overflow-y:auto;">
+                 <p style="padding:15px; color:var(--text-muted); font-size:12px; text-align:center;">Hozircha qo'ng'iroqlar yo'q</p>
               </div>
            </div>
            
-           <div class="dashboard-card">
-              <div class="dashboard-header">
-                 <span class="material-icons-round">edit_note</span> Yangi mijoz / Tezkor qayd
-              </div>
-              <div class="quick-crm">
-                 <div class="crm-input-group">
-                    <input type="text" id="quick-crm-name" placeholder="Mijoz to'liq ismi..." autocomplete="off">
-                    <input type="text" id="quick-crm-phone" placeholder="Telefon: +998..." autocomplete="off">
+           <!-- Mijoz va Buyurtma Paneli -->
+           <div class="dashboard-card" id="crm-panel">
+              <!-- Panel Header with toggle -->
+              <div class="dashboard-header" style="cursor:pointer; user-select:none;" onclick="window.CRM.toggleQuickPanel()">
+                 <div style="display:flex; align-items:center; gap:6px;">
+                    <span class="material-icons-round">person_add</span> 
+                    <span>Mijoz & Buyurtma</span>
                  </div>
-                 <input type="text" id="quick-crm-address" placeholder="Manzil (Qayerdan qo'ng'iroq qilyapti?)" autocomplete="off">
-                 <textarea id="quick-crm-note" placeholder="Gaplashish jarayonidagi ehtiyojlar, takliflar yoki shikoyatlarni tezkor yozib oling..." rows="3"></textarea>
-                 <button class="btn-primary" onclick="alert('Qayd muvaffaqiyatli saqlandi!')" style="padding: 12px; border-radius: 10px; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px;">
-                   <span class="material-icons-round" style="font-size: 18px;">save</span> Mijozni Saqlash
-                 </button>
+                 <span class="material-icons-round" id="crm-panel-arrow" style="font-size:20px; transition:transform 0.3s;">expand_more</span>
+              </div>
+
+              <!-- Incoming Call Banner (avtomatik ko'rinadi) -->
+              <div id="crm-call-banner" style="display:none; padding:8px 14px; background:rgba(99,102,241,0.1); border-bottom:1px solid rgba(99,102,241,0.15); display:none;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+                  <span class="material-icons-round" style="font-size:16px; color:var(--accent);">ring_volume</span>
+                  <span style="color:var(--text-secondary);">Liniya:</span>
+                  <strong id="crm-call-line" style="color:var(--accent);">—</strong>
+                  <span style="color:var(--text-muted);">|</span>
+                  <span style="color:var(--text-secondary);">Raqam:</span>
+                  <strong id="crm-call-number" style="color:white;">—</strong>
+                </div>
+              </div>
+
+              <!-- CRM Form (yig'ilgan holda) -->
+              <div id="crm-panel-body" style="display:none;">
+                <div style="padding:14px;">
+                  <!-- Mijoz ma'lumotlari -->
+                  <div style="margin-bottom:12px;">
+                    <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:block;">Mijoz ma'lumotlari</label>
+                    <div style="display:flex; gap:8px; margin-bottom:8px;">
+                      <input type="text" id="quick-crm-name" placeholder="Ism familiya" autocomplete="off"
+                        style="flex:1; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
+                      <input type="text" id="quick-crm-phone" placeholder="+998..." autocomplete="off"
+                        style="flex:1; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
+                    </div>
+                    <input type="text" id="quick-crm-address" placeholder="Manzil (tuman, ko'cha, uy)" autocomplete="off"
+                      style="width:100%; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none; margin-bottom:8px;">
+                    
+                    <!-- Kampaniya (liniya) tanlash -->
+                    <select id="quick-crm-campaign" 
+                      style="width:100%; padding:9px 12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
+                      <option value="">Kampaniya tanlang...</option>
+                    </select>
+                  </div>
+
+                  <!-- Buyurtma -->
+                  <div style="margin-bottom:12px;">
+                    <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:block;">Buyurtma</label>
+                    <div style="display:flex; gap:8px; margin-bottom:8px;">
+                      <input type="text" id="quick-order-product" placeholder="Mahsulot nomi" autocomplete="off"
+                        style="flex:2; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
+                      <input type="number" id="quick-order-qty" placeholder="Soni" min="1" value="1"
+                        style="width:70px; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none; text-align:center;">
+                      <input type="text" id="quick-order-price" placeholder="Narx" autocomplete="off"
+                        style="width:90px; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none;">
+                    </div>
+                    <textarea id="quick-crm-note" placeholder="Izoh, eslatma..." rows="2"
+                      style="width:100%; padding:9px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:white; font-size:13px; outline:none; resize:none; font-family:inherit;"></textarea>
+                  </div>
+
+                  <!-- Actions -->
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn-secondary btn-sm" onclick="window.CRM.saveQuickCustomer()" 
+                      style="flex:1; padding:10px; border-radius:8px; font-size:12px; display:flex; align-items:center; justify-content:center; gap:5px;">
+                      <span class="material-icons-round" style="font-size:16px;">person_add</span> Mijoz saqlash
+                    </button>
+                    <button class="btn-primary btn-sm" onclick="window.CRM.saveQuickOrder()" 
+                      style="flex:1; padding:10px; border-radius:8px; font-size:12px; display:flex; align-items:center; justify-content:center; gap:5px;">
+                      <span class="material-icons-round" style="font-size:16px;">shopping_cart</span> Buyurtma
+                    </button>
+                  </div>
+                </div>
               </div>
            </div>
         </div> <!-- /dashboard-side -->

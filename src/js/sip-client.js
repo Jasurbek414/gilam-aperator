@@ -204,6 +204,9 @@ const SipClient = {
             callerName: callerName,
             campaignName: acc.name,
           });
+
+          // CRM panelni avtomatik ochish
+          if (window.CRM) window.CRM.onCallStarted(callerNumber, acc.name);
         }
       });
 
@@ -248,7 +251,8 @@ const SipClient = {
     session.on('ended', (data) => {
       console.log('[SIP] Call ended:', data.cause);
       this._cleanupCall();
-      Utils.showToast('Qo\'ng\'iroq tugadi', 'info');
+      if (window.CRM) window.CRM.onCallEnded();
+      Utils.showToast("Qo'ng'iroq tugadi", 'info');
     });
 
     session.on('failed', (data) => {
@@ -338,6 +342,10 @@ const SipClient = {
 
       // UI: qo'ng'iroq overlay ko'rsatish
       window.UI.showActiveCall(target, 'Chaqirilmoqda...');
+
+      // CRM panelni ochish
+      const lineName = line.acc?.name || '';
+      if (window.CRM) window.CRM.onCallStarted(target, lineName);
 
     } catch (err) {
       console.error('[SIP] Call error:', err);
