@@ -4,6 +4,9 @@ const path = require('path');
 let mainWindow;
 let tray;
 
+app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
+app.commandLine.appendSwitch('allow-insecure-localhost', 'true');
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1150,
