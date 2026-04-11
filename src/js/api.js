@@ -55,10 +55,10 @@ const Api = {
     if (this.socket) return;
     if (!this.config.currentUser) return;
     
-    let socketUrl = `${this.config.API_BASE}/calls`;
-    if (this.config.API_BASE.includes('gilam.ecos.uz')) {
-      socketUrl = 'http://127.0.0.1:3000/calls'; // Bypassing NextJS which drops websocket upgrades
-    }
+    // Desktop Operator dasturi doim backend bilan bitta kompyuterda ishlaydi.
+    // Cloudflare/NextJS proksilari WebSocket Upgrade ni qo'llab-quvvatlamaydi,
+    // shuning uchun to'g'ridan-to'g'ri backend portiga ulanamiz.
+    const socketUrl = 'http://127.0.0.1:3000/calls';
     console.log('[API] Connecting WebSocket to:', socketUrl);
     
     const ioClient = window.io || (typeof io !== 'undefined' ? io : null);
