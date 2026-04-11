@@ -383,8 +383,7 @@
             <div class="setting-row">
               <span class="setting-label">Rol:</span>
               <span class="setting-value" id="settings-role">—</span>
-            </div>
-            <div class="setting-row">
+                 <div class="setting-row">
               <span class="setting-label">Kompaniya:</span>
               <span class="setting-value" id="settings-company">—</span>
             </div>
@@ -393,25 +392,19 @@
 
         <!-- SIP Settings -->
         <div class="settings-section">
-          <h3>SIP sozlamalari</h3>
-          <div class="settings-card">
-            <div class="setting-row">
-              <span class="setting-label">Holat:</span>
-              <span class="setting-value" id="settings-sip-status">Ulanmagan</span>
-            </div>
-            <div class="setting-row">
-              <span class="setting-label">Server:</span>
-              <span class="setting-value" id="settings-sip-server">—</span>
-            </div>
-            <div class="setting-row">
-              <span class="setting-label">Extension:</span>
-              <span class="setting-value" id="settings-sip-ext">—</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3>SIP Liniyalar (Raqamlar)</h3>
+            <button class="btn-primary btn-sm" onclick="showAddSipModal()" style="display: flex; align-items: center; gap: 5px;">
+              <span class="material-icons-round" style="font-size:18px;">add</span> Yangi Liniya
+            </button>
+          </div>
+          <div class="settings-card" id="sip-accounts-list">
+            <!-- Dynamic SIP accounts will be injected here -->
+            <div class="empty-state" style="padding: 20px;">
+              <span class="material-icons-round">headset_off</span>
+              <p>Mavjud SIP raqamlar topilmadi</p>
             </div>
           </div>
-          <button class="btn-secondary btn-sm" id="btn-sip-reconnect">
-            <span class="material-icons-round">sync</span>
-            SIP qayta ulash
-          </button>
         </div>
 
         <!-- Audio Settings -->
@@ -505,5 +498,53 @@
   </audio>
 
   <script src="renderer.js"></script>
+
+  <!-- ADD SIP MODAL -->
+  <div id="modal-add-sip" style="display:none;" class="modal-overlay">
+    <div class="modal-content" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3>Yangi SIP Raqam Ulash</h3>
+        <button class="btn-icon" onclick="document.getElementById('modal-add-sip').style.display='none'">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nomi (Masalan: Sotuv bo'limi)</label>
+          <input type="text" id="sip-name" placeholder="Nomini kiriting">
+        </div>
+        <div class="form-group">
+          <label>Domen yoki IP</label>
+          <input type="text" id="sip-domain" placeholder="misol: sip.gilam.uz:5060">
+        </div>
+        <div class="form-group">
+          <label>Raqam (Extension)</label>
+          <input type="text" id="sip-extension" placeholder="Masalan: 101">
+        </div>
+        <div class="form-group">
+          <label>Parol (Secret)</label>
+          <input type="password" id="sip-password" placeholder="SIP Parolini kiriting">
+        </div>
+        <div class="form-group" style="display: flex; gap: 10px;">
+          <div style="flex:1;">
+            <label>Transport</label>
+            <select id="sip-transport" class="form-control" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px;">
+              <option value="wss">WSS (Secure WebSocket)</option>
+              <option value="ws">WS (WebSocket)</option>
+            </select>
+          </div>
+          <div style="flex:1; display: flex; align-items: flex-end; padding-bottom: 5px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor: pointer;">
+              <input type="checkbox" id="sip-autoconnect" checked> Avto-ulanish
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('modal-add-sip').style.display='none'">Bekor qilish</button>
+        <button class="btn-primary" onclick="saveSipAccount()">Saqlash va Ulash</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

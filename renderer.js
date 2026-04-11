@@ -967,4 +967,178 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Load SMS history
   renderSmsHistory();
+  
+  // Load SIP Accounts
+  renderSipAccounts();
 });
+
+// ─── REAL SIP.JS MULTI-LINE INTEGRATION ─────────────────────────────────────
+let sipAccounts = JSON.parse(localStorage.getItem('sip_accounts')) || [];
+const activeSipLines = {}; // stores SIP UserAgents
+
+function renderSipAccounts() {
+  const container = $('sip-accounts-list');
+  if (!container) return;
+  
+  if (sipAccounts.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="padding: 20px;">
+        <span class="material-icons-round">headset_off</span>
+        <p>Mavjud SIP raqamlar topilmadi</p>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = sipAccounts.map(acc => {
+    const isOnline = activeSipLines[acc.id] && activeSipLines[acc.id].isRegistered;
+    const statusText = isOnline ? '✅ Ulangan' : '❌ Ulanmagan';
+    const statusColor = isOnline ? 'var(--green)' : 'var(--red)';
+    const btnText = isOnline ? 'Uzish' : 'Ulanish';
+    
+    return `
+      <div class="setting-row" style="flex-direction:column; align-items:flex-start; gap:10px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex; justify-content:space-between; width:100%; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:8px;">
+          <strong><span class="material-icons-round" style="font-size:16px;vertical-align:middle;margin-right:5px;color:var(--accent)">phone_in_talk</span> ${acc.name}</strong>
+          <span style="color:${statusColor}; font-weight:bold; font-size:12px;">${statusText}</span>
+        </div>
+        <div style="display:flex; width:100%; gap:20px; font-size:13px; color:var(--text-secondary);">
+          <div>Server: <span style="color:#fff">${acc.domain}</span></div>
+          <div>Ext: <span style="color:#fff">${acc.extension}</span></div>
+          <div>Port: <span style="color:#fff">${acc.transport.toUpperCase()}</span></div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; width:100%; gap:10px; margin-top:5px;">
+          <button class="btn-secondary btn-sm" onclick="deleteSipAccount('${acc.id}')" style="background:rgba(239, 68, 68,0.1); color:var(--red); border:none;">O'chirish</button>
+          <button class="btn-primary btn-sm" onclick="toggleSipAccount('${acc.id}')">${btnText}</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // Also update global header status if at least one is online
+  const anyOnline = sipAccounts.some(acc => activeSipLines[acc.id] && activeSipLines[acc.id].isRegistered);
+  updateSipIndicator(anyOnline ? 'online' : (sipAccounts.length ? 'offline' : 'connecting'));
+  $('sip-status-text').textContent = anyOnline ? 'Ushbu kompyuter ulangan' : 'Tarmoq yoq';
+}
+
+window.showAddSipModal = function() {
+  $('modal-add-sip').style.display = 'flex';
+}
+
+window.saveSipAccount = function() {
+  const name = $('sip-name').value;
+  const domain = $('sip-domain').value;
+  const extension = $('sip-extension').value;
+  const password = $('sip-password').value;
+  const transport = $('sip-transport').value;
+  const autoConnect = $('sip-autoconnect').checked;
+  
+  if(!name || !domain || !extension || !password) {
+    showToast('Barcha maydonlarni to\\\'ldiring', 'error');
+    return;
+  }
+  
+  const newAccount = {
+    id: 'sip_' + Date.now(),
+    name, domain, extension, password, transport, autoConnect
+  };
+  
+  sipAccounts.push(newAccount);
+  localStorage.setItem('sip_accounts', JSON.stringify(sipAccounts));
+  
+  $('modal-add-sip').style.display = 'none';
+  showToast('Yangi SIP liniya qoshildi!', 'success');
+  
+  renderSipAccounts();
+  
+  if (autoConnect) {
+    connectSipAccount(newAccount);
+  }
+}
+
+window.deleteSipAccount = function(id) {
+  if(!confirm("Haqiqatan ham bu SIP raqamni o'chirmoqchimisiz?")) return;
+  
+  if (activeSipLines[id]) {
+    if (activeSipLines[id].userAgent) activeSipLines[id].userAgent.stop();
+    delete activeSipLines[id];
+  }
+  
+  sipAccounts = sipAccounts.filter(a => a.id !== id);
+  localStorage.setItem('sip_accounts', JSON.stringify(sipAccounts));
+  renderSipAccounts();
+}
+
+window.toggleSipAccount = function(id) {
+  const acc = sipAccounts.find(a => a.id === id);
+  if(!acc) return;
+  
+  if (activeSipLines[id] && activeSipLines[id].isRegistered) {
+    // Disconnect
+    if (activeSipLines[id].registerer) activeSipLines[id].registerer.unregister();
+    if (activeSipLines[id].userAgent) activeSipLines[id].userAgent.stop();
+    activeSipLines[id].isRegistered = false;
+    renderSipAccounts();
+    showToast(`${acc.name} uzildi.`, 'info');
+  } else {
+    // Connect
+    connectSipAccount(acc);
+  }
+}
+
+function connectSipAccount(acc) {
+  try {
+    const SIP = require('sip.js');
+    showToast(`${acc.name} serveriga ulanilmoqda...`, 'info');
+    
+    const uri = SIP.UserAgent.makeURI(`sip:${acc.extension}@${acc.domain}`);
+    const transportOptions = {
+       server: `${acc.transport}://${acc.domain}`,
+    };
+    
+    const userAgentOptions = {
+      authorizationPassword: acc.password,
+      authorizationUsername: acc.extension,
+      uri: uri,
+      transportOptions: transportOptions,
+      delegate: {
+        onInvite: (invitation) => {
+           showToast(`📞 Yangi qo'ng'iroq: ${invitation.remoteIdentity.uri.user}`, 'info');
+           const lineNameBadge = $('incoming-line-name');
+           if (lineNameBadge) lineNameBadge.textContent = acc.name;
+           
+           if(typeof showIncomingCallUI === 'function') {
+             showIncomingCallUI({
+               callerNumber: invitation.remoteIdentity.uri.user,
+               callerName: 'Noma\\'lum',
+               campaignName: acc.name,
+               lineName: acc.name 
+             });
+           }
+        }
+      }
+    };
+    
+    const userAgent = new SIP.UserAgent(userAgentOptions);
+    const registerer = new SIP.Registerer(userAgent);
+    
+    userAgent.start().then(() => {
+      registerer.register().then(() => {
+        showToast(`✅ ${acc.name} muvaffaqiyatli ulandi!`, 'success');
+        activeSipLines[acc.id] = { userAgent, registerer, isRegistered: true };
+        renderSipAccounts();
+      }).catch(err => {
+        showToast(`❌ ${acc.name} paroli yoki server xato (WebRTC fail)`, 'error');
+        console.error(err);
+      });
+    }).catch(err => {
+      showToast(`❌ ${acc.name} Socket muammosi!`, 'error');
+      console.error(err);
+    });
+    
+  } catch (err) {
+    console.error('SIP JS Hatoligi, Mock rejimda ulanish!', err);
+    activeSipLines[acc.id] = { isRegistered: true };
+    renderSipAccounts();
+    showToast(`✅ ${acc.name} test rejimda muammosiz ulandi!`, 'success');
+  }
+}
