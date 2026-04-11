@@ -581,8 +581,9 @@ body {
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
   }
   .dashboard-side {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    align-items: stretch;
     flex: 1;
     gap: 24px;
   }
