@@ -55,7 +55,10 @@ const Api = {
     if (this.socket) return;
     if (!this.config.currentUser) return;
     
-    const socketUrl = `${this.config.API_BASE}/calls`;
+    let socketUrl = `${this.config.API_BASE}/calls`;
+    if (this.config.API_BASE.includes('gilam.ecos.uz')) {
+      socketUrl = 'http://127.0.0.1:3000/calls'; // Bypassing NextJS which drops websocket upgrades
+    }
     console.log('[API] Connecting WebSocket to:', socketUrl);
     
     const ioClient = window.io || (typeof io !== 'undefined' ? io : null);
