@@ -65,6 +65,7 @@ const Api = {
     }
 
     this.socket = ioClient(socketUrl, {
+      path: '/api/socket.io',
       extraHeaders: {
         Authorization: `Bearer ${this.config.token}`
       },
