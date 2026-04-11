@@ -664,10 +664,12 @@ body {
 .dialer-display {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  gap: 8px;
-  margin-bottom: 10px;
-  border-bottom: 2px solid rgba(255,255,255,0.05);
+  justify-content: center;
+  padding: 24px 16px;
+  margin-bottom: 20px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 16px;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
 }
 
 #dial-number {
@@ -675,22 +677,14 @@ body {
   background: none;
   border: none;
   color: #fff;
-  font-size: 32px;
-  font-weight: 500;
+  font-size: 36px;
+  font-weight: 600;
   text-align: center;
   outline: none;
-  letter-spacing: 2px;
-  padding: 10px;
+  letter-spacing: 3px;
+  width: 100%;
 }
-#dial-number::placeholder { color: rgba(255,255,255,0.2); font-size: 20px; }
-
-#btn-clear-number {
-  padding: 10px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-}
-#btn-clear-number svg { display: block; }
-#btn-clear-number:hover { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+#dial-number::placeholder { color: rgba(255,255,255,0.15); font-size: 24px; font-weight: 400; letter-spacing: 1px; }
 
 /* Campaign Badge */
 #active-campaign-info { padding: 0 16px 16px; display: flex; justify-content: center; }
@@ -763,15 +757,37 @@ body {
 .key-num { font-size: 22px; font-weight: 500; line-height: 1; }
 .key-letters { font-size: 9px; color: var(--text-muted); letter-spacing: 2px; margin-top: 2px; }
 
-/* Call Button */
+/* Call Actions Area */
 .call-actions {
-  display: flex;
-  justify-content: center;
-  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 64px 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: 16px;
+  padding: 16px 20px 24px;
   flex-shrink: 0;
 }
+.call-spacer { width: 100%; height: 100%; }
+
+.btn-clear-bottom {
+  grid-column: 3;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.btn-clear-bottom:hover { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+.btn-clear-bottom:active { transform: scale(0.9); }
 
 .btn-call {
+  grid-column: 2;
   width: 64px;
   height: 64px;
   border-radius: 50%;

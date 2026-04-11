@@ -112,10 +112,7 @@
 
       <!-- Number Display -->
       <div class="dialer-display">
-        <input type="text" id="dial-number" placeholder="Raqam kiriting..." autocomplete="off">
-        <button id="btn-clear-number" class="btn-icon" title="Tozalash">
-          <span class="material-icons-round">backspace</span>
-        </button>
+        <input type="text" id="dial-number" placeholder="Raqam..." autocomplete="off">
       </div>
 
       <!-- Active Campaign Info -->
@@ -159,10 +156,18 @@
         <button class="dial-key" data-key="#"><span class="key-num">#</span></button>
       </div>
 
-      <!-- Call Button -->
+      <!-- Call Actions -->
       <div class="call-actions">
-        <button id="btn-call" class="btn-call">
+        <div class="call-spacer"></div>
+        <button id="btn-call" class="btn-call" title="Qo'ng'iroq qilish">
           <span class="material-icons-round">call</span>
+        </button>
+        <button id="btn-clear-number" class="btn-clear-bottom" title="Tozalash">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+            <line x1="18" y1="9" x2="12" y2="15"></line>
+            <line x1="12" y1="9" x2="18" y2="15"></line>
+          </svg>
         </button>
       </div>
           </div> <!-- /dialer-container -->
