@@ -1,0 +1,125 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * app.js — Application Entry Point & Lifecycle Controller
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[App] Starting Gilam Operator...');
+
+  // Initialize all modules
+  window.UI.init();
+  window.SipClient.init();
+  window.CRM.init();
+
+  // ═══ LOGIN ════════════════════════════════════════════════════════════
+  Utils.$('login-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = Utils.$('login-phone')?.value?.trim();
+    const password = Utils.$('login-password')?.value?.trim();
+
+    if (!phone || !password) {
+      Utils.$('login-error').textContent = 'Telefon va parolni kiriting';
+      Utils.$('login-error').style.display = 'block';
+      return;
+    }
+
+    const btn = Utils.$('btn-login');
+    btn.disabled = true;
+    btn.textContent = 'Kirilmoqda...';
+    Utils.$('login-error').style.display = 'none';
+
+    try {
+      const user = await window.Api.login(phone, password);
+      Utils.showToast(`Xush kelibsiz, ${user.fullName || user.phone}!`, 'success');
+      startApp(user);
+    } catch (err) {
+      Utils.$('login-error').textContent = err.message || 'Kirishda xatolik';
+      Utils.$('login-error').style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Kirish <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+    }
+  });
+
+  // ═══ CHECK EXISTING LOGIN ═════════════════════════════════════════════
+  if (window.Api.config.token && window.Api.config.currentUser) {
+    console.log('[App] Existing session found, auto-login');
+    startApp(window.Api.config.currentUser);
+  } else {
+    window.UI.showScreen('login');
+  }
+});
+
+// ═══ START APP ═════════════════════════════════════════════════════════════
+function startApp(user) {
+  window.UI.showScreen('app');
+
+  // Operator info
+  const nameEl = Utils.$('operator-name');
+  if (nameEl) nameEl.textContent = user.fullName || user.phone || 'Operator';
+
+  // Settings info
+  const sName = Utils.$('settings-name');
+  if (sName) sName.textContent = user.fullName || '—';
+  
+  const sPhone = Utils.$('settings-phone');
+  if (sPhone) sPhone.textContent = user.phone || '—';
+  
+  const sRole = Utils.$('settings-role');
+  if (sRole) sRole.textContent = user.role || '—';
+  
+  const sComp = Utils.$('settings-company');
+  if (sComp) sComp.textContent = user.companyName || user.companyId || '—';
+
+  // Auto-connect SIP liniyalar
+  console.log('[App] Auto-connecting SIP accounts...');
+  window.SipClient.autoConnectAll();
+
+  // Audio qurilmalarni yuklash
+  loadAudioDevices();
+
+  // CRM ma'lumotlarni yuklash
+  try {
+    window.CRM.loadContacts();
+  } catch(e) {
+    console.warn('[App] CRM load failed:', e);
+  }
+
+  console.log('[App] ✅ Application started successfully');
+}
+
+// ═══ AUDIO DEVICES ════════════════════════════════════════════════════════
+async function loadAudioDevices() {
+  try {
+    // Avval mikrofon ruxsatini so'rash
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const inputSelect = Utils.$('audio-input');
+    const outputSelect = Utils.$('audio-output');
+    const ringSelect = Utils.$('audio-ring');
+
+    if (inputSelect) inputSelect.innerHTML = '';
+    if (outputSelect) outputSelect.innerHTML = '';
+    if (ringSelect) ringSelect.innerHTML = '';
+
+    devices.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      opt.textContent = d.label || `Qurilma (${d.deviceId.substring(0, 8)})`;
+
+      if (d.kind === 'audioinput' && inputSelect) {
+        inputSelect.appendChild(opt.cloneNode(true));
+      }
+      if (d.kind === 'audiooutput') {
+        if (outputSelect) outputSelect.appendChild(opt.cloneNode(true));
+        if (ringSelect) ringSelect.appendChild(opt.cloneNode(true));
+      }
+    });
+
+    console.log('[App] Audio devices loaded');
+  } catch (e) {
+    console.warn('[App] Audio devices error:', e);
+  }
+}

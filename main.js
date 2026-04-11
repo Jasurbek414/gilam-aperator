@@ -6,9 +6,9 @@ let tray;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 420,
-    height: 720,
-    minWidth: 380,
+    width: 1150,
+    height: 750,
+    minWidth: 450,
     minHeight: 600,
     frame: false,
     transparent: false,
@@ -28,6 +28,20 @@ function createWindow() {
   if (process.argv.includes('--dev')) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
+
+  // Handle WebRTC Media Permissions — essential for softphone audio
+  // Allow all media-related permissions automatically (like native softphones)
+  mainWindow.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+    // Allow media, audioCapture, display-capture for SIP/WebRTC
+    const allowedPermissions = ['media', 'audioCapture', 'display-capture', 'mediaKeySystem', 'clipboard-read'];
+    if (allowedPermissions.includes(permission)) return true;
+    return true; // Allow all for local app
+  });
+  
+  mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    // Auto-approve all permissions for our softphone app
+    callback(true);
+  });
 
   mainWindow.on('close', (e) => {
     e.preventDefault();
