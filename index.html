@@ -219,14 +219,35 @@
             <span class="material-icons-round">person</span>
           </div>
         </div>
+
+        <!-- Recording indicator -->
+        <div id="recording-indicator" style="display:none; text-align:center; margin-bottom:10px;">
+          <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 14px; background:rgba(239,68,68,0.15); border-radius:20px; font-size:12px; color:var(--red); font-weight:600;">
+            <span class="material-icons-round" style="font-size:14px; animation: pulse 1s infinite;">fiber_manual_record</span>
+            REC
+          </span>
+        </div>
+
+        <!-- Volume Control -->
+        <div style="display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:16px; padding:0 30px;">
+          <span class="material-icons-round" style="font-size:18px; color:var(--text-muted);">volume_down</span>
+          <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" 
+            style="flex:1; max-width:200px; accent-color:var(--accent); height:4px; cursor:pointer;">
+          <span class="material-icons-round" style="font-size:18px; color:var(--text-muted);">volume_up</span>
+        </div>
+
         <div class="call-overlay-actions">
-          <button class="btn-call-action" id="btn-mute" title="Ovozni o'chirish">
+          <button class="btn-call-action" id="btn-mute" title="Mikrofon">
             <span class="material-icons-round">mic</span>
             <span class="action-label">Mute</span>
           </button>
           <button class="btn-call-action" id="btn-hold" title="Kutishda">
             <span class="material-icons-round">pause</span>
             <span class="action-label">Hold</span>
+          </button>
+          <button class="btn-call-action" id="btn-record" title="Yozib olish">
+            <span class="material-icons-round">fiber_manual_record</span>
+            <span class="action-label">Yozish</span>
           </button>
           <button class="btn-call-action" id="btn-transfer" title="Transfer">
             <span class="material-icons-round">phone_forwarded</span>

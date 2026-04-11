@@ -30,8 +30,13 @@ const SipClient = {
   currentSession: null,      // Hozirgi aktiv session (Inviter yoki Invitation)
   isMuted: false,
   isOnHold: false,
+  isRecording: false,
+  mediaRecorder: null,
+  recordedChunks: [],
+  audioContext: null,
   localStream: null,         // Mikrofon stream
   remoteAudio: null,         // <audio> element
+  callRecordings: JSON.parse(localStorage.getItem('call_recordings') || '[]'),
 
   // ═══ INIT ═══════════════════════════════════════════════════════════════
   init() {
@@ -232,6 +237,8 @@ const SipClient = {
       const label = Utils.$('call-status-label');
       if (label) label.textContent = 'Suhbat';
       window.UI.startCallTimer();
+      // Avtomatik yozib olishni boshlash
+      setTimeout(() => this._startRecording(), 1000);
     });
 
     session.on('confirmed', () => {
@@ -463,10 +470,15 @@ const SipClient = {
 
   // ═══ CLEANUP ════════════════════════════════════════════════════════════
   _cleanupCall() {
+    // Yozib olishni to'xtatish
+    this._stopRecording();
+    
     this.currentSession = null;
     this.isMuted = false;
     this.isOnHold = false;
+    this.isRecording = false;
     this._updateMuteHoldUI();
+    this._updateRecordUI();
     window.UI.hideActiveCall();
     window.UI.hideIncomingCall();
     
@@ -497,12 +509,129 @@ const SipClient = {
   _bindMuteHoldButtons() {
     Utils.$('btn-mute')?.addEventListener('click', () => this.toggleMute());
     Utils.$('btn-hold')?.addEventListener('click', () => this.toggleHold());
+    Utils.$('btn-record')?.addEventListener('click', () => this.toggleRecord());
     
     // Transfer tugmasi
     Utils.$('btn-transfer')?.addEventListener('click', () => {
       const target = prompt('Transfer raqamini kiriting:');
       if (target) this.transfer(target);
     });
+
+    // Volume slider
+    Utils.$('volume-slider')?.addEventListener('input', (e) => {
+      this.setVolume(parseFloat(e.target.value));
+    });
+  },
+
+  // ═══ CALL RECORDING ════════════════════════════════════════════════════
+  _startRecording() {
+    if (!this.currentSession || this.isRecording) return;
+    try {
+      const pc = this.currentSession.connection;
+      if (!pc) return;
+
+      this.audioContext = new AudioContext();
+      const dest = this.audioContext.createMediaStreamDestination();
+
+      // Remote audio stream
+      pc.getReceivers().forEach(r => {
+        if (r.track && r.track.kind === 'audio') {
+          const remoteStream = new MediaStream([r.track]);
+          const remoteSource = this.audioContext.createMediaStreamSource(remoteStream);
+          remoteSource.connect(dest);
+        }
+      });
+
+      // Local audio stream (mikrofon)
+      pc.getSenders().forEach(s => {
+        if (s.track && s.track.kind === 'audio') {
+          const localStream = new MediaStream([s.track]);
+          const localSource = this.audioContext.createMediaStreamSource(localStream);
+          localSource.connect(dest);
+        }
+      });
+
+      this.recordedChunks = [];
+      this.mediaRecorder = new MediaRecorder(dest.stream, { mimeType: 'audio/webm;codecs=opus' });
+
+      this.mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) this.recordedChunks.push(e.data);
+      };
+
+      this.mediaRecorder.onstop = () => {
+        const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+        this._saveRecording(blob);
+      };
+
+      this.mediaRecorder.start(1000); // har 1 soniyada data
+      this.isRecording = true;
+      this._updateRecordUI();
+      console.log('[SIP] Recording started');
+    } catch(e) {
+      console.error('[SIP] Recording start error:', e);
+    }
+  },
+
+  _stopRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      try { this.mediaRecorder.stop(); } catch(e) {}
+      console.log('[SIP] Recording stopped');
+    }
+    if (this.audioContext) {
+      try { this.audioContext.close(); } catch(e) {}
+      this.audioContext = null;
+    }
+  },
+
+  _saveRecording(blob) {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const record = {
+        id: 'rec_' + Date.now(),
+        date: new Date().toISOString(),
+        target: Utils.$('call-target-display')?.textContent || 'Noma\'lum',
+        duration: window.UI.activeCallSeconds || 0,
+        size: blob.size,
+        data: reader.result // base64
+      };
+      this.callRecordings.unshift(record);
+      // Faqat so'nggi 50 ta yozuvni saqlash
+      if (this.callRecordings.length > 50) this.callRecordings = this.callRecordings.slice(0, 50);
+      localStorage.setItem('call_recordings', JSON.stringify(this.callRecordings));
+      Utils.showToast('Suhbat yozib olindi!', 'success');
+    };
+    reader.readAsDataURL(blob);
+  },
+
+  toggleRecord() {
+    if (this.isRecording) {
+      this._stopRecording();
+      this.isRecording = false;
+    } else {
+      this._startRecording();
+    }
+    this._updateRecordUI();
+  },
+
+  _updateRecordUI() {
+    const btn = Utils.$('btn-record');
+    const indicator = Utils.$('recording-indicator');
+    if (btn) {
+      const icon = btn.querySelector('.material-icons-round');
+      const label = btn.querySelector('.action-label');
+      if (icon) icon.textContent = this.isRecording ? 'stop_circle' : 'fiber_manual_record';
+      if (label) label.textContent = this.isRecording ? 'Stop' : 'Yozish';
+      btn.classList.toggle('recording', this.isRecording);
+      btn.style.color = this.isRecording ? 'var(--red)' : '';
+    }
+    if (indicator) indicator.style.display = this.isRecording ? 'block' : 'none';
+  },
+
+  // ═══ VOLUME CONTROL ════════════════════════════════════════════════════
+  setVolume(val) {
+    if (this.remoteAudio) {
+      this.remoteAudio.volume = Math.max(0, Math.min(1, val));
+    }
   },
 
   // ═══ ACCOUNT MANAGEMENT ═════════════════════════════════════════════════
