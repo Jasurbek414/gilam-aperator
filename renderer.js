@@ -1109,7 +1109,7 @@ function connectSipAccount(acc) {
            if(typeof showIncomingCallUI === 'function') {
              showIncomingCallUI({
                callerNumber: invitation.remoteIdentity.uri.user,
-               callerName: 'Noma\\'lum',
+               callerName: "Noma'lum",
                campaignName: acc.name,
                lineName: acc.name 
              });
