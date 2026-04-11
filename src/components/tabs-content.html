@@ -146,6 +146,57 @@
         </div>
       </section>
 
+      <!-- ─── Call Preferences ─────────────────────────────────────── -->
+      <section class="s-section">
+        <div class="s-section-head">
+          <div class="s-section-title">
+            <span class="material-icons-round">tune</span>
+            <span>Qo'ng'iroq sozlamalari</span>
+          </div>
+        </div>
+        <div class="s-card">
+          <div class="s-toggle-row">
+            <div class="s-toggle-info">
+              <span class="material-icons-round">phone_callback</span>
+              <div>
+                <strong>Avto-javob</strong>
+                <p>Kiruvchi qo'ng'iroqlarni avtomatik qabul qilish</p>
+              </div>
+            </div>
+            <label class="s-switch">
+              <input type="checkbox" id="setting-auto-answer">
+              <span class="s-switch-slider"></span>
+            </label>
+          </div>
+          <div class="s-toggle-row">
+            <div class="s-toggle-info">
+              <span class="material-icons-round">fiber_manual_record</span>
+              <div>
+                <strong>Avto-yozish</strong>
+                <p>Barcha qo'ng'iroqlarni avtomatik yozib olish</p>
+              </div>
+            </div>
+            <label class="s-switch">
+              <input type="checkbox" id="setting-auto-record">
+              <span class="s-switch-slider"></span>
+            </label>
+          </div>
+          <div class="s-toggle-row s-toggle-row--last">
+            <div class="s-toggle-info">
+              <span class="material-icons-round">notifications</span>
+              <div>
+                <strong>Desktop bildirishnomalar</strong>
+                <p>Kiruvchi qo'ng'iroqlarda tizim bildirishi</p>
+              </div>
+            </div>
+            <label class="s-switch">
+              <input type="checkbox" id="setting-notifications" checked>
+              <span class="s-switch-slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
       <!-- ─── Audio ────────────────────────────────────────────────── -->
       <section class="s-section">
         <div class="s-section-head">
@@ -158,23 +209,102 @@
           <div class="s-audio-row">
             <div class="s-audio-icon"><span class="material-icons-round">mic</span></div>
             <div class="s-audio-body">
-              <label class="s-audio-label">Mikrofon</label>
+              <div class="s-audio-head">
+                <label class="s-audio-label">Mikrofon</label>
+                <button class="s-test-btn" id="btn-test-mic" onclick="window.Settings.testMic()">
+                  <span class="material-icons-round">graphic_eq</span> Test
+                </button>
+              </div>
               <select id="audio-input" class="s-select"><option>Standart</option></select>
+              <div class="s-mic-meter" id="mic-meter" style="display:none;">
+                <div class="s-mic-bar" id="mic-bar"></div>
+              </div>
             </div>
           </div>
           <div class="s-audio-row">
             <div class="s-audio-icon"><span class="material-icons-round">volume_up</span></div>
             <div class="s-audio-body">
-              <label class="s-audio-label">Dinamik (ovoz chiqish)</label>
+              <div class="s-audio-head">
+                <label class="s-audio-label">Dinamik</label>
+                <button class="s-test-btn" id="btn-test-speaker" onclick="window.Settings.testSpeaker()">
+                  <span class="material-icons-round">play_arrow</span> Test
+                </button>
+              </div>
               <select id="audio-output" class="s-select"><option>Standart</option></select>
             </div>
           </div>
           <div class="s-audio-row s-audio-row--last">
             <div class="s-audio-icon"><span class="material-icons-round">notifications_active</span></div>
             <div class="s-audio-body">
-              <label class="s-audio-label">Qo'ng'iroq ovozi</label>
+              <label class="s-audio-label">Qo'ng'iroq ovozi balandligi</label>
+              <div class="s-volume-wrap">
+                <span class="material-icons-round s-vol-icon">volume_down</span>
+                <input type="range" id="setting-ring-volume" min="0" max="100" value="80" class="s-range">
+                <span class="material-icons-round s-vol-icon">volume_up</span>
+                <span class="s-vol-label" id="ring-volume-label">80%</span>
+              </div>
               <select id="audio-ring" class="s-select"><option>Standart</option></select>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── Network ──────────────────────────────────────────────── -->
+      <section class="s-section">
+        <div class="s-section-head">
+          <div class="s-section-title">
+            <span class="material-icons-round">wifi</span>
+            <span>Tarmoq diagnostikasi</span>
+          </div>
+        </div>
+        <div class="s-card">
+          <div class="s-net-row">
+            <div class="s-net-item">
+              <span class="s-net-label">Backend API</span>
+              <span class="s-net-status" id="net-api-status">—</span>
+            </div>
+            <div class="s-net-item">
+              <span class="s-net-label">WebSocket</span>
+              <span class="s-net-status" id="net-ws-status">—</span>
+            </div>
+            <div class="s-net-item">
+              <span class="s-net-label">PBX Server</span>
+              <span class="s-net-status" id="net-pbx-status">—</span>
+            </div>
+          </div>
+          <div class="s-net-action">
+            <button class="s-btn-add" id="btn-net-test" onclick="window.Settings.runNetTest()">
+              <span class="material-icons-round">speed</span>
+              Ulanishni tekshirish
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── Keyboard Shortcuts ───────────────────────────────────── -->
+      <section class="s-section">
+        <div class="s-section-head">
+          <div class="s-section-title">
+            <span class="material-icons-round">keyboard</span>
+            <span>Klaviatura yorliqlari</span>
+          </div>
+        </div>
+        <div class="s-card">
+          <div class="s-shortcut-row">
+            <span class="s-shortcut-desc">Qo'ng'iroq qilish / javob berish</span>
+            <kbd class="s-kbd">Enter</kbd>
+          </div>
+          <div class="s-shortcut-row">
+            <span class="s-shortcut-desc">Qo'ng'iroqni tugatish / rad etish</span>
+            <kbd class="s-kbd">Esc</kbd>
+          </div>
+          <div class="s-shortcut-row">
+            <span class="s-shortcut-desc">Mikrofonni o'chirish (Mute)</span>
+            <kbd class="s-kbd">Ctrl + M</kbd>
+          </div>
+          <div class="s-shortcut-row s-shortcut-row--last">
+            <span class="s-shortcut-desc">Kutishga qo'yish (Hold)</span>
+            <kbd class="s-kbd">Ctrl + H</kbd>
           </div>
         </div>
       </section>
@@ -223,9 +353,22 @@
             </button>
           </div>
         </div>
+        <div class="s-card s-card--danger" style="margin-top:8px;">
+          <div class="s-danger-content">
+            <div class="s-danger-text">
+              <strong>Keshni tozalash</strong>
+              <p>Saqlangan sozlamalar, qo'ng'iroq tarixi va SIP hisoblarni o'chiradi.</p>
+            </div>
+            <button class="s-btn-danger" onclick="window.Settings.clearCache()">
+              <span class="material-icons-round">delete_sweep</span>
+              Tozalash
+            </button>
+          </div>
+        </div>
       </section>
 
     </div>
   </div>
 </div>
+
 

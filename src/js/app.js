@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.UI.init();
   window.SipClient.init();
   window.CRM.init();
+  window.Settings.load();
 
   // ═══ LOGIN ════════════════════════════════════════════════════════════
   Utils.$('login-form')?.addEventListener('submit', async (e) => {
