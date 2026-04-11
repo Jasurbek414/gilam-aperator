@@ -93,76 +93,139 @@
 
 <!-- SETTINGS TAB -->
 <div class="tab-content" id="tab-settings">
-  <div class="list-container-centered">
-    <div class="tab-header">
-      <h2>Sozlamalar</h2>
-    </div>
-    <div class="settings-content">
-      <!-- User Info -->
-      <div class="settings-section">
-        <h3>Operator ma'lumotlari</h3>
-        <div class="settings-card">
-          <div class="setting-row">
-            <span class="setting-label">Ism:</span>
-            <span class="setting-value" id="settings-name">—</span>
+  <div class="settings-scroll">
+    <div class="settings-container">
+
+      <!-- ─── Profile Card ─────────────────────────────────────────── -->
+      <section class="s-card s-profile">
+        <div class="s-profile-top">
+          <div class="s-avatar" id="settings-avatar">
+            <span class="material-icons-round">person</span>
           </div>
-          <div class="setting-row">
-            <span class="setting-label">Telefon:</span>
-            <span class="setting-value" id="settings-phone">—</span>
+          <div class="s-profile-info">
+            <h3 class="s-profile-name" id="settings-name">—</h3>
+            <span class="s-profile-role" id="settings-role">—</span>
           </div>
-          <div class="setting-row">
-            <span class="setting-label">Rol:</span>
-            <span class="setting-value" id="settings-role">—</span>
-          </div>
-          <div class="setting-row">
-            <span class="setting-label">Kompaniya:</span>
-            <span class="setting-value" id="settings-company">—</span>
+          <div class="s-profile-badge" id="settings-status-badge">
+            <span class="s-dot online"></span>
+            <span>Online</span>
           </div>
         </div>
-      </div>
+        <div class="s-profile-details">
+          <div class="s-detail">
+            <span class="material-icons-round">phone</span>
+            <span class="s-detail-label">Telefon</span>
+            <span class="s-detail-value" id="settings-phone">—</span>
+          </div>
+          <div class="s-detail">
+            <span class="material-icons-round">business</span>
+            <span class="s-detail-label">Kompaniya</span>
+            <span class="s-detail-value" id="settings-company">—</span>
+          </div>
+        </div>
+      </section>
 
-      <!-- SIP Settings -->
-      <div class="settings-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-          <h3>SIP Liniyalar (Raqamlar)</h3>
-          <button class="btn-primary btn-sm" onclick="document.getElementById('modal-add-sip').style.display='flex'" style="display: flex; align-items: center; gap: 5px;">
-            <span class="material-icons-round" style="font-size:18px;">add</span> Yangi Liniya
+      <!-- ─── SIP Lines ────────────────────────────────────────────── -->
+      <section class="s-section">
+        <div class="s-section-head">
+          <div class="s-section-title">
+            <span class="material-icons-round">phone_in_talk</span>
+            <span>SIP Liniyalar</span>
+          </div>
+          <button class="s-btn-add" onclick="document.getElementById('modal-add-sip').style.display='flex'">
+            <span class="material-icons-round">add</span>
+            Liniya qo'shish
           </button>
         </div>
-        <div class="settings-card" id="sip-accounts-list">
-          <div class="empty-state" style="padding: 20px;">
+        <div class="s-card" id="sip-accounts-list">
+          <div class="s-empty">
             <span class="material-icons-round">headset_off</span>
-            <p>Mavjud SIP raqamlar topilmadi</p>
+            <p>SIP liniya qo'shilmagan</p>
+            <small>Yangi liniya qo'shish uchun yuqoridagi tugmani bosing</small>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Audio Settings -->
-      <div class="settings-section">
-        <h3>Audio</h3>
-        <div class="settings-card">
-          <div class="form-group">
-            <label>Mikrofon</label>
-            <select id="audio-input"><option>Standart</option></select>
-          </div>
-          <div class="form-group">
-            <label>Dinamik</label>
-            <select id="audio-output"><option>Standart</option></select>
-          </div>
-          <div class="form-group">
-            <label>Qo'ng'iroq ovozi</label>
-            <select id="audio-ring"><option>Standart</option></select>
+      <!-- ─── Audio ────────────────────────────────────────────────── -->
+      <section class="s-section">
+        <div class="s-section-head">
+          <div class="s-section-title">
+            <span class="material-icons-round">headphones</span>
+            <span>Audio sozlamalari</span>
           </div>
         </div>
-      </div>
+        <div class="s-card">
+          <div class="s-audio-row">
+            <div class="s-audio-icon"><span class="material-icons-round">mic</span></div>
+            <div class="s-audio-body">
+              <label class="s-audio-label">Mikrofon</label>
+              <select id="audio-input" class="s-select"><option>Standart</option></select>
+            </div>
+          </div>
+          <div class="s-audio-row">
+            <div class="s-audio-icon"><span class="material-icons-round">volume_up</span></div>
+            <div class="s-audio-body">
+              <label class="s-audio-label">Dinamik (ovoz chiqish)</label>
+              <select id="audio-output" class="s-select"><option>Standart</option></select>
+            </div>
+          </div>
+          <div class="s-audio-row s-audio-row--last">
+            <div class="s-audio-icon"><span class="material-icons-round">notifications_active</span></div>
+            <div class="s-audio-body">
+              <label class="s-audio-label">Qo'ng'iroq ovozi</label>
+              <select id="audio-ring" class="s-select"><option>Standart</option></select>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <!-- Logout -->
-      <div class="settings-section">
-        <button class="btn-danger" id="btn-logout">
-          <span class="material-icons-round">logout</span>
-          Chiqish
-        </button>
-      </div>
+      <!-- ─── App Info ─────────────────────────────────────────────── -->
+      <section class="s-section">
+        <div class="s-section-head">
+          <div class="s-section-title">
+            <span class="material-icons-round">info</span>
+            <span>Dastur haqida</span>
+          </div>
+        </div>
+        <div class="s-card">
+          <div class="s-info-row">
+            <span>Versiya</span>
+            <span class="s-info-val">2.0.0</span>
+          </div>
+          <div class="s-info-row">
+            <span>Platform</span>
+            <span class="s-info-val">Electron Desktop</span>
+          </div>
+          <div class="s-info-row s-info-row--last">
+            <span>Ishlab chiqaruvchi</span>
+            <span class="s-info-val">Gilam Team</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── Danger Zone ──────────────────────────────────────────── -->
+      <section class="s-section s-danger-zone">
+        <div class="s-section-head">
+          <div class="s-section-title s-section-title--danger">
+            <span class="material-icons-round">warning</span>
+            <span>Xavfli zona</span>
+          </div>
+        </div>
+        <div class="s-card s-card--danger">
+          <div class="s-danger-content">
+            <div class="s-danger-text">
+              <strong>Hisobdan chiqish</strong>
+              <p>Chiqish barcha SIP ulanishlarni uzadi va sessiyani tugatadi.</p>
+            </div>
+            <button class="s-btn-danger" id="btn-logout">
+              <span class="material-icons-round">logout</span>
+              Chiqish
+            </button>
+          </div>
+        </div>
+      </section>
+
     </div>
   </div>
 </div>
+
