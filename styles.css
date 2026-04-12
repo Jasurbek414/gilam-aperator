@@ -214,7 +214,7 @@ body {
 .dialer-card {
   margin: 8px; border-radius: 12px;
   background: var(--bg-1); border: 1px solid var(--border);
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 /* Number Display — ajratilgan */
@@ -249,9 +249,14 @@ body {
 }
 .dial-input::placeholder { color: var(--t3); font-weight: 300; font-size: 16px; letter-spacing: .08em; }
 
-.dialpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px 10px; }
+.dialpad {
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
+  grid-auto-rows: 44px;
+  gap: 4px; padding: 4px 10px; 
+}
 .dial-key {
-  height: 44px; border: 0; border-radius: 8px; background: var(--bg-2);
+  width: 100%; height: 100%; border: 0; border-radius: 8px; background: var(--bg-2);
   color: var(--t1); display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 0;
   transition: var(--tr); cursor: pointer;
@@ -287,7 +292,7 @@ body {
 
 
 /* Quick Actions */
-.dialer-quick { display: flex; justify-content: center; gap: 4px; padding: 4px 10px; flex-shrink: 0; }
+.dialer-quick { display: flex; justify-content: center; gap: 4px; padding: 4px 10px; flex: 0 0 auto; }
 .dq-btn {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   padding: 8px 12px; border: 0; border-radius: 8px; background: 0;
