@@ -349,6 +349,41 @@ body {
 }
 .dl-empty .material-icons-round { font-size: 20px; opacity: .4; }
 
+/* ═══ CAMPAIGN LINES TAB ═════════════════════════════════════════════════ */
+.lines-list {
+  display: flex !important; flex-direction: column !important; gap: 12px;
+  padding: 10px 0;
+}
+.line-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  padding: 16px; border-radius: 14px;
+  transition: var(--tr);
+}
+.line-card:hover { border-color: var(--border-h); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.line-card.active { border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.02); }
+.lc-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg-2); color: var(--t2);
+  display: flex; align-items: center; justify-content: center;
+}
+.line-card.active .lc-icon { background: var(--green); color: #fff; box-shadow: 0 4px 12px rgba(34,197,94,.4); }
+.line-card.active .lc-icon span { font-size: 20px; }
+.lc-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.lc-info h3 { margin:0; font-size: 15px; font-weight: 600; color: var(--t1); }
+.lc-info p { margin:0; font-size: 12px; color: var(--t3); }
+.lc-info strong { color: var(--accent-h); font-weight: 600; font-size: 13px; }
+.lc-status { padding-right: 12px; }
+.lc-status .status-badge {
+  padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 20px;
+}
+.lc-status .status-badge.online { background: rgba(34,197,94,.1); color: var(--green); }
+.lc-status .status-badge.offline { background: rgba(255,255,255,.05); color: var(--t3); }
+.lc-actions button {
+  padding: 8px 16px; font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px; border-radius: 8px; cursor: pointer;
+}
+
 /* Call Stats */
 .dialer-stats {
   display: flex; flex-shrink: 0; margin-top: auto;

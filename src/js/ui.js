@@ -13,6 +13,7 @@ const UI = {
     this.bindTabs();
     this.bindDialer();
     this.renderDialerLines();
+    this.renderCampLinesTab();
   },
 
   showScreen(name) {
@@ -45,6 +46,11 @@ const UI = {
         const tabEl = Utils.$(`tab-${tabName}`);
         if (tabEl) tabEl.classList.add('active');
       });
+    });
+
+    Utils.$('btn-refresh-lines')?.addEventListener('click', () => {
+      this.renderCampLinesTab();
+      Utils.showToast('Liniyalar ro\'yxati yangilandi', 'info');
     });
   },
 
@@ -376,6 +382,78 @@ const UI = {
       const ring = Utils.$('ringtone');
       if (ring) ring.pause();
     } catch (e) {}
+  },
+
+  renderCampLinesTab() {
+    const list = Utils.$('lines-list');
+    if (!list) return;
+
+    let lines = [];
+    try {
+      lines = JSON.parse(localStorage.getItem('sip_accounts')) || [];
+    } catch(e) {}
+
+    if (lines.length === 0) {
+      list.innerHTML = `<div class="empty-state">
+        <span class="material-icons-round">phone_disabled</span>
+        <p>Hali hech qanday liniya konfiguratsiyasi yo'q</p>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = '';
+    
+    lines.forEach(acc => {
+      let activeExt = '';
+      try {
+        const active = JSON.parse(localStorage.getItem('sip_account') || '{}');
+        activeExt = active.extension || active.username || '';
+      } catch(e) {}
+      
+      const isActive = (acc.extension === activeExt);
+      const campName = acc.campaignName || 'Umumiy Kampaniya';
+      
+      const div = document.createElement('div');
+      div.className = 'line-card';
+      if (isActive) div.classList.add('active');
+      
+      div.innerHTML = `
+        <div class="lc-icon"><span class="material-icons-round">dialer_sip</span></div>
+        <div class="lc-info">
+          <h3>${campName}</h3>
+          <p>Liniya: <strong>${acc.extension}</strong></p>
+        </div>
+        <div class="lc-status">
+          <span class="status-badge ${isActive ? 'online' : 'offline'}">${isActive ? 'Faol Liniya' : 'Kutish'}</span>
+        </div>
+        <div class="lc-actions">
+          <button class="${isActive ? 'btn-secondary' : 'btn-primary'}" onclick="window.UI.setActiveLine('${acc.extension}')">
+            ${isActive ? '<span class="material-icons-round">check</span> Tanlangan' : 'Buni Tanlash'}
+          </button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  },
+
+  setActiveLine(ext) {
+    let lines = [];
+    try {
+      lines = JSON.parse(localStorage.getItem('sip_accounts')) || [];
+    } catch(e) {}
+    
+    const target = lines.find(l => l.extension === ext);
+    if(target) {
+      localStorage.setItem('sip_account', JSON.stringify(target));
+      this.renderCampLinesTab();
+      this.renderDialerLines();
+      Utils.showToast(\`Faol liniya o'zgartirildi: \${ext}\`, 'success');
+      
+      // If we want to connect to it automatically:
+      if(window.SipClient) {
+        window.SipClient.connect(target);
+      }
+    }
   },
 
   renderDialerLines() {
