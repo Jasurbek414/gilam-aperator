@@ -560,7 +560,7 @@ const UI = {
     if (rec && rec.data) {
       const audio = new Audio(rec.data);
       audio.play().catch(e => Utils.showToast('Audio chalishda xatolik', 'error'));
-      Utils.showToast(\`\${rec.target} audiosi eshittirilmoqda\`, 'info');
+      Utils.showToast(`${rec.target} audiosi eshittirilmoqda`, 'info');
     } else {
       Utils.showToast('Audio yozuv topilmadi', 'warning');
     }
