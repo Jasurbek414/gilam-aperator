@@ -212,27 +212,45 @@ body {
 
 /* Dialer Card */
 .dialer-card {
-  margin: 10px; border-radius: 12px;
+  margin: 8px; border-radius: 12px;
   background: var(--bg-1); border: 1px solid var(--border); overflow: hidden;
 }
 
 /* Number Display — ajratilgan */
 .dial-display {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(255,255,255,.02);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 10px 12px 6px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  transition: var(--tr);
+}
+.dial-display:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99,102,241,.15);
+}
+.dial-prefix {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-h);
+  letter-spacing: .02em;
+  flex-shrink: 0;
+  user-select: none;
 }
 .dial-input {
-  width: 100%; background: 0; border: 0; color: var(--t1);
-  font-size: 26px; font-weight: 300; letter-spacing: .08em;
-  text-align: center; outline: 0; padding: 0;
+  flex: 1; background: 0; border: 0; color: var(--t1);
+  font-size: 18px; font-weight: 400; letter-spacing: .12em;
+  outline: 0; padding: 0; min-width: 0;
   font-family: 'Inter', monospace;
 }
-.dial-input::placeholder { color: var(--t3); font-weight: 300; font-size: 14px; letter-spacing: .02em; }
+.dial-input::placeholder { color: var(--t3); font-weight: 300; font-size: 16px; letter-spacing: .08em; }
 
-.dialpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 8px 12px; }
+.dialpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px 10px; }
 .dial-key {
-  height: 48px; border: 0; border-radius: 8px; background: var(--bg-2);
+  height: 44px; border: 0; border-radius: 8px; background: var(--bg-2);
   color: var(--t1); display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 0;
   transition: var(--tr); cursor: pointer;
@@ -242,29 +260,30 @@ body {
 .dk-num { font-size: 18px; font-weight: 500; line-height: 1.1; }
 .dk-sub { font-size: 7px; letter-spacing: 2px; color: var(--t3); font-weight: 600; }
 
-/* Call Row — backspace | call | clear */
+/* Call Row */
 .dial-actions {
   display: flex; align-items: center; justify-content: center;
-  gap: 16px; padding: 10px 12px 14px;
+  gap: 14px; padding: 6px 12px 10px;
 }
 .dial-side-btn {
-  width: 36px; height: 36px; border: 0; border-radius: 50%;
+  width: 34px; height: 34px; border: 0; border-radius: 50%;
   background: rgba(255,255,255,.05); color: var(--t3);
   display: flex; align-items: center; justify-content: center;
   transition: var(--tr); cursor: pointer;
 }
-.dial-side-btn .material-icons-round { font-size: 16px; }
+.dial-side-btn .material-icons-round { font-size: 15px; }
 .dial-side-btn:hover { background: rgba(255,255,255,.1); color: var(--t1); }
 .dial-side-btn:active { transform: scale(.9); }
 .btn-call {
-  width: 48px; height: 48px; border-radius: 50%; border: 0;
+  width: 46px; height: 46px; border-radius: 50%; border: 0;
   background: var(--green); color: #fff;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 2px 14px rgba(34,197,94,.3); transition: var(--tr); cursor: pointer;
 }
 .btn-call:hover { transform: scale(1.06); box-shadow: 0 4px 20px rgba(34,197,94,.4); }
 .btn-call:active { transform: scale(.94); }
-.btn-call .material-icons-round { font-size: 22px; }
+.btn-call .material-icons-round { font-size: 20px; }
+
 
 /* Quick Actions */
 .dialer-quick { display: flex; justify-content: center; gap: 4px; padding: 4px 10px; }
