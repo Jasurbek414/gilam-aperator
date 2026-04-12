@@ -97,14 +97,15 @@
 
     <!-- RIGHT: CRM Panel -->
     <div class="crm-side">
-      <!-- Active Campaign -->
+
+      <!-- Active Campaign Badge -->
       <div id="active-campaign-info" style="display:none;">
         <div class="campaign-badge"><span class="material-icons-round">campaign</span><span id="campaign-name-badge">—</span></div>
       </div>
 
-      <!-- Customer Lookup -->
-      <div id="customer-lookup" style="display:none;">
-        <div class="customer-card">
+      <!-- Customer Lookup Result -->
+      <div id="customer-lookup" class="crm-card" style="display:none;">
+        <div class="crm-card-row">
           <div class="customer-avatar"><span class="material-icons-round">person</span></div>
           <div class="customer-info">
             <span class="customer-name" id="lookup-name">—</span>
@@ -114,66 +115,106 @@
         </div>
       </div>
 
-      <!-- Recent Calls -->
-      <div class="crm-section">
-        <div class="crm-section-header">
+      <!-- ═══ MIJOZ MA'LUMOTLARI ═══ -->
+      <div class="crm-card">
+        <div class="crm-card-head">
+          <span class="material-icons-round">person_add</span>
+          <span>Mijoz</span>
+        </div>
+        <div class="crm-card-body">
+          <div class="crm-field-row">
+            <div class="crm-field">
+              <span class="material-icons-round crm-field-icon">badge</span>
+              <input type="text" id="quick-crm-name" class="crm-input" placeholder="Ism familiya">
+            </div>
+            <div class="crm-field" style="max-width:140px;">
+              <span class="material-icons-round crm-field-icon">call</span>
+              <input type="text" id="quick-crm-phone" class="crm-input" placeholder="+998...">
+            </div>
+          </div>
+          <div class="crm-field-row">
+            <div class="crm-field" style="flex:1;">
+              <span class="material-icons-round crm-field-icon">location_on</span>
+              <input type="text" id="quick-crm-address" class="crm-input" placeholder="Manzil">
+              <button class="crm-loc-btn" id="btn-pick-location" title="Lokatsiyani belgilash">
+                <span class="material-icons-round">my_location</span>
+              </button>
+            </div>
+          </div>
+          <div class="crm-field-row">
+            <div class="crm-field" style="flex:1;">
+              <span class="material-icons-round crm-field-icon">place</span>
+              <input type="text" id="quick-crm-landmark" class="crm-input" placeholder="Mo'ljal (masalan: metro yonida)">
+            </div>
+          </div>
+          <!-- Lokatsiya koordinatalari (yashirin) -->
+          <input type="hidden" id="quick-crm-lat" value="">
+          <input type="hidden" id="quick-crm-lng" value="">
+          <div id="location-status" class="crm-loc-status" style="display:none;">
+            <span class="material-icons-round">gps_fixed</span>
+            <span id="location-text">Lokatsiya belgilandi</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ BUYURTMA ═══ -->
+      <div class="crm-card">
+        <div class="crm-card-head">
+          <span class="material-icons-round">shopping_cart</span>
+          <span>Buyurtma</span>
+        </div>
+        <div class="crm-card-body">
+          <div class="crm-field-row">
+            <div class="crm-field" style="flex:2;">
+              <span class="material-icons-round crm-field-icon">inventory_2</span>
+              <select id="quick-order-product" class="crm-input">
+                <option value="">Xizmat tanlang</option>
+              </select>
+            </div>
+            <div class="crm-field" style="width:60px;">
+              <input type="number" id="quick-order-qty" class="crm-input" placeholder="Soni" min="1" value="1" style="text-align:center;">
+            </div>
+            <div class="crm-field" style="width:80px;">
+              <input type="text" id="quick-order-price" class="crm-input" placeholder="Narx">
+            </div>
+          </div>
+          <div class="crm-field-row">
+            <div class="crm-field" style="flex:1;">
+              <span class="material-icons-round crm-field-icon">event</span>
+              <select id="quick-crm-campaign" class="crm-input">
+                <option value="">Kampaniya tanlang...</option>
+              </select>
+            </div>
+          </div>
+          <div class="crm-field">
+            <span class="material-icons-round crm-field-icon">notes</span>
+            <textarea id="quick-crm-note" class="crm-input" placeholder="Izoh..." rows="2" style="resize:none;"></textarea>
+          </div>
+          <div class="crm-actions">
+            <button class="btn-crm btn-crm-secondary" onclick="window.CRM.saveQuickCustomer()">
+              <span class="material-icons-round">person_add</span> Mijoz saqlash
+            </button>
+            <button class="btn-crm btn-crm-primary" onclick="window.CRM.saveQuickOrder()">
+              <span class="material-icons-round">add_shopping_cart</span> Buyurtma
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SO'NGGI QO'NG'IROQLAR ═══ -->
+      <div class="crm-card">
+        <div class="crm-card-head">
           <span class="material-icons-round">history</span>
           <span>So'nggi qo'ng'iroqlar</span>
         </div>
-        <div id="dashboard-calls-list" class="crm-section-body">
-          <div class="empty-mini">Hozircha qo'ng'iroqlar yo'q</div>
-        </div>
-      </div>
-
-      <!-- Quick CRM -->
-      <div class="crm-section">
-        <div class="crm-section-header crm-toggle" onclick="window.CRM.toggleQuickPanel()">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span class="material-icons-round">assignment</span>
-            <span>Mijoz & Buyurtma</span>
-          </div>
-          <span class="material-icons-round" id="crm-panel-arrow" style="font-size:18px;transition:transform .25s;">expand_more</span>
-        </div>
-
-        <!-- Call Banner -->
-        <div id="crm-call-banner" class="crm-banner" style="display:none;">
-          <span class="material-icons-round" style="font-size:14px;color:var(--accent);">ring_volume</span>
-          <span>Liniya: <strong id="crm-call-line">—</strong></span>
-          <span style="opacity:.3;">|</span>
-          <span>Raqam: <strong id="crm-call-number">—</strong></span>
-        </div>
-
-        <div id="crm-panel-body" class="crm-form" style="display:none;">
-          <div class="crm-row">
-            <input type="text" id="quick-crm-name" class="crm-input" placeholder="Ism familiya">
-            <input type="text" id="quick-crm-phone" class="crm-input" placeholder="+998...">
-          </div>
-          <input type="text" id="quick-crm-address" class="crm-input" placeholder="Manzil (tuman, ko'cha, uy)">
-          <select id="quick-crm-campaign" class="crm-input">
-            <option value="">Kampaniya tanlang...</option>
-          </select>
-
-          <div class="crm-divider"></div>
-
-          <div class="crm-row">
-            <select id="quick-order-product" class="crm-input" style="flex:2;">
-              <option value="">Xizmat tanlang</option>
-            </select>
-            <input type="number" id="quick-order-qty" class="crm-input" placeholder="Soni" min="1" value="1" style="width:72px;">
-            <input type="text" id="quick-order-price" class="crm-input" placeholder="Narx" style="width:90px;">
-          </div>
-          <textarea id="quick-crm-note" class="crm-input" placeholder="Izoh..." rows="2" style="resize:none;"></textarea>
-
-          <div class="crm-row" style="gap:8px;">
-            <button class="btn btn-ghost" onclick="window.CRM.saveQuickCustomer()">
-              <span class="material-icons-round">person_add</span> Mijoz
-            </button>
-            <button class="btn btn-accent" onclick="window.CRM.saveQuickOrder()">
-              <span class="material-icons-round">shopping_cart</span> Buyurtma
-            </button>
+        <div id="dashboard-calls-list" class="crm-card-body">
+          <div class="crm-empty">
+            <span class="material-icons-round">phone_disabled</span>
+            <span>Hozircha qo'ng'iroqlar yo'q</span>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </div>

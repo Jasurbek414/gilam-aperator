@@ -143,6 +143,55 @@ const UI = {
       };
       window.SipClient.makeCall = wrapped;
     }
+
+    // ═══ Location Picker ═══
+    Utils.$('btn-pick-location')?.addEventListener('click', async () => {
+      const btn = Utils.$('btn-pick-location');
+      const status = Utils.$('location-status');
+      const locText = Utils.$('location-text');
+      const latField = Utils.$('quick-crm-lat');
+      const lngField = Utils.$('quick-crm-lng');
+      const addrField = Utils.$('quick-crm-address');
+
+      if (!navigator.geolocation) {
+        return Utils.showToast("Geolokatsiya qo'llab-quvvatlanmaydi", "error");
+      }
+
+      btn.innerHTML = '<span class="material-icons-round" style="animation:pulse 1s infinite">gps_not_fixed</span>';
+      
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lng = pos.coords.longitude.toFixed(6);
+          latField.value = lat;
+          lngField.value = lng;
+          btn.classList.add('active');
+          btn.innerHTML = '<span class="material-icons-round">gps_fixed</span>';
+          
+          if (status) {
+            status.style.display = 'flex';
+            locText.textContent = `${lat}, ${lng}`;
+          }
+          
+          // Reverse geocode
+          try {
+            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uz`);
+            const d = await r.json();
+            if (d.display_name && addrField) {
+              addrField.value = d.display_name.split(',').slice(0, 3).join(',');
+              Utils.showToast("Lokatsiya belgilandi ✓", "success");
+            }
+          } catch(e) {
+            Utils.showToast(`GPS: ${lat}, ${lng}`, "success");
+          }
+        },
+        (err) => {
+          btn.innerHTML = '<span class="material-icons-round">my_location</span>';
+          Utils.showToast("Lokatsiyani olishda xatolik: " + err.message, "error");
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
   },
 
   // ═══ ACTIVE CALL OVERLAY ════════════════════════════════════════════════
