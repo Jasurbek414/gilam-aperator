@@ -214,7 +214,7 @@ body {
 .dialer-card {
   margin: 8px; border-radius: 12px;
   background: var(--bg-1); border: 1px solid var(--border);
-  flex: 0 0 auto;
+  flex: 0 0 auto; max-height: 290px;
 }
 
 /* Number Display — ajratilgan */
@@ -249,9 +249,10 @@ body {
 }
 .dial-input::placeholder { color: var(--t3); font-weight: 300; font-size: 16px; letter-spacing: .08em; }
 
-.dialpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px 10px; }
+.dialpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px 10px; align-items: start; align-content: start; }
 .dial-key {
-  height: 44px; border: 0; border-radius: 8px; background: var(--bg-2);
+  height: 44px !important; min-height: 44px !important; max-height: 44px !important;
+  border: 0; border-radius: 8px; background: var(--bg-2);
   color: var(--t1); display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 0;
   transition: var(--tr); cursor: pointer;
