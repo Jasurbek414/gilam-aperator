@@ -1294,3 +1294,73 @@ textarea.crm-input { resize: none; }
   .dialer-panel { width: 100%; border-right: 0; border-bottom: 1px solid var(--border); }
   .crm-side { display: none; }
 }
+
+/* ═══ MAP MODAL ═══════════════════════════════════════════════════════ */
+.map-modal {
+  position: fixed; inset: 0; z-index: 3000;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(8px);
+  animation: ovIn .2s ease;
+}
+.map-modal-content {
+  width: 90%; max-width: 600px; height: 70vh; max-height: 500px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-h);
+  border-radius: var(--r-lg);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.map-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.map-modal-title {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: var(--t1);
+}
+.map-modal-title .material-icons-round { font-size: 18px; color: var(--accent-h); }
+.map-modal-close {
+  width: 28px; height: 28px; border: 0; border-radius: 50%;
+  background: rgba(255,255,255,.05); color: var(--t3);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: var(--tr);
+}
+.map-modal-close:hover { background: var(--red); color: #fff; }
+.map-modal-close .material-icons-round { font-size: 16px; }
+
+.map-container {
+  flex: 1; min-height: 0;
+}
+/* Leaflet dark tile overrides */
+.map-container .leaflet-control-zoom a {
+  background: var(--bg-1) !important;
+  color: var(--t1) !important;
+  border-color: var(--border) !important;
+}
+.map-container .leaflet-control-attribution {
+  background: rgba(12,12,20,.8) !important;
+  color: var(--t3) !important;
+  font-size: 9px !important;
+}
+
+.map-modal-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.map-coords {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 10px; color: var(--t3);
+}
+.map-coords .material-icons-round { font-size: 14px; color: var(--accent-h); }
+.map-actions { display: flex; gap: 6px; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}

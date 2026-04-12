@@ -144,49 +144,104 @@ const UI = {
       window.SipClient.makeCall = wrapped;
     }
 
-    // ═══ Location Picker — Xarita orqali ═══
+    // ═══ Map Location Picker — Leaflet widget ═══
+    let mapInstance = null;
+    let mapMarker = null;
+    let selectedCoords = null;
+
     Utils.$('btn-pick-location')?.addEventListener('click', () => {
+      const modal = Utils.$('map-modal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+
+      // Initialize or reset map
+      setTimeout(() => {
+        if (!mapInstance) {
+          mapInstance = L.map('map-container', { zoomControl: true }).setView([41.2995, 69.2401], 12);
+          
+          // Dark tile layer
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            maxZoom: 19,
+          }).addTo(mapInstance);
+
+          // Click to place marker
+          mapInstance.on('click', (e) => {
+            selectedCoords = e.latlng;
+            if (mapMarker) mapMarker.setLatLng(e.latlng);
+            else mapMarker = L.marker(e.latlng, { draggable: true }).addTo(mapInstance);
+            
+            mapMarker.on('dragend', () => {
+              selectedCoords = mapMarker.getLatLng();
+              Utils.$('map-coords-text').textContent = `${selectedCoords.lat.toFixed(6)}, ${selectedCoords.lng.toFixed(6)}`;
+            });
+            
+            Utils.$('map-coords-text').textContent = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+          });
+        } else {
+          mapInstance.invalidateSize();
+        }
+
+        // Try to center on GPS
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const lat = pos.coords.latitude;
+              const lng = pos.coords.longitude;
+              mapInstance.setView([lat, lng], 16);
+              
+              // Auto-place marker at GPS
+              selectedCoords = L.latLng(lat, lng);
+              if (mapMarker) mapMarker.setLatLng(selectedCoords);
+              else mapMarker = L.marker(selectedCoords, { draggable: true }).addTo(mapInstance);
+              
+              mapMarker.on('dragend', () => {
+                selectedCoords = mapMarker.getLatLng();
+                Utils.$('map-coords-text').textContent = `${selectedCoords.lat.toFixed(6)}, ${selectedCoords.lng.toFixed(6)}`;
+              });
+              
+              Utils.$('map-coords-text').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            },
+            () => {}, { enableHighAccuracy: true, timeout: 5000 }
+          );
+        }
+      }, 100);
+    });
+
+    // Confirm location
+    Utils.$('map-confirm')?.addEventListener('click', async () => {
+      if (!selectedCoords) return Utils.showToast("Avval xaritadan joy tanlang", "warning");
+      
+      const lat = selectedCoords.lat.toFixed(6);
+      const lng = selectedCoords.lng.toFixed(6);
+      Utils.$('quick-crm-lat').value = lat;
+      Utils.$('quick-crm-lng').value = lng;
+      
       const btn = Utils.$('btn-pick-location');
-      const latField = Utils.$('quick-crm-lat');
-      const lngField = Utils.$('quick-crm-lng');
-      const addrField = Utils.$('quick-crm-address');
+      btn.classList.add('active');
+      btn.innerHTML = '<span class="material-icons-round">gps_fixed</span>';
+      
       const status = Utils.$('location-status');
       const locText = Utils.$('location-text');
-
-      // Avval GPS orqali joriy koordinatalarni olamiz
-      if (navigator.geolocation) {
-        btn.innerHTML = '<span class="material-icons-round" style="animation:pulse 1s infinite">gps_not_fixed</span>';
-        
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const lat = pos.coords.latitude.toFixed(6);
-            const lng = pos.coords.longitude.toFixed(6);
-            latField.value = lat;
-            lngField.value = lng;
-            btn.classList.add('active');
-            btn.innerHTML = '<span class="material-icons-round">gps_fixed</span>';
-            
-            if (status) { status.style.display = 'flex'; locText.textContent = `${lat}, ${lng}`; }
-
-            // Yandex Maps ochish
-            const mapUrl = `https://yandex.uz/maps/?ll=${lng},${lat}&z=16&pt=${lng},${lat},pm2rdm`;
-            require('electron').shell.openExternal(mapUrl);
-            Utils.showToast("GPS lokatsiya belgilandi va xarita ochildi ✓", "success");
-          },
-          () => {
-            // GPS ishlamasa — Toshkent markazi bilan xarita ochish
-            btn.innerHTML = '<span class="material-icons-round">map</span>';
-            const mapUrl = `https://yandex.uz/maps/?ll=69.2401,41.2995&z=12`;
-            require('electron').shell.openExternal(mapUrl);
-            Utils.showToast("Xarita ochildi — manzilni qo'lda kiriting", "info");
-          },
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-      } else {
-        const mapUrl = `https://yandex.uz/maps/?ll=69.2401,41.2995&z=12`;
-        require('electron').shell.openExternal(mapUrl);
-      }
+      if (status) { status.style.display = 'flex'; locText.textContent = `${lat}, ${lng}`; }
+      
+      // Reverse geocode
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uz`);
+        const d = await r.json();
+        if (d.display_name) {
+          Utils.$('quick-crm-address').value = d.display_name.split(',').slice(0, 3).join(',').trim();
+        }
+      } catch(e) {}
+      
+      Utils.$('map-modal').style.display = 'none';
+      Utils.showToast("Lokatsiya belgilandi ✓", "success");
     });
+
+    // Cancel / Close
+    const closeMap = () => { Utils.$('map-modal').style.display = 'none'; };
+    Utils.$('map-cancel')?.addEventListener('click', closeMap);
+    Utils.$('map-modal-close')?.addEventListener('click', closeMap);
   },
 
   // ═══ CAMPAIGN AUTO-LOAD ═══════════════════════════════════════════════
