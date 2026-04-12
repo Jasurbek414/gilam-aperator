@@ -14,6 +14,7 @@ const UI = {
     this.bindDialer();
     this.renderDialerLines();
     this.renderCampLinesTab();
+    this.renderCallHistory('all');
   },
 
   showScreen(name) {
@@ -51,6 +52,20 @@ const UI = {
     Utils.$('btn-refresh-lines')?.addEventListener('click', () => {
       this.renderCampLinesTab();
       Utils.showToast('Liniyalar ro\'yxati yangilandi', 'info');
+    });
+
+    Utils.$$('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        Utils.$$('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.renderCallHistory(btn.dataset.filter);
+      });
+    });
+
+    Utils.$('btn-refresh-calls')?.addEventListener('click', () => {
+      const activeFilter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+      this.renderCallHistory(activeFilter);
+      Utils.showToast('Tarix yangilandi', 'info');
     });
   },
 
@@ -429,6 +444,83 @@ const UI = {
         <div class="lc-actions">
           <button class="${isActive ? 'btn-secondary' : 'btn-primary'}" onclick="window.UI.setActiveLine('${acc.extension}')">
             ${isActive ? '<span class="material-icons-round">check</span> Tanlangan' : 'Buni Tanlash'}
+          </button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  },
+
+  renderCallHistory(filter = 'all') {
+    const list = Utils.$('calls-list');
+    if (!list) return;
+
+    let history = [];
+    try {
+      history = JSON.parse(localStorage.getItem('call_recordings')) || [];
+    } catch(e) {}
+    
+    // Add mock history if it is empty so they can see the design
+    if (history.length === 0) {
+      history = [
+        { id: 1, date: new Date(Date.now() - 1000 * 60 * 5).toISOString(), target: '+998901234567', duration: 125, type: 'INCOMING' },
+        { id: 2, date: new Date(Date.now() - 1000 * 60 * 60).toISOString(), target: '+998991112233', duration: 0, type: 'MISSED' },
+        { id: 3, date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), target: '+998941112233', duration: 45, type: 'OUTGOING' },
+        { id: 4, date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), target: '+998971112233', duration: 320, type: 'INCOMING' }
+      ];
+      localStorage.setItem('call_recordings', JSON.stringify(history));
+    }
+
+    // Filter logic
+    let filtered = history;
+    if (filter !== 'all') {
+      filtered = history.filter(h => h.type === filter || (!h.type && filter === 'INCOMING')); // fallback old recordings to INCOMING
+    }
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state">
+        <span class="material-icons-round">history</span>
+        <p>Qo'ng'iroqlar tarixi bo'sh</p>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = '';
+    
+    filtered.forEach(call => {
+      const date = new Date(call.date);
+      const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const dateStr = date.toLocaleDateString();
+      const durStr = window.Utils.formatDuration(call.duration || 0);
+      
+      let icon = 'call';
+      let iconClass = 'incoming';
+      let typeLabel = 'Kiruvchi';
+      
+      if (call.type === 'OUTGOING') { 
+        icon = 'call_made'; iconClass = 'outgoing'; typeLabel = 'Chiquvchi';
+      } else if (call.type === 'MISSED') { 
+        icon = 'call_missed'; iconClass = 'missed'; typeLabel = 'Javobsiz';
+      } else {
+        icon = 'call_received'; iconClass = 'incoming'; typeLabel = 'Kiruvchi';
+      }
+
+      const div = document.createElement('div');
+      div.className = 'history-card';
+      div.innerHTML = `
+        <div class="hc-icon-wrapper ${iconClass}">
+          <span class="material-icons-round hc-icon">${icon}</span>
+        </div>
+        <div class="hc-details">
+          <h4>${call.target}</h4>
+          <p>${dateStr} • ${timeStr} • ${typeLabel}</p>
+        </div>
+        <div class="hc-duration">
+          ${call.duration ? `<span class="dur-badge">${durStr}</span>` : '<span class="status-badge offline" style="font-size:10px;padding:3px 8px;">Javobsiz</span>'}
+        </div>
+        <div class="hc-actions">
+          <button class="btn-icon history-call-btn" onclick="document.getElementById('dial-number').value='${call.target}'; window.UI.switchTab('dialer');" title="Qayta qo'ng'iroq">
+            <span class="material-icons-round">call</span>
           </button>
         </div>
       `;
