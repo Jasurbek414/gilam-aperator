@@ -249,14 +249,9 @@ body {
 }
 .dial-input::placeholder { color: var(--t3); font-weight: 300; font-size: 16px; letter-spacing: .08em; }
 
-.dialpad {
-  display: grid; 
-  grid-template-columns: repeat(3, 1fr); 
-  grid-auto-rows: 44px;
-  gap: 4px; padding: 4px 10px; 
-}
+.dialpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px 10px; }
 .dial-key {
-  width: 100%; height: 100%; border: 0; border-radius: 8px; background: var(--bg-2);
+  height: 44px; border: 0; border-radius: 8px; background: var(--bg-2);
   color: var(--t1); display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 0;
   transition: var(--tr); cursor: pointer;
