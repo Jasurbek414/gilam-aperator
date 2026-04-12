@@ -12,14 +12,11 @@
         <span id="sip-extension-text" class="sip-ext">—</span>
       </div>
 
-      <!-- ═══ DIALER CARD — ajratilgan raqam terish ═══ -->
+      <!-- ═══ DIALER CARD ═══ -->
       <div class="dialer-card">
-        <!-- Number Input -->
-        <div class="dial-input-wrap">
+        <!-- Number Display — ajratilgan -->
+        <div class="dial-display">
           <input type="text" id="dial-number" class="dial-input" placeholder="Raqam kiriting" autocomplete="off" spellcheck="false">
-          <button id="btn-clear-number" class="dial-clear" title="Tozalash">
-            <span class="material-icons-round">backspace</span>
-          </button>
         </div>
 
         <!-- Dialpad Grid -->
@@ -38,31 +35,37 @@
           <button class="dial-key" data-key="#"><span class="dk-num">#</span></button>
         </div>
 
-        <!-- Call Button -->
+        <!-- Call Row: backspace | call | clear -->
         <div class="dial-actions">
+          <button id="btn-clear-number" class="dial-side-btn" title="Oxirgi raqamni o'chirish">
+            <span class="material-icons-round">backspace</span>
+          </button>
           <button id="btn-call" class="btn-call" title="Qo'ng'iroq">
             <span class="material-icons-round">call</span>
+          </button>
+          <button class="dial-side-btn" title="Hammasini tozalash" onclick="document.getElementById('dial-number').value='';document.getElementById('dial-number').focus();">
+            <span class="material-icons-round">close</span>
           </button>
         </div>
       </div>
 
-      <!-- ═══ QUICK ACTIONS — tezkor amallar ═══ -->
+      <!-- ═══ QUICK ACTIONS ═══ -->
       <div class="dialer-quick">
-        <button class="dq-btn" title="Oxirgi raqam" onclick="window.UI?.redial?.()">
+        <button class="dq-btn" id="dq-redial" title="Oxirgi raqamga qayta qo'ng'iroq">
           <span class="material-icons-round">replay</span>
           <span class="dq-label">Qayta</span>
         </button>
-        <button class="dq-btn" title="Yo'naltirish" onclick="window.UI?.transfer?.()">
+        <button class="dq-btn" id="dq-transfer" title="Qo'ng'iroqni yo'naltirish">
           <span class="material-icons-round">phone_forwarded</span>
           <span class="dq-label">Transfer</span>
         </button>
-        <button class="dq-btn" title="Konferensiya">
-          <span class="material-icons-round">group_add</span>
-          <span class="dq-label">Konf.</span>
+        <button class="dq-btn" id="dq-hold" title="Kutishga qo'yish">
+          <span class="material-icons-round">pause</span>
+          <span class="dq-label">Kutish</span>
         </button>
-        <button class="dq-btn" title="Klaviatura">
-          <span class="material-icons-round">dialpad</span>
-          <span class="dq-label">DTMF</span>
+        <button class="dq-btn" id="dq-mute" title="Mikrofonni o'chirish">
+          <span class="material-icons-round">mic_off</span>
+          <span class="dq-label">Mute</span>
         </button>
       </div>
 

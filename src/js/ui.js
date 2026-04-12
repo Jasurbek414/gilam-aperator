@@ -101,6 +101,48 @@ const UI = {
     Utils.$('btn-answer-call')?.addEventListener('click', () => window.SipClient.answer());
     // Reject
     Utils.$('btn-reject-call')?.addEventListener('click', () => window.SipClient.reject());
+
+    // ═══ Quick Actions ═══
+    // Redial
+    Utils.$('dq-redial')?.addEventListener('click', () => {
+      const last = localStorage.getItem('gilam-last-dialed');
+      if (last) {
+        const input = Utils.$('dial-number');
+        if (input) input.value = last;
+        window.SipClient.makeCall(last);
+      } else {
+        Utils.showToast("Oxirgi raqam topilmadi", "warning");
+      }
+    });
+    // Transfer
+    Utils.$('dq-transfer')?.addEventListener('click', () => {
+      if (window.SipClient?.transfer) {
+        const target = prompt("Yo'naltirish raqami:");
+        if (target) window.SipClient.transfer(target);
+      } else {
+        Utils.showToast("Hozir faol qo'ng'iroq yo'q", "warning");
+      }
+    });
+    // Hold
+    Utils.$('dq-hold')?.addEventListener('click', () => {
+      if (window.SipClient?.hold) window.SipClient.hold();
+      else Utils.showToast("Kutish funksiyasi mavjud emas", "warning");
+    });
+    // Mute
+    Utils.$('dq-mute')?.addEventListener('click', () => {
+      if (window.SipClient?.mute) window.SipClient.mute();
+      else Utils.showToast("Mute funksiyasi mavjud emas", "warning");
+    });
+
+    // Store last dialed
+    const origMakeCall = window.SipClient?.makeCall;
+    if (origMakeCall) {
+      const wrapped = function(target) {
+        if (target) localStorage.setItem('gilam-last-dialed', target);
+        return origMakeCall.call(window.SipClient, target);
+      };
+      window.SipClient.makeCall = wrapped;
+    }
   },
 
   // ═══ ACTIVE CALL OVERLAY ════════════════════════════════════════════════
