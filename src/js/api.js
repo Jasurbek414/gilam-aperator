@@ -37,6 +37,23 @@ const Api = {
   },
 
   async login(phone, password) {
+    // UI TEST BYPASS
+    if (phone === 'test' && password === 'test') {
+      const mockUser = { id: 999, name: 'Faol Operator (Test)', role: 'OPERATOR' };
+      this.config.token = 'mock_token';
+      this.config.currentUser = mockUser;
+      localStorage.setItem('token', 'mock_token');
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      
+      // Load mock SIP accounts so lines menu shows something useful
+      localStorage.setItem('sip_accounts', JSON.stringify([
+        { id: 'm1', extension: '101', name: 'Zavod 1', domain: '127.0.0.1', transport: 'ws', campaignName: 'Gilam Yuvish' },
+        { id: 'm2', extension: '102', name: 'Liniya 2', domain: '127.0.0.1', transport: 'ws', campaignName: 'Mebel Tozalash' }
+      ]));
+      
+      return mockUser;
+    }
+
     const data = await this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ phone, password }),
