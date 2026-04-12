@@ -12,35 +12,82 @@
         <span id="sip-extension-text" class="sip-ext">—</span>
       </div>
 
-      <!-- Number Input -->
-      <div class="dial-input-wrap">
-        <input type="text" id="dial-number" class="dial-input" placeholder="Raqam kiriting" autocomplete="off" spellcheck="false">
-        <button id="btn-clear-number" class="dial-clear" title="Tozalash">
-          <span class="material-icons-round">backspace</span>
+      <!-- ═══ DIALER CARD — ajratilgan raqam terish ═══ -->
+      <div class="dialer-card">
+        <!-- Number Input -->
+        <div class="dial-input-wrap">
+          <input type="text" id="dial-number" class="dial-input" placeholder="Raqam kiriting" autocomplete="off" spellcheck="false">
+          <button id="btn-clear-number" class="dial-clear" title="Tozalash">
+            <span class="material-icons-round">backspace</span>
+          </button>
+        </div>
+
+        <!-- Dialpad Grid -->
+        <div class="dialpad">
+          <button class="dial-key" data-key="1"><span class="dk-num">1</span></button>
+          <button class="dial-key" data-key="2"><span class="dk-num">2</span><span class="dk-sub">ABC</span></button>
+          <button class="dial-key" data-key="3"><span class="dk-num">3</span><span class="dk-sub">DEF</span></button>
+          <button class="dial-key" data-key="4"><span class="dk-num">4</span><span class="dk-sub">GHI</span></button>
+          <button class="dial-key" data-key="5"><span class="dk-num">5</span><span class="dk-sub">JKL</span></button>
+          <button class="dial-key" data-key="6"><span class="dk-num">6</span><span class="dk-sub">MNO</span></button>
+          <button class="dial-key" data-key="7"><span class="dk-num">7</span><span class="dk-sub">PQRS</span></button>
+          <button class="dial-key" data-key="8"><span class="dk-num">8</span><span class="dk-sub">TUV</span></button>
+          <button class="dial-key" data-key="9"><span class="dk-num">9</span><span class="dk-sub">WXYZ</span></button>
+          <button class="dial-key" data-key="*"><span class="dk-num">✱</span></button>
+          <button class="dial-key" data-key="0"><span class="dk-num">0</span><span class="dk-sub">+</span></button>
+          <button class="dial-key" data-key="#"><span class="dk-num">#</span></button>
+        </div>
+
+        <!-- Call Button -->
+        <div class="dial-actions">
+          <button id="btn-call" class="btn-call" title="Qo'ng'iroq">
+            <span class="material-icons-round">call</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ QUICK ACTIONS — tezkor amallar ═══ -->
+      <div class="dialer-quick">
+        <button class="dq-btn" title="Oxirgi raqam" onclick="window.UI?.redial?.()">
+          <span class="material-icons-round">replay</span>
+          <span class="dq-label">Qayta</span>
+        </button>
+        <button class="dq-btn" title="Yo'naltirish" onclick="window.UI?.transfer?.()">
+          <span class="material-icons-round">phone_forwarded</span>
+          <span class="dq-label">Transfer</span>
+        </button>
+        <button class="dq-btn" title="Konferensiya">
+          <span class="material-icons-round">group_add</span>
+          <span class="dq-label">Konf.</span>
+        </button>
+        <button class="dq-btn" title="Klaviatura">
+          <span class="material-icons-round">dialpad</span>
+          <span class="dq-label">DTMF</span>
         </button>
       </div>
 
-      <!-- Dialpad Grid -->
-      <div class="dialpad">
-        <button class="dial-key" data-key="1"><span class="dk-num">1</span></button>
-        <button class="dial-key" data-key="2"><span class="dk-num">2</span><span class="dk-sub">ABC</span></button>
-        <button class="dial-key" data-key="3"><span class="dk-num">3</span><span class="dk-sub">DEF</span></button>
-        <button class="dial-key" data-key="4"><span class="dk-num">4</span><span class="dk-sub">GHI</span></button>
-        <button class="dial-key" data-key="5"><span class="dk-num">5</span><span class="dk-sub">JKL</span></button>
-        <button class="dial-key" data-key="6"><span class="dk-num">6</span><span class="dk-sub">MNO</span></button>
-        <button class="dial-key" data-key="7"><span class="dk-num">7</span><span class="dk-sub">PQRS</span></button>
-        <button class="dial-key" data-key="8"><span class="dk-num">8</span><span class="dk-sub">TUV</span></button>
-        <button class="dial-key" data-key="9"><span class="dk-num">9</span><span class="dk-sub">WXYZ</span></button>
-        <button class="dial-key" data-key="*"><span class="dk-num">✱</span></button>
-        <button class="dial-key" data-key="0"><span class="dk-num">0</span><span class="dk-sub">+</span></button>
-        <button class="dial-key" data-key="#"><span class="dk-num">#</span></button>
-      </div>
-
-      <!-- Call Button -->
-      <div class="dial-actions">
-        <button id="btn-call" class="btn-call" title="Qo'ng'iroq">
-          <span class="material-icons-round">call</span>
-        </button>
+      <!-- ═══ CALL STATS — bugungi statistika ═══ -->
+      <div class="dialer-stats">
+        <div class="ds-item">
+          <span class="material-icons-round">call_made</span>
+          <span class="ds-val" id="stat-outgoing">0</span>
+          <span class="ds-lbl">Chiquvchi</span>
+        </div>
+        <div class="ds-item">
+          <span class="material-icons-round">call_received</span>
+          <span class="ds-val" id="stat-incoming">0</span>
+          <span class="ds-lbl">Kiruvchi</span>
+        </div>
+        <div class="ds-item">
+          <span class="material-icons-round">call_missed</span>
+          <span class="ds-val" id="stat-missed">0</span>
+          <span class="ds-lbl">Javobsiz</span>
+        </div>
+        <div class="ds-item">
+          <span class="material-icons-round">schedule</span>
+          <span class="ds-val" id="stat-duration">0:00</span>
+          <span class="ds-lbl">Umumiy</span>
+        </div>
       </div>
     </div>
 
