@@ -12,6 +12,7 @@ const UI = {
     this.bindWindowControls();
     this.bindTabs();
     this.bindDialer();
+    this.renderDialerLines();
   },
 
   showScreen(name) {
@@ -375,6 +376,51 @@ const UI = {
       const ring = Utils.$('ringtone');
       if (ring) ring.pause();
     } catch (e) {}
+  },
+
+  renderDialerLines() {
+    const list = Utils.$('dialer-lines-list');
+    if (!list) return;
+    
+    let lines = [];
+    try {
+      lines = JSON.parse(localStorage.getItem('sip_accounts')) || [];
+    } catch(e) {}
+    
+    if (lines.length === 0) {
+      list.innerHTML = `<div class="dl-empty">
+        <span class="material-icons-round">sim_card_alert</span>
+        Chiziqlar ro'yxati bo'sh
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = '';
+    
+    // SIP accounts usually have extension, campaignName
+    lines.forEach(acc => {
+      // Find connection status internally or just assume from state?
+      // Since sip-client hooks handles connection, we'll try to find active SIP account
+      let activeExt = '';
+      try {
+        const active = JSON.parse(localStorage.getItem('sip_account') || '{}');
+        activeExt = active.extension || active.username || '';
+      } catch(e) {}
+
+      const isActive = (acc.extension === activeExt);
+      const statusClass = isActive ? 'on' : 'off';
+      const campName = acc.campaignName || 'Umumiy';
+      
+      const item = document.createElement('div');
+      item.className = 'dl-item';
+      item.innerHTML = `
+        <div class="dl-dot ${statusClass}"></div>
+        <div class="dl-name">${acc.extension || acc.username || 'Raqam'}</div>
+        <span class="material-icons-round dl-arrow">arrow_forward_ios</span>
+        <div class="dl-campaign">${campName}</div>
+      `;
+      list.appendChild(item);
+    });
   }
 };
 
