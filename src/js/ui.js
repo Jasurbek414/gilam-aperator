@@ -493,39 +493,77 @@ const UI = {
       const dateStr = date.toLocaleDateString();
       const durStr = window.Utils.formatDuration(call.duration || 0);
       
-      let icon = 'call';
-      let iconClass = 'incoming';
-      let typeLabel = 'Kiruvchi';
+      let typeIcon = 'call_received';
+      let typeCol = 'var(--green)';
+      let isMissed = false;
       
       if (call.type === 'OUTGOING') { 
-        icon = 'call_made'; iconClass = 'outgoing'; typeLabel = 'Chiquvchi';
+        typeIcon = 'call_made'; typeCol = '#3b82f6';
       } else if (call.type === 'MISSED') { 
-        icon = 'call_missed'; iconClass = 'missed'; typeLabel = 'Javobsiz';
-      } else {
-        icon = 'call_received'; iconClass = 'incoming'; typeLabel = 'Kiruvchi';
+        typeIcon = 'call_missed'; typeCol = 'var(--red)'; isMissed = true;
       }
-
+      
+      // Determine if it's a known contact
+      let contactName = call.target;
+      let initials = '#';
+      let recognized = false;
+      if (window.CRM && window.CRM.allContacts) {
+        const found = window.CRM.allContacts.find(c => c.phone1 === call.target || c.phone2 === call.target);
+        if (found) {
+          contactName = found.fullName || call.target;
+          initials = contactName.charAt(0).toUpperCase();
+          recognized = true;
+        }
+      }
+      
+      // Audio Recording logic
+      const hasAudio = call.data ? true : false;
+      
       const div = document.createElement('div');
       div.className = 'history-card';
       div.innerHTML = `
-        <div class="hc-icon-wrapper ${iconClass}">
-          <span class="material-icons-round hc-icon">${icon}</span>
-        </div>
+        <div class="hc-avatar ${isMissed ? 'missed-bg' : ''}">${initials}</div>
         <div class="hc-details">
-          <h4>${call.target}</h4>
-          <p>${dateStr} • ${timeStr} • ${typeLabel}</p>
+          <h4 style="${isMissed ? 'color: var(--red);' : ''}">${contactName}</h4>
+          <p>
+            <span class="material-icons-round type-indicator" style="color: ${typeCol}">${typeIcon}</span> 
+            ${dateStr} • ${timeStr}
+          </p>
         </div>
         <div class="hc-duration">
           ${call.duration ? `<span class="dur-badge">${durStr}</span>` : '<span class="status-badge offline" style="font-size:10px;padding:3px 8px;">Javobsiz</span>'}
         </div>
         <div class="hc-actions">
-          <button class="btn-icon history-call-btn" onclick="document.getElementById('dial-number').value='${call.target}'; window.UI.switchTab('dialer');" title="Qayta qo'ng'iroq">
+          ${hasAudio ? `
+          <button class="btn-icon" onclick="window.UI.playRecording('${call.id}')" title="Eshitish">
+            <span class="material-icons-round">play_arrow</span>
+          </button>` : ''}
+          ${!recognized ? `
+          <button class="btn-icon" onclick="document.getElementById('new-customer-phone1').value='${call.target}'; document.getElementById('modal-new-customer').style.display='flex';" title="Mijoz sifatida saqlash">
+            <span class="material-icons-round">person_add</span>
+          </button>` : ''}
+          <button class="btn-icon history-call-btn" onclick="document.getElementById('dial-number').value='${call.target}'; window.UI.switchTab('dialer');" title="Qong'iroq qilish">
             <span class="material-icons-round">call</span>
           </button>
         </div>
       `;
       list.appendChild(div);
     });
+  },
+  
+  playRecording(id) {
+    let history = [];
+    try {
+      history = JSON.parse(localStorage.getItem('call_recordings')) || [];
+    } catch(e) {}
+    const rec = history.find(r => r.id === id);
+    if (rec && rec.data) {
+      const audio = new Audio(rec.data);
+      audio.play().catch(e => Utils.showToast('Audio chalishda xatolik', 'error'));
+      Utils.showToast(\`\${rec.target} audiosi eshittirilmoqda\`, 'info');
+    } else {
+      Utils.showToast('Audio yozuv topilmadi', 'warning');
+    }
   },
 
   setActiveLine(ext) {
