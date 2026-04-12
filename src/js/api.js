@@ -38,8 +38,11 @@ const Api = {
 
   async login(phone, password) {
     // UI TEST BYPASS
-    if (phone === 'test' && password === 'test') {
-      const mockUser = { id: 999, name: 'Faol Operator (Test)', role: 'OPERATOR' };
+    const ph = String(phone || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const pw = String(password || '').toLowerCase().trim();
+    
+    if (ph.includes('test') && pw.includes('test')) {
+      const mockUser = { id: 999, fullName: 'Test Operator', phone: '+998000000000', role: 'OPERATOR' };
       this.config.token = 'mock_token';
       this.config.currentUser = mockUser;
       localStorage.setItem('token', 'mock_token');
@@ -47,8 +50,8 @@ const Api = {
       
       // Load mock SIP accounts so lines menu shows something useful
       localStorage.setItem('sip_accounts', JSON.stringify([
-        { id: 'm1', extension: '101', name: 'Zavod 1', domain: '127.0.0.1', transport: 'ws', campaignName: 'Gilam Yuvish' },
-        { id: 'm2', extension: '102', name: 'Liniya 2', domain: '127.0.0.1', transport: 'ws', campaignName: 'Mebel Tozalash' }
+        { id: 'm1', extension: '101', name: 'Asosiy Liniya', domain: '127.0.0.1', transport: 'ws', campaignName: 'Gilam Yuvish' },
+        { id: 'm2', extension: '102', name: 'Zaxira Liniya', domain: '127.0.0.1', transport: 'ws', campaignName: 'Mebel Tozalash' }
       ]));
       
       return mockUser;
