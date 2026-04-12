@@ -144,54 +144,107 @@ const UI = {
       window.SipClient.makeCall = wrapped;
     }
 
-    // ═══ Location Picker ═══
-    Utils.$('btn-pick-location')?.addEventListener('click', async () => {
+    // ═══ Location Picker — Xarita orqali ═══
+    Utils.$('btn-pick-location')?.addEventListener('click', () => {
       const btn = Utils.$('btn-pick-location');
-      const status = Utils.$('location-status');
-      const locText = Utils.$('location-text');
       const latField = Utils.$('quick-crm-lat');
       const lngField = Utils.$('quick-crm-lng');
       const addrField = Utils.$('quick-crm-address');
+      const status = Utils.$('location-status');
+      const locText = Utils.$('location-text');
 
-      if (!navigator.geolocation) {
-        return Utils.showToast("Geolokatsiya qo'llab-quvvatlanmaydi", "error");
+      // Avval GPS orqali joriy koordinatalarni olamiz
+      if (navigator.geolocation) {
+        btn.innerHTML = '<span class="material-icons-round" style="animation:pulse 1s infinite">gps_not_fixed</span>';
+        
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude.toFixed(6);
+            const lng = pos.coords.longitude.toFixed(6);
+            latField.value = lat;
+            lngField.value = lng;
+            btn.classList.add('active');
+            btn.innerHTML = '<span class="material-icons-round">gps_fixed</span>';
+            
+            if (status) { status.style.display = 'flex'; locText.textContent = `${lat}, ${lng}`; }
+
+            // Yandex Maps ochish
+            const mapUrl = `https://yandex.uz/maps/?ll=${lng},${lat}&z=16&pt=${lng},${lat},pm2rdm`;
+            require('electron').shell.openExternal(mapUrl);
+            Utils.showToast("GPS lokatsiya belgilandi va xarita ochildi ✓", "success");
+          },
+          () => {
+            // GPS ishlamasa — Toshkent markazi bilan xarita ochish
+            btn.innerHTML = '<span class="material-icons-round">map</span>';
+            const mapUrl = `https://yandex.uz/maps/?ll=69.2401,41.2995&z=12`;
+            require('electron').shell.openExternal(mapUrl);
+            Utils.showToast("Xarita ochildi — manzilni qo'lda kiriting", "info");
+          },
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      } else {
+        const mapUrl = `https://yandex.uz/maps/?ll=69.2401,41.2995&z=12`;
+        require('electron').shell.openExternal(mapUrl);
       }
-
-      btn.innerHTML = '<span class="material-icons-round" style="animation:pulse 1s infinite">gps_not_fixed</span>';
-      
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude.toFixed(6);
-          const lng = pos.coords.longitude.toFixed(6);
-          latField.value = lat;
-          lngField.value = lng;
-          btn.classList.add('active');
-          btn.innerHTML = '<span class="material-icons-round">gps_fixed</span>';
-          
-          if (status) {
-            status.style.display = 'flex';
-            locText.textContent = `${lat}, ${lng}`;
-          }
-          
-          // Reverse geocode
-          try {
-            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uz`);
-            const d = await r.json();
-            if (d.display_name && addrField) {
-              addrField.value = d.display_name.split(',').slice(0, 3).join(',');
-              Utils.showToast("Lokatsiya belgilandi ✓", "success");
-            }
-          } catch(e) {
-            Utils.showToast(`GPS: ${lat}, ${lng}`, "success");
-          }
-        },
-        (err) => {
-          btn.innerHTML = '<span class="material-icons-round">my_location</span>';
-          Utils.showToast("Lokatsiyani olishda xatolik: " + err.message, "error");
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
     });
+  },
+
+  // ═══ CAMPAIGN AUTO-LOAD ═══════════════════════════════════════════════
+  // Liniya bo'yicha kampaniya ma'lumotlarini avtomatik yuklash
+  async loadCampaignByLine(lineNumber) {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+      
+      const res = await fetch(`http://127.0.0.1:3000/api/campaigns/by-line/${lineNumber}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!res.ok) return;
+      const campaign = await res.json();
+      
+      if (campaign && campaign.data) {
+        const c = campaign.data;
+        
+        // Kampaniya nomini ko'rsatish
+        const badge = Utils.$('campaign-name-badge');
+        const info = Utils.$('active-campaign-info');
+        if (badge) badge.textContent = c.name || '—';
+        if (info) info.style.display = '';
+        
+        // Xizmat turlarini to'ldirish
+        const productSelect = Utils.$('quick-order-product');
+        if (productSelect && c.products) {
+          productSelect.innerHTML = '<option value="">Xizmat tanlang</option>';
+          c.products.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id || p.name;
+            opt.textContent = `${p.name} — ${p.price?.toLocaleString() || '—'} so'm`;
+            opt.dataset.price = p.price || '';
+            productSelect.appendChild(opt);
+          });
+        }
+        
+        // Kampaniya selectni to'ldirish
+        const campSelect = Utils.$('quick-crm-campaign');
+        if (campSelect) {
+          campSelect.innerHTML = `<option value="${c.id}" selected>${c.name}</option>`;
+        }
+        
+        // Narxni avtomatik to'ldirish (xizmat tanlanganda)
+        productSelect?.addEventListener('change', () => {
+          const sel = productSelect.options[productSelect.selectedIndex];
+          const priceField = Utils.$('quick-order-price');
+          if (sel?.dataset?.price && priceField) {
+            priceField.value = sel.dataset.price;
+          }
+        });
+        
+        Utils.showToast(`Kampaniya: ${c.name}`, "success");
+      }
+    } catch (e) {
+      console.warn('Campaign load error:', e);
+    }
   },
 
   // ═══ ACTIVE CALL OVERLAY ════════════════════════════════════════════════

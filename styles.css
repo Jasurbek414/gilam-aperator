@@ -213,7 +213,7 @@ body {
 /* Dialer Card */
 .dialer-card {
   margin: 8px; border-radius: 12px;
-  background: var(--bg-1); border: 1px solid var(--border); overflow: hidden;
+  background: var(--bg-1); border: 1px solid var(--border);
 }
 
 /* Number Display — ajratilgan */

@@ -207,6 +207,11 @@ const SipClient = {
 
           // CRM panelni avtomatik ochish
           if (window.CRM) window.CRM.onCallStarted(callerNumber, acc.name);
+          
+          // Liniya bo'yicha kampaniya va xizmatlarni avtomatik yuklash
+          if (window.UI?.loadCampaignByLine) {
+            window.UI.loadCampaignByLine(acc.name || callerNumber);
+          }
         }
       });
 
