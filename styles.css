@@ -214,6 +214,7 @@ body {
 .dialer-card {
   margin: 8px; border-radius: 12px;
   background: var(--bg-1); border: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 /* Number Display — ajratilgan */
@@ -286,7 +287,7 @@ body {
 
 
 /* Quick Actions */
-.dialer-quick { display: flex; justify-content: center; gap: 4px; padding: 4px 10px; }
+.dialer-quick { display: flex; justify-content: center; gap: 4px; padding: 4px 10px; flex-shrink: 0; }
 .dq-btn {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   padding: 8px 12px; border: 0; border-radius: 8px; background: 0;
@@ -338,7 +339,7 @@ body {
 
 /* Call Stats */
 .dialer-stats {
-  display: flex; flex-shrink: 0;
+  display: flex; flex-shrink: 0; margin-top: auto;
   border-top: 1px solid var(--border); background: var(--bg-1);
 }
 .ds-item {
