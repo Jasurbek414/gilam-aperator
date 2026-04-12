@@ -447,7 +447,7 @@ const UI = {
       localStorage.setItem('sip_account', JSON.stringify(target));
       this.renderCampLinesTab();
       this.renderDialerLines();
-      Utils.showToast(\`Faol liniya o'zgartirildi: \${ext}\`, 'success');
+      Utils.showToast(`Faol liniya o'zgartirildi: ${ext}`, 'success');
       
       // If we want to connect to it automatically:
       if(window.SipClient) {
