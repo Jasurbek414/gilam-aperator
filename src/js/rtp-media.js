@@ -128,20 +128,15 @@ class RtpMediaEngine {
       const outputBuffer = e.outputBuffer.getChannelData(0);
       let outIdx = 0;
       
-      // If on hold, do not play the jitter buffer and just drain it
-      if (this.isOnHold) {
-        this.jitterBuffer = [];
-      }
-      
       while (outIdx < outputBuffer.length && this.jitterBuffer.length > 0) {
         let chunk = this.jitterBuffer[0];
         let space = outputBuffer.length - outIdx;
         if (chunk.length <= space) {
-          outputBuffer.set(chunk, outIdx);
+          if (!this.isHold) outputBuffer.set(chunk, outIdx);
           outIdx += chunk.length;
           this.jitterBuffer.shift();
         } else {
-          outputBuffer.set(chunk.slice(0, space), outIdx);
+          if (!this.isHold) outputBuffer.set(chunk.slice(0, space), outIdx);
           this.jitterBuffer[0] = chunk.slice(space);
           outIdx += space;
         }
@@ -173,11 +168,6 @@ class RtpMediaEngine {
         // Buffer starvation, wait for next tick
         return;
       }
-
-      // If muted or hold, force chunk to absolute silence
-      if (this.isMuted || this.isOnHold) {
-        for (let i = 0; i < 160; i++) chunk[i] = 0;
-      }
       
       const rtpPacket = Buffer.alloc(12 + 160);
       
@@ -189,10 +179,17 @@ class RtpMediaEngine {
 
       for (let i = 0; i < 160; i++) {
         let pcmInt = chunk[i] * 32767;
-        // Amplify voice slightly
-        pcmInt = pcmInt * 1.5; 
-        if (pcmInt > 32767) pcmInt = 32767;
-        if (pcmInt < -32768) pcmInt = -32768;
+        
+        // Mutening logic
+        if (this.isMuted || this.isHold) {
+          pcmInt = 0;
+        } else {
+          // Amplify voice slightly
+          pcmInt = pcmInt * 1.5; 
+          if (pcmInt > 32767) pcmInt = 32767;
+          if (pcmInt < -32768) pcmInt = -32768;
+        }
+        
         rtpPacket[12 + i] = ulawEncode[pcmInt & 0xFFFF];
       }
 
@@ -205,14 +202,12 @@ class RtpMediaEngine {
     }, 20); // Exactly every 20ms
   }
 
-  setMute(state) {
-    this.isMuted = state;
-    console.log(`[RTP] Mute set to: ${state}`);
+  setMute(isMuted) {
+    this.isMuted = isMuted;
   }
 
-  setHold(state) {
-    this.isOnHold = state;
-    console.log(`[RTP] Hold set to: ${state}`);
+  setHold(isHold) {
+    this.isHold = isHold;
   }
 
   stop() {

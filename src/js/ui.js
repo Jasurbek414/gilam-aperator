@@ -118,32 +118,37 @@ const UI = {
     });
 
     // Hangup — event delegation uchun (component dinamik yuklanadi)
+    // Hangup — event delegation uchun (component dinamik yuklanadi)
     document.addEventListener('click', (e) => {
+      // Hangup
       const hangupBtn = e.target.closest('#btn-hangup');
       if (hangupBtn) {
         console.log('[UI] Hangup button clicked');
         this.stopRingbackTone();
-        window.SipClient.hangup();
+        if (window.SipClient) window.SipClient.hangup();
         this.hideActiveCall();
+        return;
+      }
+
+      // Redial
+      if (e.target.closest('#dq-redial')) {
+        const last = localStorage.getItem('gilam-last-dialed');
+        if (last) {
+          const input = Utils.$('dial-number');
+          if (input) input.value = last;
+          if (window.SipClient) window.SipClient.makeCall(last);
+        } else {
+          Utils.showToast("Oxirgi raqam topilmadi", "warning");
+        }
+        return;
       }
     });
+
     // Answer
     Utils.$('btn-answer-call')?.addEventListener('click', () => window.SipClient.answer());
     // Reject
     Utils.$('btn-reject-call')?.addEventListener('click', () => window.SipClient.reject());
 
-    // ═══ Quick Actions ═══
-    // Redial
-    Utils.$('dq-redial')?.addEventListener('click', () => {
-      const last = localStorage.getItem('gilam-last-dialed');
-      if (last) {
-        const input = Utils.$('dial-number');
-        if (input) input.value = last;
-        window.SipClient.makeCall(last);
-      } else {
-        Utils.showToast("Oxirgi raqam topilmadi", "warning");
-      }
-    });
     // Transfer, Hold, Mute bindings are handled in sip-client.js 
 
     // Store last dialed

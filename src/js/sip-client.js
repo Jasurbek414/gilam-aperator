@@ -506,27 +506,31 @@ const SipClient = {
   },
 
   _bindMuteHoldButtons() {
-    Utils.$('btn-mute')?.addEventListener('click', () => this.toggleMute());
-    Utils.$('btn-hold')?.addEventListener('click', () => this.toggleHold());
-    Utils.$('dq-mute')?.addEventListener('click', () => this.toggleMute());
-    Utils.$('dq-hold')?.addEventListener('click', () => this.toggleHold());
-    
-    // Yozib olish tugmasi hozircha simulatsiya qilinadi, chunki RtpMediaEngine o'zi yozmaydi
-    Utils.$('btn-record')?.addEventListener('click', () => {
-      Utils.showToast("Yozib olish funksiyasi ATS orqali serverda saqlanmoqda", "info");
+    document.addEventListener('click', (e) => {
+      // MUTE
+      if (e.target.closest('#btn-mute') || e.target.closest('#dq-mute')) {
+        this.toggleMute();
+      }
+      // HOLD
+      if (e.target.closest('#btn-hold') || e.target.closest('#dq-hold')) {
+        this.toggleHold();
+      }
+      // TRANSFER
+      if (e.target.closest('#btn-transfer') || e.target.closest('#dq-transfer')) {
+        const target = prompt("Yo'naltirish uchun raqamni yoki ichki raqamni kiriting:");
+        if (target) this.transfer(target);
+      }
+      // RECORD (mock)
+      if (e.target.closest('#btn-record')) {
+        Utils.showToast("Yozib olish ATS apparati orqali serverda avtomat saqlanadi", "info");
+      }
     });
-    
-    // Transfer tugmalari
-    const doTransfer = () => {
-      const target = prompt("Yo'naltirish uchun raqamni yoki ext-ni kiriting:");
-      if (target) this.transfer(target);
-    };
-    Utils.$('btn-transfer')?.addEventListener('click', doTransfer);
-    Utils.$('dq-transfer')?.addEventListener('click', doTransfer);
 
-    // Volume slider
-    Utils.$('volume-slider')?.addEventListener('input', (e) => {
-      this.setVolume(parseFloat(e.target.value));
+    // Volume slider can't be well delegated via click, wait for it or just delegate input
+    document.addEventListener('input', (e) => {
+      if (e.target.id === 'volume-slider') {
+        this.setVolume(parseFloat(e.target.value));
+      }
     });
   },
 
