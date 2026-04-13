@@ -99,7 +99,7 @@ const SipClient = {
       delete this.activeSipLines[acc.id];
     }
 
-    const SipUdpEngine = require('./sip-udp-engine');
+    const SipUdpEngine = require('./src/js/sip-udp-engine');
     const engine = new SipUdpEngine();
 
     console.log(`[SIP] Connecting via UDP: ${acc.name}`);
