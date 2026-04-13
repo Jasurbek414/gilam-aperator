@@ -48,11 +48,17 @@ const Api = {
       localStorage.setItem('token', 'mock_token');
       localStorage.setItem('user', JSON.stringify(mockUser));
       
-      // Load mock SIP accounts so lines menu shows something useful
-      localStorage.setItem('sip_accounts', JSON.stringify([
-        { id: 'm1', extension: '101', name: 'Asosiy Liniya', domain: '127.0.0.1', transport: 'ws', campaignName: 'Gilam Yuvish' },
-        { id: 'm2', extension: '102', name: 'Zaxira Liniya', domain: '127.0.0.1', transport: 'ws', campaignName: 'Mebel Tozalash' }
-      ]));
+      // Real SIP account — Asterisk server
+      const realSipAccounts = [
+        { id: 'sip_real_101', extension: '101', username: '101', name: 'Asosiy Liniya (101)', domain: '10.100.100.1', password: 'a1234567a', transport: 'ws', autoConnect: true, campaignName: 'Gilam Yuvish' }
+      ];
+      
+      // Agar mavjud SIP accountlar bo'lsa, ustiga yozmaymiz
+      const existing = JSON.parse(localStorage.getItem('sip_accounts') || '[]');
+      const hasReal = existing.some(a => a.extension === '101' && a.domain === '10.100.100.1');
+      if (!hasReal) {
+        localStorage.setItem('sip_accounts', JSON.stringify(realSipAccounts));
+      }
       
       return mockUser;
     }

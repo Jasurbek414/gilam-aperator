@@ -93,9 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
 function startApp(user) {
   window.UI.showScreen('app');
 
-  // WebSocket ga ulanish
-  if (window.Api && window.Api.connectSocket) {
-    window.Api.connectSocket();
+  // WebSocket ga ulanish (backend mavjud bo'lsagina)
+  try {
+    if (window.Api && window.Api.connectSocket && window.Api.config.token !== 'mock_token') {
+      window.Api.connectSocket();
+    }
+  } catch(e) {
+    console.warn('[App] Backend WebSocket ulanishi imkonsiz:', e.message);
   }
 
   // Operator info

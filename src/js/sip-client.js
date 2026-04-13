@@ -850,8 +850,13 @@ const SipClient = {
 
   // ═══ AUTO-CONNECT ═══════════════════════════════════════════════════════
   autoConnectAll() {
-    this.sipAccounts.filter(a => a.autoConnect).forEach(acc => {
-      setTimeout(() => this.connect(acc), 300);
+    // Refresh accounts from localStorage (login paytida yangi account qo'shilgan bo'lishi mumkin)
+    this.sipAccounts = JSON.parse(localStorage.getItem('sip_accounts') || '[]');
+    this.renderAccounts();
+    
+    console.log('[SIP] Auto-connecting', this.sipAccounts.filter(a => a.autoConnect).length, 'accounts...');
+    this.sipAccounts.filter(a => a.autoConnect).forEach((acc, i) => {
+      setTimeout(() => this.connect(acc), 500 + i * 1000);
     });
   }
 };
