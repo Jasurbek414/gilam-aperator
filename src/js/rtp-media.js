@@ -1,0 +1,205 @@
+const dgram = require('dgram');
+
+/**
+ * G.711 PCMU (µ-law) Codec lookup tables
+ */
+function createUlawTables() {
+  const CLIP = 32635;
+  const BIAS = 0x84;
+
+  const linearToUlaw = (sample) => {
+    let sign = (sample >> 8) & 0x80;
+    if (sign !== 0) sample = -sample;
+    if (sample > CLIP) sample = CLIP;
+    sample = sample + BIAS;
+    let exponent = 7;
+    for (let expMask = 0x4000; (sample & expMask) === 0 && exponent > 0; exponent--, expMask >>= 1) {}
+    let mantissa = (sample >> (exponent + 3)) & 0x0F;
+    let ulawByte = ~(sign | (exponent << 4) | mantissa);
+    return ulawByte & 0xFF;
+  };
+
+  const ulawToLinear = (ulawByte) => {
+    ulawByte = ~ulawByte;
+    let sign = (ulawByte & 0x80);
+    let exponent = (ulawByte >> 4) & 0x07;
+    let mantissa = ulawByte & 0x0F;
+    let sample = ((mantissa << 3) + 132) << exponent;
+    sample -= 132;
+    return sign !== 0 ? -sample : sample;
+  };
+
+  const encodeTable = new Uint8Array(65536);
+  for (let i = -32768; i <= 32767; i++) {
+    encodeTable[new Int16Array([i])[0] & 0xFFFF] = linearToUlaw(i);
+  }
+
+  const decodeTable = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    decodeTable[i] = ulawToLinear(i) / 32768.0;
+  }
+
+  return { encodeTable, decodeTable };
+}
+
+const { encodeTable: ulawEncode, decodeTable: ulawDecode } = createUlawTables();
+
+class RtpMediaEngine {
+  constructor() {
+    this.rtpSocket = null;
+    this.audioCtx = null;
+    this.audioStream = null;
+    this.scriptProcessor = null;
+    this.sourceNode = null;
+    this.localPort = 0;
+    
+    this.remoteIp = null;
+    this.remotePort = 0;
+
+    this.seq = Math.floor(Math.random() * 65536);
+    this.ts = Math.floor(Math.random() * 0xFFFFFFFF);
+    this.ssrc = Math.floor(Math.random() * 0xFFFFFFFF);
+
+    this.jitterBuffer = []; // stores decoded Float32 chunks
+  }
+
+  start(localPort, remoteIp, remotePort) {
+    this.stop();
+    this.localPort = localPort;
+    this.remoteIp = remoteIp;
+    this.remotePort = remotePort;
+
+    console.log(`[RTP] Starting media engine. Local port: ${localPort}, Remote: ${remoteIp}:${remotePort}`);
+
+    // Create UDP socket for RTP
+    this.rtpSocket = dgram.createSocket('udp4');
+    this.rtpSocket.on('error', (err) => console.error('[RTP] UDP Error:', err));
+    
+    this.rtpSocket.on('message', (msg, rinfo) => {
+      // Decode incoming RTP packets
+      if (msg.length <= 12) return;
+      const pt = msg[1] & 0x7F;
+      // PCMU is PT=0, PCMA is PT=8. We only decode PCMU (0) for now.
+      if (pt === 0) {
+        const payload = msg.slice(12);
+        const pcmFloat = new Float32Array(payload.length);
+        for (let i = 0; i < payload.length; i++) {
+          pcmFloat[i] = ulawDecode[payload[i]];
+        }
+        this.jitterBuffer.push(pcmFloat);
+        // Keep buffer from growing too large (latency control)
+        if (this.jitterBuffer.length > 10) {
+          this.jitterBuffer.shift();
+        }
+      }
+    });
+
+    this.rtpSocket.bind(this.localPort, () => {
+      console.log(`[RTP] Bound to local port ${this.localPort}`);
+      this._startAudioContext();
+    });
+  }
+
+  async _startAudioContext() {
+    try {
+      this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 8000 });
+      
+      this.sourceNode = this.audioCtx.createMediaStreamSource(this.audioStream);
+      // 2048 at 8000Hz is ~256ms chunk. Asterisk prefers 20ms chunks (160 bytes). 
+      // ScriptProcessor is deprecated but easiest for 2-way without separate files.
+      // We'll process larger chunks and break them down into 160-byte packets.
+      this.scriptProcessor = this.audioCtx.createScriptProcessor(1024, 1, 1);
+
+      this.scriptProcessor.onaudioprocess = (e) => {
+        // 1. Playback (Incoming audio)
+        const outputBuffer = e.outputBuffer.getChannelData(0);
+        let outIdx = 0;
+        
+        // Fill output buffer from jitter buffer
+        while (outIdx < outputBuffer.length && this.jitterBuffer.length > 0) {
+          let chunk = this.jitterBuffer[0];
+          let space = outputBuffer.length - outIdx;
+          if (chunk.length <= space) {
+            outputBuffer.set(chunk, outIdx);
+            outIdx += chunk.length;
+            this.jitterBuffer.shift();
+          } else {
+            outputBuffer.set(chunk.slice(0, space), outIdx);
+            this.jitterBuffer[0] = chunk.slice(space);
+            outIdx += space;
+          }
+        }
+        // If not enough incoming audio, fill rest with silence
+        while (outIdx < outputBuffer.length) {
+          outputBuffer[outIdx++] = 0;
+        }
+
+        // 2. Microhone Capture (Outgoing audio)
+        const inputBuffer = e.inputBuffer.getChannelData(0);
+        // Break into 160-sample chunks for RTP
+        for (let offset = 0; offset < inputBuffer.length; offset += 160) {
+          const size = Math.min(160, inputBuffer.length - offset);
+          const rtpPacket = Buffer.alloc(12 + size);
+          
+          // RTP Header
+          rtpPacket[0] = 0x80; // V=2
+          rtpPacket[1] = 0x00; // PT=0 (PCMU)
+          rtpPacket.writeUInt16BE(this.seq & 0xFFFF, 2); // Seq
+          rtpPacket.writeUInt32BE(this.ts >>> 0, 4); // TS
+          rtpPacket.writeUInt32BE(this.ssrc >>> 0, 8); // SSRC
+
+          // Payload encode
+          for (let i = 0; i < size; i++) {
+            let floatVal = inputBuffer[offset + i];
+            let pcmInt = floatVal * 32767;
+            if (pcmInt > 32767) pcmInt = 32767;
+            if (pcmInt < -32768) pcmInt = -32768;
+            rtpPacket[12 + i] = ulawEncode[pcmInt & 0xFFFF];
+          }
+
+          if (this.rtpSocket && this.remoteIp && this.remotePort) {
+            this.rtpSocket.send(rtpPacket, 0, rtpPacket.length, this.remotePort, this.remoteIp);
+          }
+
+          this.seq++;
+          this.ts += size;
+        }
+      };
+
+      this.sourceNode.connect(this.scriptProcessor);
+      this.scriptProcessor.connect(this.audioCtx.destination);
+      
+      console.log('[RTP] Audio Context and Microhone running.');
+    } catch (err) {
+      console.error('[RTP] Audio capture failed:', err);
+    }
+  }
+
+  stop() {
+    console.log('[RTP] Stopping media engine.');
+    if (this.scriptProcessor) {
+      this.scriptProcessor.disconnect();
+      this.scriptProcessor = null;
+    }
+    if (this.sourceNode) {
+      this.sourceNode.disconnect();
+      this.sourceNode = null;
+    }
+    if (this.audioStream) {
+      this.audioStream.getTracks().forEach(t => t.stop());
+      this.audioStream = null;
+    }
+    if (this.audioCtx) {
+      this.audioCtx.close().catch(()=>{});
+      this.audioCtx = null;
+    }
+    if (this.rtpSocket) {
+      try { this.rtpSocket.close(); } catch(e) {}
+      this.rtpSocket = null;
+    }
+    this.jitterBuffer = [];
+  }
+}
+
+module.exports = RtpMediaEngine;

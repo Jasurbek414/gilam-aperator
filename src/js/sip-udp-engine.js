@@ -18,6 +18,7 @@ const dgram = require('dgram');
 const crypto = require('crypto');
 const os = require('os');
 const EventEmitter = require('events');
+const RtpMediaEngine = require('./rtp-media');
 
 class SipUdpEngine extends EventEmitter {
   constructor() {
@@ -37,6 +38,7 @@ class SipUdpEngine extends EventEmitter {
     this.cseq = 0;
     this.currentCall = null;
     this._pendingAuth = {};
+    this.mediaEngine = new RtpMediaEngine();
   }
 
   // ═══ HELPERS ═════════════════════════════════════════════════════════════
@@ -285,6 +287,7 @@ class SipUdpEngine extends EventEmitter {
     console.log(`[SIP-UDP] --> BYE`);
     this._send(msg);
     this.currentCall = null;
+    this.mediaEngine.stop();
     this.emit('callEnded', { reason: 'local_hangup' });
   }
 
@@ -310,6 +313,12 @@ class SipUdpEngine extends EventEmitter {
     console.log(`[SIP-UDP] --> 200 OK (Answer)`);
     this._send(msg);
     this.currentCall.state = 'ANSWERED';
+    
+    // Start media if we got remote SDP during INVITE
+    if (this.currentCall.remoteIp && this.currentCall.remotePort) {
+      this.mediaEngine.start(this.localPort + 2, this.currentCall.remoteIp, this.currentCall.remotePort);
+    }
+    
     this.emit('callAnswered', { target: this.currentCall.targetExt });
   }
 
@@ -328,6 +337,7 @@ class SipUdpEngine extends EventEmitter {
     console.log(`[SIP-UDP] --> 486 Busy (Reject)`);
     this._send(msg);
     this.currentCall = null;
+    this.mediaEngine.stop();
     this.emit('callEnded', { reason: 'rejected' });
   }
 
@@ -424,6 +434,13 @@ class SipUdpEngine extends EventEmitter {
           this.currentCall.state = 'ANSWERED';
           const toTagMatch = data.match(/To:.*?;tag=([^\s;>]+)/i);
           if (toTagMatch) this.currentCall.toTag = toTagMatch[1];
+          
+          // Parse remote SDP
+          const rtpPortMatch = data.match(/m=audio\s+(\d+)/i);
+          const rtpIpMatch = data.match(/c=IN\s+IP4\s+([0-9.]+)/i);
+          if (rtpPortMatch && rtpIpMatch) {
+            this.mediaEngine.start(this.localPort + 2, rtpIpMatch[1], parseInt(rtpPortMatch[1]));
+          }
         }
         // Send ACK
         this._sendAck();
@@ -431,6 +448,7 @@ class SipUdpEngine extends EventEmitter {
       } else if (code >= 400) {
         console.log(`[SIP-UDP]    Call failed: ${code} ${reason}`);
         this.currentCall = null;
+        this.mediaEngine.stop();
         this.emit('callFailed', { code, reason });
       }
     } else if (method === 'BYE') {
@@ -467,6 +485,8 @@ class SipUdpEngine extends EventEmitter {
       // Extract details
       const callerMatch = data.match(/From:.*?[<]?sip:([^\s@>:]+)/i);
       const callerDisplayMatch = data.match(/From:\s*"([^"]+)"/i);
+      const rtpPortMatch = data.match(/m=audio\s+(\d+)/i);
+      const rtpIpMatch = data.match(/c=IN\s+IP4\s+([0-9.]+)/i);
 
       this.currentCall = {
         callId: callIdMatch ? callIdMatch[1].trim() : '',
@@ -478,6 +498,8 @@ class SipUdpEngine extends EventEmitter {
         toTag: '',
         state: 'RINGING',
         direction: 'incoming',
+        remoteIp: rtpIpMatch ? rtpIpMatch[1] : null,
+        remotePort: rtpPortMatch ? parseInt(rtpPortMatch[1]) : null,
       };
 
       // Send 180 Ringing
@@ -516,6 +538,7 @@ class SipUdpEngine extends EventEmitter {
       
       this._send(ok);
       this.currentCall = null;
+      this.mediaEngine.stop();
       this.emit('callEnded', { reason: 'remote_hangup' });
     } else if (method === 'OPTIONS') {
       // Keepalive - respond 200
