@@ -76,7 +76,7 @@ const Api = {
   },
 
   getCampaigns() {
-    return this.request('/api/campaigns', { method: 'GET' });
+    return this.request('/campaigns', { method: 'GET' });
   },
 
   socket: null,
@@ -85,10 +85,9 @@ const Api = {
     if (this.socket) return;
     if (!this.config.currentUser) return;
     
-    // Desktop Operator dasturi doim backend bilan bitta kompyuterda ishlaydi.
-    // Cloudflare/NextJS proksilari WebSocket Upgrade ni qo'llab-quvvatlamaydi,
-    // shuning uchun to'g'ridan-to'g'ri backend portiga ulanamiz.
-    const socketUrl = 'http://127.0.0.1:3000/calls';
+    // WebSocket ulanishi — API_BASE domen orqali
+    // Cloudflare Tunnel WebSocket Upgrade ni qo'llab-quvvatlaydi
+    const socketUrl = this.config.API_BASE + '/calls';
     console.log('[API] Connecting WebSocket to:', socketUrl);
     
     const ioClient = window.io || (typeof io !== 'undefined' ? io : null);
@@ -99,12 +98,13 @@ const Api = {
 
     this.socket = ioClient(socketUrl, {
       path: '/api/socket.io',
+      transports: ['websocket', 'polling'],
       extraHeaders: {
         Authorization: `Bearer ${this.config.token}`
       },
-      reconnectionAttempts: 5,        // Faqat 5 marta urinadi
-      reconnectionDelay: 5000,        // Har 5 soniyada (default juda tez)
-      reconnectionDelayMax: 10000     // Maksimum 10 soniya pauza
+      reconnectionAttempts: 10,
+      reconnectionDelay: 3000,
+      reconnectionDelayMax: 10000
     });
 
     this.socket.on('connect', () => {
