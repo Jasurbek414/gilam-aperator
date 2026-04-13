@@ -113,7 +113,17 @@ class RtpMediaEngine {
       if (!navigator.mediaDevices) {
         throw new Error("MediaDevices API bu kompyuterda ishlamaydi.");
       }
-      this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const constraints = { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } };
+      
+      // Mikrofonni sozlamalardan o'qish (agar tanlangan bo'lsa)
+      if (window.Settings && typeof window.Settings.get === 'function') {
+        const savedMicId = window.Settings.get('audio-input');
+        if (savedMicId && savedMicId !== 'default') {
+          constraints.audio.deviceId = { exact: savedMicId };
+        }
+      }
+
+      this.audioStream = await navigator.mediaDevices.getUserMedia(constraints);
       this.sourceNode = this.audioCtx.createMediaStreamSource(this.audioStream);
       this.sourceNode.connect(this.scriptProcessor);
       micInputAvailable = true;

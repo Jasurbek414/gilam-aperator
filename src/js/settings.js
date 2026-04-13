@@ -140,6 +140,22 @@ const Settings = (() => {
         _settings[id] = e.target.value;
         save();
         Utils.showToast('Audio moslama tanlandi', 'info');
+
+        // Qo'ng'iroq (ringtone) dinamiki
+        if (id === 'audio-ring') {
+          const ringEl = document.getElementById('ringtone');
+          if (ringEl && typeof ringEl.setSinkId === 'function' && e.target.value !== 'default') {
+            ringEl.setSinkId(e.target.value).catch(err => console.warn('Ringtone sink error', err));
+          }
+        }
+        
+        // Umumiy suhbat dinamiki (SIP Call ovozi)
+        if (id === 'audio-output') {
+          const sipEl = document.getElementById('sipRemoteAudio');
+          if (sipEl && typeof sipEl.setSinkId === 'function' && e.target.value !== 'default') {
+            sipEl.setSinkId(e.target.value).catch(err => console.warn('SIP sink error', err));
+          }
+        }
       });
     });
   }
@@ -193,8 +209,21 @@ const Settings = (() => {
 
       // Saqlangan qiymatlarni tanlash
       if (audioInput && _settings['audio-input']) audioInput.value = _settings['audio-input'];
-      if (audioOutput && _settings['audio-output']) audioOutput.value = _settings['audio-output'];
-      if (audioRing && _settings['audio-ring']) audioRing.value = _settings['audio-ring'];
+      if (audioOutput && _settings['audio-output']) {
+        audioOutput.value = _settings['audio-output'];
+        const sipEl = document.getElementById('sipRemoteAudio');
+        if (sipEl && typeof sipEl.setSinkId === 'function' && audioOutput.value !== 'default') {
+          sipEl.setSinkId(audioOutput.value).catch(err => console.warn('Init SIP sink err:', err));
+        }
+      }
+      
+      if (audioRing && _settings['audio-ring']) {
+        audioRing.value = _settings['audio-ring'];
+        const ringEl = document.getElementById('ringtone');
+        if (ringEl && typeof ringEl.setSinkId === 'function' && audioRing.value !== 'default') {
+          ringEl.setSinkId(audioRing.value).catch(err => console.warn('Init ringtone sink err:', err));
+        }
+      }
 
     } catch(err) {
       console.warn('[Settings] Audio devices load error:', err);
@@ -220,7 +249,15 @@ const Settings = (() => {
       btn.innerHTML = '<span class="material-icons-round">stop</span> To\'xtat';
       meter.style.display = 'block';
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Tanlangan mikrofonni olish
+      const selectedMicId = get('audio-input');
+      const constraints = { audio: true };
+      
+      if (selectedMicId && selectedMicId !== 'default') {
+        constraints.audio = { deviceId: { exact: selectedMicId } };
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       _micStream = stream;
 
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -283,7 +320,7 @@ const Settings = (() => {
   // ───────────────────────────────────────────────────────
   // DINAMIK TEST
   // ───────────────────────────────────────────────────────
-  function testSpeaker() {
+  async function testSpeaker() {
     const btn = document.getElementById('btn-test-speaker');
     btn.classList.add('active');
     btn.innerHTML = '<span class="material-icons-round">stop</span> ...';
@@ -291,6 +328,13 @@ const Settings = (() => {
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       
+      const selectedSpeakerId = get('audio-output');
+      if (selectedSpeakerId && selectedSpeakerId !== 'default') {
+        if (typeof audioCtx.setSinkId === 'function') {
+          await audioCtx.setSinkId(selectedSpeakerId);
+        }
+      }
+
       // 440Hz beep ovoz (A4 nota)
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -306,7 +350,7 @@ const Settings = (() => {
       setTimeout(() => {
         btn.classList.remove('active');
         btn.innerHTML = '<span class="material-icons-round">play_arrow</span> Test';
-        Utils.showToast('Dinamik test muvaffaqiyatli', 'success');
+        Utils.showToast('Dinamik test muvaffaqiyatli (Moslama tanlandi)', 'success');
       }, 900);
     } catch (err) {
       console.error('[Settings] Speaker test error:', err);
