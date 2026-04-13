@@ -385,53 +385,7 @@ body {
   display: flex; align-items: center; gap: 6px; border-radius: 8px; cursor: pointer;
 }
 
-/* ═══ CALLS HISTORY TAB ═════════════════════════════════════════════════ */
-.calls-filters {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-  background: var(--bg-1); padding: 4px; border-radius: 10px; border: 1px solid var(--border);
-  overflow-x: auto;
-}
-.filter-btn {
-  background: transparent; border: none; color: var(--t3);
-  padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: 8px;
-  cursor: pointer; transition: var(--tr); white-space: nowrap;
-}
-.filter-btn:hover { color: var(--t1); background: rgba(255,255,255,.02); }
-.filter-btn.active { background: var(--accent-h); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-
-.calls-list {
-  display: flex !important; flex-direction: column !important; gap: 8px;
-  padding: 10px 0; overflow-y: auto; flex: 1;
-}
-.history-card {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  background: var(--bg-1); border: 1px solid var(--border);
-  padding: 12px 16px; border-radius: 12px;
-  transition: var(--tr);
-}
-.history-card:hover { border-color: var(--border-h); background: rgba(255,255,255,.01); }
-.hc-avatar {
-  width: 42px; height: 42px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; background: var(--bg-2); color: var(--t2);
-  font-size: 16px; font-weight: 700; text-transform: uppercase;
-}
-.hc-avatar.missed-bg { background: rgba(239,68,68,.1); color: var(--red); }
-.hc-details { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.hc-details h4 { margin:0; font-size: 15px; font-weight: 600; color: var(--t1); }
-.hc-details p { margin:0; font-size: 11px; color: var(--t3); display: flex; align-items: center; gap: 4px; }
-.hc-details .type-indicator { font-size: 12px; }
-.hc-duration { padding: 0 10px; }
-.hc-duration .dur-badge {
-  background: var(--bg-2); padding: 4px 10px; border-radius: 6px;
-  font-family: monospace; font-size: 12px; font-weight: 600; color: var(--t2); border: 1px solid var(--border);
-}
-.hc-actions button {
-  background: rgba(255,255,255,.04); border: 1px solid var(--border); padding: 8px; border-radius: 8px;
-  cursor: pointer; color: var(--accent-h); transition: var(--tr); display: flex; align-items: center; justify-content: center;
-}
-.hc-actions button:hover { background: var(--accent-h); color: #fff; border-color: var(--accent-h); }
-.hc-actions .material-icons-round { font-size: 18px; }
+/* Legacy history card configs were removed to favor the modern layout at bottom. */
 
 /* Call Stats */
 .dialer-stats {
