@@ -442,6 +442,36 @@ const UI = {
     }
   },
 
+  addCallToHistory(target, type, durationSeconds = 0) {
+    let history = [];
+    try {
+      history = JSON.parse(localStorage.getItem('call_recordings')) || [];
+    } catch(e) { }
+
+    // Check if target is an object (came from an event payload)
+    const targetStr = typeof target === 'object' ? (target.target || target.callerNumber || "Noma'lum") : (target || "Noma'lum");
+
+    const newRecord = {
+      id: "call_" + Date.now(),
+      target: targetStr,
+      type: type || 'OUTGOING',
+      date: new Date().toLocaleString('uz-UZ'),
+      duration: Utils.formatDuration(durationSeconds)
+    };
+
+    history.unshift(newRecord);
+
+    // Keep history manageable
+    if (history.length > 500) history.pop();
+
+    localStorage.setItem('call_recordings', JSON.stringify(history));
+    
+    // Auto-update UI if open
+    if (typeof this.renderCallHistory === 'function') {
+      this.renderCallHistory();
+    }
+  },
+
   // ═══ INCOMING CALL OVERLAY ══════════════════════════════════════════════
   showIncomingCallUI(data) {
     const num = Utils.$('incoming-caller-number');

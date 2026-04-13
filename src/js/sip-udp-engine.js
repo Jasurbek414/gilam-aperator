@@ -286,9 +286,10 @@ class SipUdpEngine extends EventEmitter {
 
     console.log(`[SIP-UDP] --> BYE`);
     this._send(msg);
+    const lastCall = this.currentCall;
     this.currentCall = null;
     this.mediaEngine.stop();
-    this.emit('callEnded', { reason: 'local_hangup' });
+    this.emit('callEnded', { reason: 'local_hangup', target: lastCall?.targetExt, direction: lastCall?.direction });
   }
 
   // ═══ ANSWER INCOMING CALL ═════════════════════════════════════════════
@@ -336,9 +337,10 @@ class SipUdpEngine extends EventEmitter {
 
     console.log(`[SIP-UDP] --> 486 Busy (Reject)`);
     this._send(msg);
+    const lastCall = this.currentCall;
     this.currentCall = null;
     this.mediaEngine.stop();
-    this.emit('callEnded', { reason: 'rejected' });
+    this.emit('callEnded', { reason: 'rejected', target: lastCall?.targetExt, direction: lastCall?.direction });
   }
 
   // ═══ SDP BUILDER ═══════════════════════════════════════════════════════
@@ -473,8 +475,9 @@ class SipUdpEngine extends EventEmitter {
           
           this._sendNon2xxAck(errCseq, originalBranch);
           this.mediaEngine.stop();
-          this.emit('callFailed', { code, reason });
+          const lastCall = this.currentCall;
           this.currentCall = null;
+          this.emit('callFailed', { code, reason, target: lastCall?.targetExt, direction: lastCall?.direction });
         }
       }
     } else if (method === 'BYE') {
@@ -563,9 +566,10 @@ class SipUdpEngine extends EventEmitter {
       ok += `Content-Length: 0\r\n\r\n`;
       
       this._send(ok);
+      const lastCall = this.currentCall;
       this.currentCall = null;
       this.mediaEngine.stop();
-      this.emit('callEnded', { reason: 'remote_hangup' });
+      this.emit('callEnded', { reason: 'remote_hangup', target: lastCall?.targetExt, direction: lastCall?.direction });
     } else if (method === 'OPTIONS') {
       // Keepalive - respond 200
       const callIdMatch = data.match(/Call-ID:\s*(.*)/i);

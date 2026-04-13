@@ -183,6 +183,13 @@ const SipClient = {
 
     engine.on('callEnded', (data) => {
       console.log(`[SIP] Call ended: ${data.reason}`);
+      
+      const type = data.direction === 'incoming' ? 'INCOMING' : 'OUTGOING';
+      const dur = window.UI && window.UI.activeCallSeconds ? window.UI.activeCallSeconds : 0;
+      if (data.target && window.UI && window.UI.addCallToHistory) {
+        window.UI.addCallToHistory(data.target, type, dur);
+      }
+      
       this.currentSession = null;
       this._cleanupCall();
     });
@@ -195,6 +202,12 @@ const SipClient = {
 
     engine.on('callFailed', (data) => {
       console.log(`[SIP] Call failed: ${data.code} ${data.reason}`);
+      
+      const type = data.direction === 'incoming' ? 'MISSED' : 'OUTGOING';
+      if (data.target && window.UI && window.UI.addCallToHistory) {
+        window.UI.addCallToHistory(data.target, type, 0); // missed calls have 0 duration
+      }
+      
       this.currentSession = null;
       this._cleanupCall();
       Utils.showToast(`❌ Qo'ng'iroq rad etildi: ${data.reason}`, 'error');
