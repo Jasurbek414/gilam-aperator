@@ -102,27 +102,29 @@ class RtpMediaEngine {
 
   async _startAudioContext() {
     this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 8000 });
-    this.scriptProcessor = this.audioCtx.createScriptProcessor(1024, 1, 1);
+    // Use smaller buffer for lower latency
+    this.scriptProcessor = this.audioCtx.createScriptProcessor(512, 1, 1);
 
     let micInputAvailable = false;
+    this.sendBuffer = []; // Outgoing microphone buffer
+    this.sendInterval = null;
 
     try {
       if (!navigator.mediaDevices) {
         throw new Error("MediaDevices API bu kompyuterda ishlamaydi.");
       }
-      this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       this.sourceNode = this.audioCtx.createMediaStreamSource(this.audioStream);
       this.sourceNode.connect(this.scriptProcessor);
       micInputAvailable = true;
-      console.log('[RTP] Audio Context and Microhone running.');
+      console.log('[RTP] Audio capture started successfully.');
     } catch (err) {
       console.error('[RTP] Audio capture failed:', err);
-      window.alert("Mikrofonni yozib olish imkoniyati topilmadi yoki ruxsat etilmagan!\nOvoz jo'natilmaydi, lekin qo'ng'iroq davom etadi.");
-      // Shunday bo'lsa ham bo'sh (silent) RTP jo'natishda davom etamiz, zora Asterisk 4 sekundda uzib yubormasa (rtptimeout)
+      // Fallback
     }
 
     this.scriptProcessor.onaudioprocess = (e) => {
-      // 1. Playback (Incoming audio)
+      // 1. Playback
       const outputBuffer = e.outputBuffer.getChannelData(0);
       let outIdx = 0;
       
@@ -143,42 +145,63 @@ class RtpMediaEngine {
         outputBuffer[outIdx++] = 0;
       }
 
-      // 2. Microhone Capture (Outgoing audio)
-      // Agar mikrofon bo'lmasa, sukut saqlovchi bo'sh buffer jo'natamiz
-      const inputBuffer = micInputAvailable ? e.inputBuffer.getChannelData(0) : new Float32Array(outputBuffer.length);
-      
-      for (let offset = 0; offset < inputBuffer.length; offset += 160) {
-        const size = Math.min(160, inputBuffer.length - offset);
-        const rtpPacket = Buffer.alloc(12 + size);
-        
-        rtpPacket[0] = 0x80; // V=2
-        rtpPacket[1] = 0x00; // PT=0 (PCMU)
-        rtpPacket.writeUInt16BE(this.seq & 0xFFFF, 2); // Seq
-        rtpPacket.writeUInt32BE(this.ts >>> 0, 4); // TS
-        rtpPacket.writeUInt32BE(this.ssrc >>> 0, 8); // SSRC
-
-        for (let i = 0; i < size; i++) {
-          let floatVal = inputBuffer[offset + i];
-          let pcmInt = floatVal * 32767;
-          if (pcmInt > 32767) pcmInt = 32767;
-          if (pcmInt < -32768) pcmInt = -32768;
-          rtpPacket[12 + i] = ulawEncode[pcmInt & 0xFFFF];
+      // 2. Microphone Capture
+      if (micInputAvailable) {
+        const inputData = e.inputBuffer.getChannelData(0);
+        for (let i = 0; i < inputData.length; i++) {
+          this.sendBuffer.push(inputData[i]);
         }
-
-        if (this.rtpSocket && this.remoteIp && this.remotePort) {
-          this.rtpSocket.send(rtpPacket, 0, rtpPacket.length, this.remotePort, this.remoteIp);
-        }
-
-        this.seq++;
-        this.ts += size;
       }
     };
 
     this.scriptProcessor.connect(this.audioCtx.destination);
+
+    // Smooth network transmission (20ms)
+    this.sendInterval = setInterval(() => {
+      // Create silent 160-sample array if no mic or buffer depleted
+      let chunk = new Float32Array(160);
+      if (this.sendBuffer.length >= 160) {
+        for (let i = 0; i < 160; i++) {
+          chunk[i] = this.sendBuffer.shift();
+        }
+      } else if (micInputAvailable) {
+        // Buffer starvation, wait for next tick
+        return;
+      }
+      
+      const rtpPacket = Buffer.alloc(12 + 160);
+      
+      rtpPacket[0] = 0x80; // V=2
+      rtpPacket[1] = 0x00; // PT=0 (PCMU)
+      rtpPacket.writeUInt16BE(this.seq & 0xFFFF, 2); // Seq
+      rtpPacket.writeUInt32BE(this.ts >>> 0, 4); // TS
+      rtpPacket.writeUInt32BE(this.ssrc >>> 0, 8); // SSRC
+
+      for (let i = 0; i < 160; i++) {
+        let pcmInt = chunk[i] * 32767;
+        // Amplify voice slightly
+        pcmInt = pcmInt * 1.5; 
+        if (pcmInt > 32767) pcmInt = 32767;
+        if (pcmInt < -32768) pcmInt = -32768;
+        rtpPacket[12 + i] = ulawEncode[pcmInt & 0xFFFF];
+      }
+
+      if (this.rtpSocket && this.remoteIp && this.remotePort) {
+        this.rtpSocket.send(rtpPacket, 0, rtpPacket.length, this.remotePort, this.remoteIp);
+      }
+
+      this.seq++;
+      this.ts += 160;
+    }, 20); // Exactly every 20ms
   }
 
   stop() {
     console.log('[RTP] Stopping media engine.');
+    if (this.sendInterval) {
+      clearInterval(this.sendInterval);
+      this.sendInterval = null;
+    }
+    this.sendBuffer = [];
     if (this.scriptProcessor) {
       this.scriptProcessor.disconnect();
       this.scriptProcessor = null;
