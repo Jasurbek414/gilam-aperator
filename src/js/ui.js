@@ -15,6 +15,27 @@ const UI = {
     this.renderDialerLines();
     this.renderCampLinesTab();
     this.renderCallHistory('all');
+    this.loadCampaignDropdown();
+  },
+
+  async loadCampaignDropdown() {
+    try {
+      if (!window.Api) return;
+      const res = await window.Api.getCampaigns();
+      const select = Utils.$('sip-campaign');
+      if (select && res && Array.isArray(res.data)) {
+        // Asosiy default option qolaveradi
+        select.innerHTML = `<option value="Umumiy Kampaniya" selected>Umumiy Kampaniya</option>`;
+        res.data.forEach(camp => {
+          let opt = document.createElement('option');
+          opt.value = camp.name;
+          opt.textContent = camp.name;
+          select.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.warn("Kampaniyalarni yuklashda xatolik (login bo'lmagan bo'lishi mumkin):", err);
+    }
   },
 
   showScreen(name) {

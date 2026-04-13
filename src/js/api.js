@@ -75,6 +75,10 @@ const Api = {
     return data.user;
   },
 
+  getCampaigns() {
+    return this.request('/api/campaigns', { method: 'GET' });
+  },
+
   socket: null,
 
   connectSocket() {
