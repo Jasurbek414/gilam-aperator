@@ -1523,6 +1523,201 @@ textarea.crm-input { resize: none; }
 .map-coords .material-icons-round { font-size: 14px; color: var(--accent-h); }
 .map-actions { display: flex; gap: 6px; }
 
+/* ═══ LIST TABS & CARDS (HISTORY, RECORDINGS, CONTACTS) ══════════════ */
+.list-container-centered {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+  gap: 16px;
+}
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tab-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--t1);
+  margin: 0;
+}
+.calls-filters {
+  display: flex;
+  gap: 8px;
+  background: var(--bg-1);
+  padding: 6px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+}
+.filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--t2);
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: var(--tr);
+}
+.filter-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--t1);
+}
+.filter-btn.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(99,102,241,0.3);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0 16px;
+  gap: 12px;
+  transition: border-color var(--tr);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.search-bar:focus-within {
+  border-color: var(--accent);
+}
+.search-bar .material-icons-round {
+  color: var(--t3);
+  font-size: 20px;
+}
+.search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 14px 0;
+  color: var(--t1);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+.search-bar input::placeholder {
+  color: var(--t3);
+}
+
+.calls-list, .contacts-list, .sms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-bottom: 24px;
+  flex: 1;
+  padding-right: 8px; /* For scrollbar */
+}
+.calls-list::-webkit-scrollbar, 
+.contacts-list::-webkit-scrollbar, 
+.sms-list::-webkit-scrollbar {
+  width: 6px;
+}
+.calls-list::-webkit-scrollbar-thumb, 
+.contacts-list::-webkit-scrollbar-thumb, 
+.sms-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+/* History Card */
+.history-card {
+  display: flex;
+  align-items: center;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 20px;
+  gap: 16px;
+  transition: transform var(--tr), box-shadow var(--tr), border-color var(--tr);
+}
+.history-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+.hc-avatar {
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), #4f46e5);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  text-transform: uppercase;
+}
+.hc-avatar.missed-bg {
+  background: linear-gradient(135deg, var(--red), #b91c1c);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+.hc-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hc-details h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--t1);
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+.hc-details p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--t3);
+  margin: 0;
+}
+.type-indicator {
+  font-size: 14px;
+}
+.hc-duration {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--t2);
+  min-width: 60px;
+  text-align: center;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.hc-actions {
+  display: flex;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+.hc-actions .btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all var(--tr);
+}
+.hc-actions .btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: .3; }
