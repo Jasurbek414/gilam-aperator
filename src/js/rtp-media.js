@@ -101,79 +101,80 @@ class RtpMediaEngine {
   }
 
   async _startAudioContext() {
+    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 8000 });
+    this.scriptProcessor = this.audioCtx.createScriptProcessor(1024, 1, 1);
+
+    let micInputAvailable = false;
+
     try {
+      if (!navigator.mediaDevices) {
+        throw new Error("MediaDevices API bu kompyuterda ishlamaydi.");
+      }
       this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 8000 });
-      
       this.sourceNode = this.audioCtx.createMediaStreamSource(this.audioStream);
-      // 2048 at 8000Hz is ~256ms chunk. Asterisk prefers 20ms chunks (160 bytes). 
-      // ScriptProcessor is deprecated but easiest for 2-way without separate files.
-      // We'll process larger chunks and break them down into 160-byte packets.
-      this.scriptProcessor = this.audioCtx.createScriptProcessor(1024, 1, 1);
-
-      this.scriptProcessor.onaudioprocess = (e) => {
-        // 1. Playback (Incoming audio)
-        const outputBuffer = e.outputBuffer.getChannelData(0);
-        let outIdx = 0;
-        
-        // Fill output buffer from jitter buffer
-        while (outIdx < outputBuffer.length && this.jitterBuffer.length > 0) {
-          let chunk = this.jitterBuffer[0];
-          let space = outputBuffer.length - outIdx;
-          if (chunk.length <= space) {
-            outputBuffer.set(chunk, outIdx);
-            outIdx += chunk.length;
-            this.jitterBuffer.shift();
-          } else {
-            outputBuffer.set(chunk.slice(0, space), outIdx);
-            this.jitterBuffer[0] = chunk.slice(space);
-            outIdx += space;
-          }
-        }
-        // If not enough incoming audio, fill rest with silence
-        while (outIdx < outputBuffer.length) {
-          outputBuffer[outIdx++] = 0;
-        }
-
-        // 2. Microhone Capture (Outgoing audio)
-        const inputBuffer = e.inputBuffer.getChannelData(0);
-        // Break into 160-sample chunks for RTP
-        for (let offset = 0; offset < inputBuffer.length; offset += 160) {
-          const size = Math.min(160, inputBuffer.length - offset);
-          const rtpPacket = Buffer.alloc(12 + size);
-          
-          // RTP Header
-          rtpPacket[0] = 0x80; // V=2
-          rtpPacket[1] = 0x00; // PT=0 (PCMU)
-          rtpPacket.writeUInt16BE(this.seq & 0xFFFF, 2); // Seq
-          rtpPacket.writeUInt32BE(this.ts >>> 0, 4); // TS
-          rtpPacket.writeUInt32BE(this.ssrc >>> 0, 8); // SSRC
-
-          // Payload encode
-          for (let i = 0; i < size; i++) {
-            let floatVal = inputBuffer[offset + i];
-            let pcmInt = floatVal * 32767;
-            if (pcmInt > 32767) pcmInt = 32767;
-            if (pcmInt < -32768) pcmInt = -32768;
-            rtpPacket[12 + i] = ulawEncode[pcmInt & 0xFFFF];
-          }
-
-          if (this.rtpSocket && this.remoteIp && this.remotePort) {
-            this.rtpSocket.send(rtpPacket, 0, rtpPacket.length, this.remotePort, this.remoteIp);
-          }
-
-          this.seq++;
-          this.ts += size;
-        }
-      };
-
       this.sourceNode.connect(this.scriptProcessor);
-      this.scriptProcessor.connect(this.audioCtx.destination);
-      
+      micInputAvailable = true;
       console.log('[RTP] Audio Context and Microhone running.');
     } catch (err) {
       console.error('[RTP] Audio capture failed:', err);
+      window.alert("Mikrofonni yozib olish imkoniyati topilmadi yoki ruxsat etilmagan!\nOvoz jo'natilmaydi, lekin qo'ng'iroq davom etadi.");
+      // Shunday bo'lsa ham bo'sh (silent) RTP jo'natishda davom etamiz, zora Asterisk 4 sekundda uzib yubormasa (rtptimeout)
     }
+
+    this.scriptProcessor.onaudioprocess = (e) => {
+      // 1. Playback (Incoming audio)
+      const outputBuffer = e.outputBuffer.getChannelData(0);
+      let outIdx = 0;
+      
+      while (outIdx < outputBuffer.length && this.jitterBuffer.length > 0) {
+        let chunk = this.jitterBuffer[0];
+        let space = outputBuffer.length - outIdx;
+        if (chunk.length <= space) {
+          outputBuffer.set(chunk, outIdx);
+          outIdx += chunk.length;
+          this.jitterBuffer.shift();
+        } else {
+          outputBuffer.set(chunk.slice(0, space), outIdx);
+          this.jitterBuffer[0] = chunk.slice(space);
+          outIdx += space;
+        }
+      }
+      while (outIdx < outputBuffer.length) {
+        outputBuffer[outIdx++] = 0;
+      }
+
+      // 2. Microhone Capture (Outgoing audio)
+      // Agar mikrofon bo'lmasa, sukut saqlovchi bo'sh buffer jo'natamiz
+      const inputBuffer = micInputAvailable ? e.inputBuffer.getChannelData(0) : new Float32Array(outputBuffer.length);
+      
+      for (let offset = 0; offset < inputBuffer.length; offset += 160) {
+        const size = Math.min(160, inputBuffer.length - offset);
+        const rtpPacket = Buffer.alloc(12 + size);
+        
+        rtpPacket[0] = 0x80; // V=2
+        rtpPacket[1] = 0x00; // PT=0 (PCMU)
+        rtpPacket.writeUInt16BE(this.seq & 0xFFFF, 2); // Seq
+        rtpPacket.writeUInt32BE(this.ts >>> 0, 4); // TS
+        rtpPacket.writeUInt32BE(this.ssrc >>> 0, 8); // SSRC
+
+        for (let i = 0; i < size; i++) {
+          let floatVal = inputBuffer[offset + i];
+          let pcmInt = floatVal * 32767;
+          if (pcmInt > 32767) pcmInt = 32767;
+          if (pcmInt < -32768) pcmInt = -32768;
+          rtpPacket[12 + i] = ulawEncode[pcmInt & 0xFFFF];
+        }
+
+        if (this.rtpSocket && this.remoteIp && this.remotePort) {
+          this.rtpSocket.send(rtpPacket, 0, rtpPacket.length, this.remotePort, this.remoteIp);
+        }
+
+        this.seq++;
+        this.ts += size;
+      }
+    };
+
+    this.scriptProcessor.connect(this.audioCtx.destination);
   }
 
   stop() {
