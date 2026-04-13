@@ -87,27 +87,74 @@
 </div>
 
 <!-- SMS TAB -->
-<div class="tab-content" id="tab-sms">
-  <div class="list-container-centered">
-    <div class="tab-header">
-      <h2>SMS xabarlar</h2>
-    </div>
-    <div class="sms-compose">
-      <div class="form-group">
-        <input type="text" id="sms-to" placeholder="Qabul qiluvchi raqam" autocomplete="off">
+<div class="tab-content" id="tab-sms" style="padding: 0; background: var(--bg-0);">
+  <div class="sms-telegram-layout">
+    
+    <!-- LEFT SIDEBAR: Contacts / Chats -->
+    <div class="tg-sidebar">
+      <div class="tg-sidebar-header">
+        <div class="search-bar tg-search">
+          <span class="material-icons-round">search</span>
+          <input type="text" id="sms-search" placeholder="Qidirish..." autocomplete="off">
+        </div>
+        <button class="btn-icon tg-new-chat-btn" title="Yangi xabar" onclick="document.getElementById('sms-to').focus();">
+          <span class="material-icons-round">edit_square</span>
+        </button>
       </div>
-      <div class="form-group">
-        <textarea id="sms-text" placeholder="Xabar matni..." rows="3"></textarea>
+      
+      <div class="tg-chat-list" id="sms-chat-list">
+        <!-- Dynamic item example -->
+        <div class="tg-chat-item active">
+          <div class="tg-avatar">#</div>
+          <div class="tg-chat-info">
+            <div class="tg-chat-top">
+              <h4>Yangi xabar</h4>
+            </div>
+            <div class="tg-chat-bottom">
+              <p>Raqam kiritib xabar yuboring</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <button class="btn-primary btn-sm" id="btn-send-sms">
-        <span class="material-icons-round">send</span>
-        Yuborish
-      </button>
     </div>
-    <div id="sms-list" class="sms-list">
-      <div class="empty-state">
-        <span class="material-icons-round">sms</span>
-        <p>SMS xabarlar bo'sh</p>
+
+    <!-- RIGHT MAIN AREA: Chat / Compose -->
+    <div class="tg-main-area">
+      <!-- HEADER -->
+      <div class="tg-chat-header">
+        <div class="tg-chat-target">
+          <div class="tg-target-info">
+            <label for="sms-to">Qabul qiluvchi:</label>
+            <input type="text" id="sms-to" class="tg-target-input" placeholder="+998 90 123 45 67" autocomplete="off" focus>
+          </div>
+        </div>
+        <div class="tg-chat-actions">
+          <button class="btn-icon"><span class="material-icons-round">more_vert</span></button>
+        </div>
+      </div>
+      
+      <!-- MESSAGES HISTORY -->
+      <div class="tg-chat-history" id="sms-history-area">
+        <div class="tg-empty-chat">
+          <div class="tg-empty-icon">
+            <span class="material-icons-round">question_answer</span>
+          </div>
+          <p>Mijozga xabar yozish uchun pastdagi maydondan foydalaning</p>
+          <span class="tg-empty-sub">Xabarlar to'g'ridan-to'g'ri integratsiya orqali yetkaziladi.</span>
+        </div>
+      </div>
+
+      <!-- INPUT AREA -->
+      <div class="tg-input-area">
+        <button class="btn-icon tg-attach" title="Fayl biriktirish (Tez kunda)">
+          <span class="material-icons-round">attach_file</span>
+        </button>
+        <div class="tg-input-wrapper">
+          <textarea id="sms-text" rows="1" placeholder="Xabar matni..." autocomplete="off" oninput="this.style.height = '';this.style.height = Math.min(this.scrollHeight, 120) + 'px'"></textarea>
+        </div>
+        <button class="tg-send-btn" id="btn-send-sms">
+          <span class="material-icons-round">send</span>
+        </button>
       </div>
     </div>
   </div>
