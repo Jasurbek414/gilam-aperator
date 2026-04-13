@@ -144,25 +144,7 @@ const UI = {
         Utils.showToast("Oxirgi raqam topilmadi", "warning");
       }
     });
-    // Transfer
-    Utils.$('dq-transfer')?.addEventListener('click', () => {
-      if (window.SipClient?.transfer) {
-        const target = prompt("Yo'naltirish raqami:");
-        if (target) window.SipClient.transfer(target);
-      } else {
-        Utils.showToast("Hozir faol qo'ng'iroq yo'q", "warning");
-      }
-    });
-    // Hold
-    Utils.$('dq-hold')?.addEventListener('click', () => {
-      if (window.SipClient?.hold) window.SipClient.hold();
-      else Utils.showToast("Kutish funksiyasi mavjud emas", "warning");
-    });
-    // Mute
-    Utils.$('dq-mute')?.addEventListener('click', () => {
-      if (window.SipClient?.mute) window.SipClient.mute();
-      else Utils.showToast("Mute funksiyasi mavjud emas", "warning");
-    });
+    // Transfer, Hold, Mute bindings are handled in sip-client.js 
 
     // Store last dialed
     const origMakeCall = window.SipClient?.makeCall;

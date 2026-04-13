@@ -485,32 +485,44 @@ const SipClient = {
 
   // ═══ MUTE/HOLD UI UPDATE ════════════════════════════════════════════════
   _updateMuteHoldUI() {
-    const muteBtn = Utils.$('btn-mute');
-    const holdBtn = Utils.$('btn-hold');
+    const muteBtns = [Utils.$('btn-mute'), Utils.$('dq-mute')];
+    const holdBtns = [Utils.$('btn-hold'), Utils.$('dq-hold')];
     
-    if (muteBtn) {
-      const icon = muteBtn.querySelector('.material-icons-round');
-      if (icon) icon.textContent = this.isMuted ? 'mic_off' : 'mic';
-      muteBtn.classList.toggle('active', this.isMuted);
-    }
-    
-    if (holdBtn) {
-      const icon = holdBtn.querySelector('.material-icons-round');
-      if (icon) icon.textContent = this.isOnHold ? 'play_arrow' : 'pause';
-      holdBtn.classList.toggle('active', this.isOnHold);
-    }
+    muteBtns.forEach((btn) => {
+      if (btn) {
+        const icon = btn.querySelector('.material-icons-round');
+        if (icon) icon.textContent = this.isMuted ? 'mic_off' : 'mic';
+        btn.classList.toggle('active', this.isMuted);
+      }
+    });
+
+    holdBtns.forEach((btn) => {
+      if (btn) {
+        const icon = btn.querySelector('.material-icons-round');
+        if (icon) icon.textContent = this.isOnHold ? 'play_arrow' : 'pause';
+        btn.classList.toggle('active', this.isOnHold);
+      }
+    });
   },
 
   _bindMuteHoldButtons() {
     Utils.$('btn-mute')?.addEventListener('click', () => this.toggleMute());
     Utils.$('btn-hold')?.addEventListener('click', () => this.toggleHold());
-    Utils.$('btn-record')?.addEventListener('click', () => this.toggleRecord());
+    Utils.$('dq-mute')?.addEventListener('click', () => this.toggleMute());
+    Utils.$('dq-hold')?.addEventListener('click', () => this.toggleHold());
     
-    // Transfer tugmasi
-    Utils.$('btn-transfer')?.addEventListener('click', () => {
-      const target = prompt('Transfer raqamini kiriting:');
-      if (target) this.transfer(target);
+    // Yozib olish tugmasi hozircha simulatsiya qilinadi, chunki RtpMediaEngine o'zi yozmaydi
+    Utils.$('btn-record')?.addEventListener('click', () => {
+      Utils.showToast("Yozib olish funksiyasi ATS orqali serverda saqlanmoqda", "info");
     });
+    
+    // Transfer tugmalari
+    const doTransfer = () => {
+      const target = prompt("Yo'naltirish uchun raqamni yoki ext-ni kiriting:");
+      if (target) this.transfer(target);
+    };
+    Utils.$('btn-transfer')?.addEventListener('click', doTransfer);
+    Utils.$('dq-transfer')?.addEventListener('click', doTransfer);
 
     // Volume slider
     Utils.$('volume-slider')?.addEventListener('input', (e) => {
