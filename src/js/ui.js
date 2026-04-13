@@ -558,45 +558,50 @@ const UI = {
 
   renderCallHistory(filter = 'all') {
     const list = Utils.$('calls-list');
-    if (!list) return;
+    const dashboardList = Utils.$('dashboard-calls-list');
+    if (!list && !dashboardList) return;
 
     let history = [];
     try {
       history = JSON.parse(localStorage.getItem('call_recordings')) || [];
     } catch(e) {}
     
-    // Add mock history if it is empty so they can see the design
-    if (history.length === 0) {
-      history = [
-        { id: 1, date: new Date(Date.now() - 1000 * 60 * 5).toISOString(), target: '+998901234567', duration: 125, type: 'INCOMING' },
-        { id: 2, date: new Date(Date.now() - 1000 * 60 * 60).toISOString(), target: '+998991112233', duration: 0, type: 'MISSED' },
-        { id: 3, date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), target: '+998941112233', duration: 45, type: 'OUTGOING' },
-        { id: 4, date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), target: '+998971112233', duration: 320, type: 'INCOMING' }
-      ];
-      localStorage.setItem('call_recordings', JSON.stringify(history));
-    }
-
     // Filter logic
     let filtered = history;
     if (filter !== 'all') {
       filtered = history.filter(h => h.type === filter || (!h.type && filter === 'INCOMING')); // fallback old recordings to INCOMING
     }
 
+    const emptyHtml = `<div class="empty-state">
+      <span class="material-icons-round">history</span>
+      <p>Qo'ng'iroqlar tarixi bo'sh</p>
+    </div>`;
+    
+    const dashboardEmptyHtml = `<div class="crm-empty">
+      <span class="material-icons-round">phone_disabled</span>
+      <span>Hozircha qo'ng'iroqlar yo'q</span>
+    </div>`;
+
     if (filtered.length === 0) {
-      list.innerHTML = `<div class="empty-state">
-        <span class="material-icons-round">history</span>
-        <p>Qo'ng'iroqlar tarixi bo'sh</p>
-      </div>`;
+      if (list) list.innerHTML = emptyHtml;
+      if (dashboardList) dashboardList.innerHTML = dashboardEmptyHtml;
       return;
     }
 
-    list.innerHTML = '';
+    if (list) list.innerHTML = '';
+    if (dashboardList) dashboardList.innerHTML = '';
     
-    filtered.forEach(call => {
+    filtered.forEach((call, index) => {
       const date = new Date(call.date);
-      const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      const dateStr = date.toLocaleDateString();
-      const durStr = window.Utils.formatDuration(call.duration || 0);
+      let timeStr = '', dateStr = '';
+      try {
+        timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        dateStr = date.toLocaleDateString();
+      } catch(e) {
+        timeStr = call.date.split(' ')[1] || '';
+        dateStr = call.date.split(' ')[0] || call.date;
+      }
+      const durStr = call.duration || '00:00';
       
       let typeIcon = 'call_received';
       let typeCol = 'var(--green)';
@@ -609,7 +614,7 @@ const UI = {
       }
       
       // Determine if it's a known contact
-      let contactName = call.target;
+      let contactName = call.target || "Noma'lum";
       let initials = '#';
       let recognized = false;
       if (window.CRM && window.CRM.allContacts) {
@@ -623,36 +628,67 @@ const UI = {
       
       // Audio Recording logic
       const hasAudio = call.data ? true : false;
-      
-      const div = document.createElement('div');
-      div.className = 'history-card';
-      div.innerHTML = `
-        <div class="hc-avatar ${isMissed ? 'missed-bg' : ''}">${initials}</div>
-        <div class="hc-details">
-          <h4 style="${isMissed ? 'color: var(--red);' : ''}">${contactName}</h4>
-          <p>
-            <span class="material-icons-round type-indicator" style="color: ${typeCol}">${typeIcon}</span> 
-            ${dateStr} • ${timeStr}
-          </p>
-        </div>
-        <div class="hc-duration">
-          ${call.duration ? `<span class="dur-badge">${durStr}</span>` : '<span class="status-badge offline" style="font-size:10px;padding:3px 8px;">Javobsiz</span>'}
-        </div>
-        <div class="hc-actions">
-          ${hasAudio ? `
-          <button class="btn-icon" onclick="window.UI.playRecording('${call.id}')" title="Eshitish">
-            <span class="material-icons-round">play_arrow</span>
-          </button>` : ''}
-          ${!recognized ? `
-          <button class="btn-icon" onclick="document.getElementById('new-customer-phone1').value='${call.target}'; document.getElementById('modal-new-customer').style.display='flex';" title="Mijoz sifatida saqlash">
-            <span class="material-icons-round">person_add</span>
-          </button>` : ''}
-          <button class="btn-icon history-call-btn" onclick="document.getElementById('dial-number').value='${call.target}'; window.UI.switchTab('dialer');" title="Qong'iroq qilish">
-            <span class="material-icons-round">call</span>
+
+      // 1. Populate full history tab (calls-list)
+      if (list) {
+        const div = document.createElement('div');
+        div.className = 'history-card';
+        div.innerHTML = `
+          <div class="hc-avatar ${isMissed ? 'missed-bg' : ''}">${initials}</div>
+          <div class="hc-details">
+            <h4 style="${isMissed ? 'color: var(--red);' : ''}">${contactName}</h4>
+            <p>
+              <span class="material-icons-round type-indicator" style="color: ${typeCol}">${typeIcon}</span> 
+              ${dateStr} • ${timeStr}
+            </p>
+          </div>
+          <div class="hc-duration">
+            ${call.duration && call.duration !== '00:00' ? `<span class="dur-badge">${durStr}</span>` : '<span class="status-badge offline" style="font-size:10px;padding:3px 8px;">Javobsiz</span>'}
+          </div>
+          <div class="hc-actions">
+            ${hasAudio ? `
+            <button class="btn-icon" onclick="window.UI.playRecording('${call.id}')" title="Eshitish">
+              <span class="material-icons-round">play_arrow</span>
+            </button>` : ''}
+            ${!recognized ? `
+            <button class="btn-icon" onclick="document.getElementById('new-customer-phone1').value='${call.target}'; document.getElementById('modal-new-customer').style.display='flex';" title="Mijoz sifatida saqlash">
+              <span class="material-icons-round">person_add</span>
+            </button>` : ''}
+            <button class="btn-icon history-call-btn" onclick="document.getElementById('dial-number').value='${call.target}'; window.UI.switchTab('dialer');" title="Qong'iroq qilish">
+              <span class="material-icons-round">call</span>
+            </button>
+            <button class="btn-icon" onclick="window.UI.deleteCallRecord('${call.id}')" title="O'chirish">
+              <span class="material-icons-round" style="color: var(--danger)">delete_outline</span>
+            </button>
+          </div>
+        `;
+        list.appendChild(div);
+      }
+
+      // 2. Populate dashboard shortcut (limit to 5)
+      if (dashboardList && index < 5) {
+        const dDiv = document.createElement('div');
+        dDiv.className = 'crm-history-item';
+        dDiv.style.display = 'flex';
+        dDiv.style.alignItems = 'center';
+        dDiv.style.justifyContent = 'space-between';
+        dDiv.style.padding = '8px 0';
+        dDiv.style.borderBottom = '1px solid var(--border-light)';
+        
+        dDiv.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round" style="color: ${typeCol}; font-size: 16px;">${typeIcon}</span>
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-size: 13px; font-weight: 500;">${contactName}</span>
+              <span style="font-size: 11px; color: var(--text-muted);">${timeStr} • ${durStr}</span>
+            </div>
+          </div>
+          <button class="btn-icon" onclick="document.getElementById('dial-number').value='${call.target}';" style="transform: scale(0.8);">
+            <span class="material-icons-round" style="color: var(--success)">call</span>
           </button>
-        </div>
-      `;
-      list.appendChild(div);
+        `;
+        dashboardList.appendChild(dDiv);
+      }
     });
   },
   
