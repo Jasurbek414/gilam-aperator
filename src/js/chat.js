@@ -53,12 +53,14 @@ const ChatManager = {
 
   async loadConversations() {
      try {
-       const res = await API.get('/messages/conversations');
+       const res = await window.Api.request('/messages/conversations');
        this.elements.driversList.innerHTML = '<span style="font-size: 11px; color: #64748b; margin-right:4px;">Haydovchilar:</span>';
-       res.forEach(user => {
-         this.drivers[user.id] = user;
-         this.addDriverBadge(user);
-       });
+       if(res && Array.isArray(res)) {
+         res.forEach(user => {
+           this.drivers[user.id] = user;
+           this.addDriverBadge(user);
+         });
+       }
      } catch(e) { console.error('Load conv error', e); }
   },
 
@@ -90,9 +92,11 @@ const ChatManager = {
      });
 
      try {
-       const history = await API.get(`/messages/history/${userId}`);
+       const history = await window.Api.request(`/messages/history/${userId}`);
        this.elements.messagesBox.innerHTML = '';
-       history.forEach(m => this.renderMessage(m));
+       if (history && Array.isArray(history)) {
+         history.forEach(m => this.renderMessage(m));
+       }
        this.scrollToBottom();
      } catch (e) {}
   },
@@ -108,7 +112,9 @@ const ChatManager = {
         this.scrollToBottom();
      } else {
         // notification logic
-        ui.showToast(`Yangi xabar: ${msg.sender?.fullName || 'Haydovchi'}`);
+        if (window.UI && window.UI.showToast) {
+           window.UI.showToast(`Yangi xabar: ${msg.sender?.fullName || 'Haydovchi'}`);
+        }
      }
   },
 
