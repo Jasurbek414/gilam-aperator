@@ -128,6 +128,11 @@ class RtpMediaEngine {
       const outputBuffer = e.outputBuffer.getChannelData(0);
       let outIdx = 0;
       
+      // If on hold, do not play the jitter buffer and just drain it
+      if (this.isOnHold) {
+        this.jitterBuffer = [];
+      }
+      
       while (outIdx < outputBuffer.length && this.jitterBuffer.length > 0) {
         let chunk = this.jitterBuffer[0];
         let space = outputBuffer.length - outIdx;
@@ -168,6 +173,11 @@ class RtpMediaEngine {
         // Buffer starvation, wait for next tick
         return;
       }
+
+      // If muted or hold, force chunk to absolute silence
+      if (this.isMuted || this.isOnHold) {
+        for (let i = 0; i < 160; i++) chunk[i] = 0;
+      }
       
       const rtpPacket = Buffer.alloc(12 + 160);
       
@@ -193,6 +203,16 @@ class RtpMediaEngine {
       this.seq++;
       this.ts += 160;
     }, 20); // Exactly every 20ms
+  }
+
+  setMute(state) {
+    this.isMuted = state;
+    console.log(`[RTP] Mute set to: ${state}`);
+  }
+
+  setHold(state) {
+    this.isOnHold = state;
+    console.log(`[RTP] Hold set to: ${state}`);
   }
 
   stop() {

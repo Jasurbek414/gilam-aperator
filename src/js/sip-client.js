@@ -414,15 +414,11 @@ const SipClient = {
   toggleMute() {
     if (!this.currentSession) return;
     
-    if (this.isMuted) {
-      this.currentSession.unmute({ audio: true });
-      this.isMuted = false;
-      Utils.showToast('🎤 Mikrofon yoqildi', 'info');
-    } else {
-      this.currentSession.mute({ audio: true });
-      this.isMuted = true;
-      Utils.showToast('🔇 Mikrofon o\'chirildi', 'info');
+    this.isMuted = !this.isMuted;
+    if (this.currentSession.mediaEngine) {
+      this.currentSession.mediaEngine.setMute(this.isMuted);
     }
+    Utils.showToast(this.isMuted ? "🔇 Mikrofon o'chirildi" : "🎤 Mikrofon yoqildi", 'info');
     this._updateMuteHoldUI();
   },
 
@@ -430,15 +426,11 @@ const SipClient = {
   toggleHold() {
     if (!this.currentSession) return;
     
-    if (this.isOnHold) {
-      this.currentSession.unhold();
-      this.isOnHold = false;
-      Utils.showToast('▶️ Suhbat davom ettirildi', 'info');
-    } else {
-      this.currentSession.hold();
-      this.isOnHold = true;
-      Utils.showToast('⏸️ Kutish rejimida', 'info');
+    this.isOnHold = !this.isOnHold;
+    if (this.currentSession.mediaEngine) {
+      this.currentSession.mediaEngine.setHold(this.isOnHold);
     }
+    Utils.showToast(this.isOnHold ? "⏸️ Kutish rejimida" : "▶️ Suhbat davom ettirildi", 'info');
     this._updateMuteHoldUI();
   },
 
@@ -463,16 +455,8 @@ const SipClient = {
       return;
     }
     
-    const activeKey = Object.keys(this.activeSipLines).find(
-      id => this.activeSipLines[id].isRegistered
-    );
-    if (!activeKey) return;
-    
-    const realm = this._extractRealm(this.activeSipLines[activeKey].acc.domain);
-    const referUri = `sip:${target}@${realm}`;
-    
     try {
-      this.currentSession.refer(referUri);
+      this.currentSession.refer(target);
       Utils.showToast(`📲 Qo'ng'iroq ${target} ga o'tkazilmoqda...`, 'info');
     } catch(e) {
       Utils.showToast(`Transfer xatosi: ${e.message}`, 'error');

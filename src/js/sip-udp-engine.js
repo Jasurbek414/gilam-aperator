@@ -595,6 +595,32 @@ class SipUdpEngine extends EventEmitter {
     }
   }
 
+  // ═══ TRANSFER (REFER) ═════════════════════════════════════════════════
+  refer(targetExt) {
+    if (!this.currentCall || this.currentCall.state !== 'ANSWERED') {
+      throw new Error("Active call required for transfer");
+    }
+    
+    this.cseq++;
+    const branch = this._branch();
+    const referTo = `<sip:${targetExt}@${this.sipServer}>`;
+
+    let msg = `REFER sip:${this.currentCall.targetExt}@${this.sipServer} SIP/2.0\r\n`;
+    msg += `Via: SIP/2.0/UDP ${this.localIp}:${this.localPort};rport;branch=${branch}\r\n`;
+    msg += `Max-Forwards: 70\r\n`;
+    msg += `From: "${this.displayName}" <sip:${this.extension}@${this.sipServer}>;tag=${this.currentCall.fromTag || this.tag}\r\n`;
+    msg += `To: <sip:${this.currentCall.targetExt}@${this.sipServer}>${this.currentCall.toTag ? ';tag=' + this.currentCall.toTag : ''}\r\n`;
+    msg += `Call-ID: ${this.currentCall.callId}\r\n`;
+    msg += `CSeq: ${this.cseq} REFER\r\n`;
+    msg += `Refer-To: ${referTo}\r\n`;
+    msg += `Referred-By: <sip:${this.extension}@${this.sipServer}>\r\n`;
+    msg += `User-Agent: GilamOperator/2.0\r\n`;
+    msg += `Content-Length: 0\r\n\r\n`;
+    
+    console.log(`[SIP-UDP] --> REFER ${targetExt}`);
+    this._send(msg);
+  }
+
   _sendAck(cseqOverride) {
     if (!this.currentCall) return;
     
