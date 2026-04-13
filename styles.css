@@ -777,16 +777,42 @@ textarea.crm-input { resize: none; }
 }
 
 /* ═══ CALL OVERLAYS ═══════════════════════════════════════════════════ */
-#active-call-overlay, #incoming-call-overlay {
+
+/* Incoming call — fullscreen uchun (qaratadi diqqatni) */
+#incoming-call-overlay {
   position: fixed; inset: 0; z-index: 1000;
   display: flex; align-items: center; justify-content: center;
 }
-.call-overlay-bg, .incoming-overlay-bg {
+
+/* Active call — COMPACT panel (dialer ustiga, butun oynani qoplamaydi) */
+#active-call-overlay {
+  position: fixed; z-index: 900;
+  top: 36px; left: 60px;
+  width: calc(280px); /* sidebar width + dialer width ga mos */
+  bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: auto;
+}
+
+.call-overlay-bg {
+  position: absolute; inset: 0;
+  background: rgba(8,8,16,.96);
+  backdrop-filter: blur(14px);
+  border-right: 1px solid var(--border);
+}
+.incoming-overlay-bg {
   position: absolute; inset: 0;
   background: rgba(8,8,16,.94);
   backdrop-filter: blur(20px);
 }
-.call-overlay-content, .incoming-overlay-content {
+
+.call-overlay-content {
+  position: relative; z-index: 2;
+  text-align: center;
+  max-width: 260px; width: 90%;
+  animation: ovIn .3s ease;
+}
+.incoming-overlay-content {
   position: relative; z-index: 2;
   text-align: center;
   max-width: 360px; width: 90%;
@@ -794,12 +820,12 @@ textarea.crm-input { resize: none; }
 }
 @keyframes ovIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
 
-.call-status-label { font-size: 11px; color: var(--t3); text-transform: uppercase; letter-spacing: .15em; font-weight: 600; margin-bottom: 6px; }
-.call-target-number { font-size: 28px; font-weight: 700; letter-spacing: .04em; margin-bottom: 2px; }
-.call-target-name { font-size: 13px; color: var(--t2); }
-.call-timer { font-size: 16px; font-weight: 600; color: var(--green); font-family: monospace; letter-spacing: .1em; margin: 4px 0 16px; }
+.call-status-label { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: .15em; font-weight: 600; margin-bottom: 4px; }
+.call-target-number { font-size: 22px; font-weight: 700; letter-spacing: .04em; margin-bottom: 2px; }
+.call-target-name { font-size: 12px; color: var(--t2); }
+.call-timer { font-size: 15px; font-weight: 600; color: var(--green); font-family: monospace; letter-spacing: .1em; margin: 4px 0 10px; }
 
-.call-wave, .incoming-wave { position: relative; width: 100px; height: 100px; margin: 14px auto 20px; }
+.call-wave, .incoming-wave { position: relative; width: 80px; height: 80px; margin: 10px auto 14px; }
 .wave-ring {
   position: absolute; inset: 0; border: 2px solid var(--accent); border-radius: 50%;
   opacity: 0; animation: wr 2s ease-out infinite;
@@ -815,17 +841,19 @@ textarea.crm-input { resize: none; }
   display: flex; align-items: center; justify-content: center;
   color: var(--accent-h);
 }
-.call-avatar .material-icons-round, .incoming-avatar .material-icons-round { font-size: 28px; }
+.call-avatar .material-icons-round { font-size: 22px; }
+.incoming-avatar .material-icons-round { font-size: 28px; }
 .incoming-avatar { background: var(--green-bg); border-color: rgba(34,197,94,.25); color: var(--green); }
 
-.call-overlay-actions { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.call-overlay-actions { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
 .btn-call-action {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
   background: rgba(255,255,255,.04); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 10px 12px;
-  color: var(--t2); transition: var(--tr); min-width: 50px;
-  cursor: pointer;
+  border-radius: var(--r); padding: 8px 10px;
+  color: var(--t2); transition: var(--tr); min-width: 44px;
+  cursor: pointer; font-size: 10px;
 }
+.btn-call-action .material-icons-round { font-size: 18px; }
 .btn-call-action:hover { background: rgba(255,255,255,.07); color: var(--t1); }
 .btn-call-action.active { background: var(--accent-bg); color: var(--accent-h); border-color: var(--accent-border); }
 .btn-call-action .material-icons-round { font-size: 20px; }
