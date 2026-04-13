@@ -1941,6 +1941,51 @@ textarea.crm-input { resize: none; }
   margin-left: 2px;
 }
 
+/* CHAT BUBBLES */
+.tg-message-row {
+  display: flex;
+  margin-bottom: 12px;
+  width: 100%;
+}
+.tg-message-row.sent {
+  justify-content: flex-end;
+}
+.tg-message-row.recv {
+  justify-content: flex-start;
+}
+.tg-bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  position: relative;
+  font-size: 14.5px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.tg-message-row.sent .tg-bubble {
+  background: var(--accent);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.tg-message-row.recv .tg-bubble {
+  background: var(--bg-1);
+  color: var(--t1);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.tg-bubble-time {
+  display: inline-block;
+  font-size: 10px;
+  margin-left: 8px;
+  opacity: 0.7;
+  vertical-align: bottom;
+  position: relative;
+  top: 3px;
+}
+.tg-message-row.sent .tg-bubble-time { color: rgba(255,255,255,0.8); }
+.tg-message-row.recv .tg-bubble-time { color: var(--t3); }
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: .3; }

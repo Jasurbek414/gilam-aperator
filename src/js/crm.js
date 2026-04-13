@@ -134,19 +134,66 @@ const CRM = {
       }
     });
 
+    // ─── SMS Telegram UI Eventlari ──────────────────────────────────────────
+    
+    // 1. Matn kiritishda Enter ishlatish (Shift + Enter yangi qator)
+    const smsInput = Utils.$('sms-text');
+    if (smsInput) {
+      smsInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          Utils.$('btn-send-sms')?.click();
+        }
+      });
+    }
+
+    // 2. Raqam formatlash: +998 (XX) XXX XX XX qilib chiroyli kiritish
+    const smsTo = Utils.$('sms-to');
+    if (smsTo) {
+      smsTo.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/\D/g, '');
+        if (val.length === 0) val = '998';
+        else if (!val.startsWith('99')) val = '998' + val;
+
+        let formatted = '+' + val.substring(0, 3); // +998
+        if (val.length > 3) formatted += ' (' + val.substring(3, 5);
+        if (val.length > 5) formatted += ') ' + val.substring(5, 8);
+        if (val.length > 8) formatted += ' ' + val.substring(8, 10);
+        if (val.length > 10) formatted += ' ' + val.substring(10, 12);
+
+        e.target.value = formatted;
+        
+        // Raqam yetarli uzunlikka yetsa, chatni aynan shu raqamga o'girish
+        if (val.length >= 12) {
+          this.activeSmsNumber = formatted;
+          this.renderSmsHistory();
+        }
+      });
+    }
+
+    // 3. Xabar yuborish
     Utils.$('btn-send-sms')?.addEventListener('click', () => {
-      const to = Utils.$('sms-to').value.trim();
+      const toVal = Utils.$('sms-to').value;
+      const cleanTo = toVal.replace(/\D/g, '');
       const text = Utils.$('sms-text').value.trim();
-      if (!to || !text) return Utils.showToast('Raqam va xabar matni kerak', 'warning');
+      
+      if (cleanTo.length < 12 || !text) {
+        return Utils.showToast('Asl raqam va xabarni to\'liq yozing', 'warning');
+      }
       
       const smsList = JSON.parse(localStorage.getItem('smsHistory') || '[]');
-      smsList.unshift({ to, text, time: new Date().toISOString(), status: 'sent' });
+      // Xabarni guruhlash oson bo'lishi formati saqlaymiz: qabul qiluvchi = "+998(90)1234567" logikasi
+      smsList.push({ to: toVal, text, time: new Date().toISOString(), status: 'sent', sender: 'me' });
       localStorage.setItem('smsHistory', JSON.stringify(smsList));
       
-      Utils.showToast('SMS yuborildi!', 'success');
-      Utils.$('sms-to').value = '';
       Utils.$('sms-text').value = '';
+      Utils.$('sms-text').style.height = ''; 
+      
+      this.activeSmsNumber = toVal;
       this.renderSmsHistory();
+      
+      // Auto-focus back to textarea
+      Utils.$('sms-text').focus();
     });
 
     Utils.$('btn-logout')?.addEventListener('click', () => window.Api.logout());
@@ -163,28 +210,79 @@ const CRM = {
   },
 
   renderSmsHistory() {
-    const container = Utils.$('sms-list');
-    if (!container) return;
+    const listCont = Utils.$('sms-chat-list');
+    const histCont = Utils.$('sms-history-area');
+    if (!listCont || !histCont) return;
+
     const smsList = JSON.parse(localStorage.getItem('smsHistory') || '[]');
     
-    if (smsList.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <span class="material-icons-round">sms</span>
-          <p>SMS xabarlar bo'sh</p>
+    // 1. Kontaktlar ro'yxatini yig'ish (Chap panel)
+    const contactsMap = {};
+    smsList.forEach(sms => {
+      if (!contactsMap[sms.to]) {
+        contactsMap[sms.to] = [];
+      }
+      contactsMap[sms.to].push(sms);
+    });
+
+    if (Object.keys(contactsMap).length === 0) {
+      listCont.innerHTML = `
+        <div class="empty-state" style="margin-top: 40px; transform: scale(0.9);">
+          <span class="material-icons-round">forum</span>
+          <p>Yozishmalar yo'q</p>
         </div>`;
-      return;
+    } else {
+      let listHTML = '';
+      for (const [phone, chats] of Object.entries(contactsMap)) {
+        const lastMsg = chats[chats.length - 1];
+        const isActive = this.activeSmsNumber === phone;
+        
+        listHTML += `
+          <div class="tg-chat-item ${isActive ? 'active' : ''}" onclick="window.CRM.activeSmsNumber='${phone}'; document.getElementById('sms-to').value='${phone}'; window.CRM.renderSmsHistory();">
+            <div class="tg-avatar">${phone.substring( phone.length-2 )}</div>
+            <div class="tg-chat-info">
+              <div class="tg-chat-top">
+                <h4>${phone}</h4>
+                <span class="tg-time">${Utils.formatTime(lastMsg.time)}</span>
+              </div>
+              <div class="tg-chat-bottom">
+                <p>${lastMsg.text}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      listCont.innerHTML = listHTML;
     }
-    
-    container.innerHTML = smsList.map(sms => `
-      <div class="sms-item" style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-        <div class="sms-item-header" style="display:flex; justify-content:space-between; color:var(--text-secondary); font-size:12px; margin-bottom: 5px;">
-          <span class="sms-item-to" style="color:white; font-weight:bold;">${sms.to}</span>
-          <span class="sms-item-time">${Utils.formatTime(sms.time)}</span>
-        </div>
-        <div class="sms-item-text" style="font-size:13px; color:var(--text-main);">${sms.text}</div>
-      </div>
-    `).join('');
+
+    // 2. Chat tarixini yig'ish (O'ng panel)
+    if (!this.activeSmsNumber || !contactsMap[this.activeSmsNumber]) {
+      histCont.innerHTML = `
+        <div class="tg-empty-chat">
+          <div class="tg-empty-icon"><span class="material-icons-round">question_answer</span></div>
+          <p>Raqam kiritib suhbatni boshlang...</p>
+        </div>`;
+    } else {
+      const msgs = contactsMap[this.activeSmsNumber];
+      let histHTML = '';
+      
+      msgs.forEach(sms => {
+        const isMine = true; // Hozircha hamma sms chiquvchi deb olinmoqda
+        const rowClass = isMine ? 'sent' : 'recv';
+        histHTML += `
+          <div class="tg-message-row ${rowClass}">
+            <div class="tg-bubble">
+              ${sms.text}
+              <span class="tg-bubble-time">${Utils.formatTime(sms.time)}</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      histCont.innerHTML = histHTML;
+      // Eng pastga skroll qilish (Yangi sms kelganda ko'rinishi uchun)
+      histCont.scrollTop = histCont.scrollHeight;
+    }
   },
 
   // ═══ QUICK CRM PANEL ═══════════════════════════════════════════════════
