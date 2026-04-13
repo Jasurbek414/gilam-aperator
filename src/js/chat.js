@@ -83,6 +83,13 @@ const ChatManager = {
      this.elements.sendBtn.style.background = '#10b981';
      this.elements.sendBtn.style.cursor = 'pointer';
 
+     // Update chat header title
+     const user = this.drivers[userId];
+     const titleEl = document.getElementById('chat-title');
+     if (titleEl && user) {
+       titleEl.innerText = 'Suhbat: ' + (user.fullName || userId);
+     }
+
      // Highlight chosen driver
      Array.from(this.elements.driversList.children).forEach(el => {
        if(el.id.startsWith('driver-badge-')) {
@@ -134,7 +141,7 @@ const ChatManager = {
      this.socket.emit('sendMessage', msgPayload);
      
      // Render optimistic
-     this.renderMessage({ text: val, senderId: me.id, createdAt: new Date().toISOString() });
+     this.renderMessage({ text: val, senderId: me.id, sender: me, createdAt: new Date().toISOString() });
      
      this.elements.input.value = '';
      this.scrollToBottom();
@@ -146,8 +153,16 @@ const ChatManager = {
      const isMe = m.senderId === myId;
 
      const wrapper = document.createElement('div');
-     wrapper.style = `display: flex; flex-direction: column; align-items: ${isMe ? 'flex-end' : 'flex-start'}; margin-bottom: 4px;`;
+     wrapper.style = `display: flex; flex-direction: column; align-items: ${isMe ? 'flex-end' : 'flex-start'}; margin-bottom: 6px;`;
      
+     // Sender Name Badge
+     if (!isMe && m.sender?.fullName) {
+       const nameLb = document.createElement('span');
+       nameLb.style = 'font-size: 10px; color: #64748b; margin-bottom: 2px; padding: 0 4px; font-weight: 600;';
+       nameLb.innerText = m.sender.fullName;
+       wrapper.appendChild(nameLb);
+     }
+
      const bubble = document.createElement('div');
      bubble.style = `max-width: 80%; padding: 8px 12px; border-radius: 16px; font-size: 13px; color: ${isMe?'white':'#0f172a'}; background: ${isMe?'#10b981':'#e2e8f0'};`;
      bubble.innerText = m.text;
