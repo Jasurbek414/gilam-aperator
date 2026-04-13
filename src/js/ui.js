@@ -117,8 +117,16 @@ const UI = {
       }
     });
 
-    // Hangup
-    Utils.$('btn-hangup')?.addEventListener('click', () => window.SipClient.hangup());
+    // Hangup — event delegation uchun (component dinamik yuklanadi)
+    document.addEventListener('click', (e) => {
+      const hangupBtn = e.target.closest('#btn-hangup');
+      if (hangupBtn) {
+        console.log('[UI] Hangup button clicked');
+        this.stopRingbackTone();
+        window.SipClient.hangup();
+        this.hideActiveCall();
+      }
+    });
     // Answer
     Utils.$('btn-answer-call')?.addEventListener('click', () => window.SipClient.answer());
     // Reject
@@ -325,9 +333,12 @@ const UI = {
   },
 
   // ═══ ACTIVE CALL OVERLAY ════════════════════════════════════════════════
+  ringbackOscillator: null,
+  ringbackInterval: null,
+
   showActiveCall(target, statusLabel) {
     const d = Utils.$('call-target-display');
-    if (d) d.textContent = target;
+    if (d) d.textContent = typeof target === 'object' ? target.target : target;
     
     const s = Utils.$('call-status-label');
     if (s) s.textContent = statusLabel || "Qo'ng'iroq qilinmoqda...";
@@ -342,17 +353,81 @@ const UI = {
     if (o) o.style.display = 'flex';
     
     this.activeCallSeconds = 0;
+
+    // Ringback tone boshlash (chaqirish paytida operator eshitsin)
+    if (statusLabel !== 'Kiruvchi suhbat') {
+      this.startRingbackTone();
+    }
   },
 
   hideActiveCall() {
     const o = Utils.$('active-call-overlay');
     if (o) o.style.display = 'none';
     this.stopCallTimer();
+    this.stopRingbackTone();
+  },
+
+  // Ringback tone — operator chaqirayotganda "tu-tu-tu" ovoz
+  startRingbackTone() {
+    this.stopRingbackTone();
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = 0;
+      gainNode.connect(ctx.destination);
+
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 425; // Standard ringback frequency
+      osc.connect(gainNode);
+      osc.start();
+
+      this.ringbackOscillator = { ctx, osc, gainNode };
+
+      // 1 sec ON, 4 sec OFF pattern (standard ringback)
+      let isOn = false;
+      const toggle = () => {
+        isOn = !isOn;
+        gainNode.gain.setValueAtTime(isOn ? 0.15 : 0, ctx.currentTime);
+      };
+      toggle(); // start ON
+      this.ringbackInterval = setInterval(toggle, isOn ? 1000 : 4000);
+      // More precise: 1s on, 4s off
+      clearInterval(this.ringbackInterval);
+      const cycle = () => {
+        if (!this.ringbackOscillator) return;
+        gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+        setTimeout(() => {
+          if (!this.ringbackOscillator) return;
+          gainNode.gain.setValueAtTime(0, ctx.currentTime);
+          this.ringbackInterval = setTimeout(cycle, 3000);
+        }, 1000);
+      };
+      cycle();
+    } catch(e) {
+      console.warn('[UI] Ringback tone error:', e);
+    }
+  },
+
+  stopRingbackTone() {
+    if (this.ringbackOscillator) {
+      try {
+        this.ringbackOscillator.osc.stop();
+        this.ringbackOscillator.ctx.close();
+      } catch(e) {}
+      this.ringbackOscillator = null;
+    }
+    if (this.ringbackInterval) {
+      clearTimeout(this.ringbackInterval);
+      clearInterval(this.ringbackInterval);
+      this.ringbackInterval = null;
+    }
   },
 
   startCallTimer() {
     this.activeCallSeconds = 0;
     this.stopCallTimer();
+    this.stopRingbackTone(); // Javob berganda ringback to'xtaydi
     this.activeCallTimer = setInterval(() => {
       this.activeCallSeconds++;
       const el = Utils.$('call-timer');

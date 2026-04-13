@@ -185,6 +185,7 @@ body {
 .dialer-panel {
   width: 280px; flex-shrink: 0; display: flex; flex-direction: column;
   border-right: 1px solid var(--border); background: var(--bg-0);
+  position: relative; /* call overlay uchun */
 }
 .crm-side {
   flex: 1; overflow-y: auto; padding: 14px;
@@ -784,12 +785,10 @@ textarea.crm-input { resize: none; }
   display: flex; align-items: center; justify-content: center;
 }
 
-/* Active call — COMPACT panel (dialer ustiga, butun oynani qoplamaydi) */
+/* Active call — COMPACT panel (dialer-panel ichida chiqadi) */
 #active-call-overlay {
-  position: fixed; z-index: 900;
-  top: 36px; left: 60px;
-  width: calc(280px); /* sidebar width + dialer width ga mos */
-  bottom: 0;
+  position: absolute; z-index: 50;
+  inset: 0;
   display: flex; align-items: center; justify-content: center;
   pointer-events: auto;
 }
