@@ -682,7 +682,7 @@ const SipClient = {
 
     // Avval disconnect
     if (this.activeSipLines[id]) {
-      try { this.activeSipLines[id].phone.stop(); } catch(e) {}
+      try { this.activeSipLines[id].phone.disconnect(); } catch(e) {}
       delete this.activeSipLines[id];
     }
 
@@ -699,8 +699,7 @@ const SipClient = {
     if (this.activeSipLines[id] && this.activeSipLines[id].isRegistered) {
       // Disconnect
       try {
-        this.activeSipLines[id].phone.unregister({ all: true });
-        this.activeSipLines[id].phone.stop();
+        this.activeSipLines[id].phone.disconnect();
       } catch(e) {}
       this.activeSipLines[id].isRegistered = false;
       this.renderAccounts();
