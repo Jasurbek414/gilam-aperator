@@ -383,7 +383,7 @@ const Settings = (() => {
     // 1. API Test
     try {
       const start = Date.now();
-      const apiUrl = window.Api ? window.Api.config.API_BASE : 'http://127.0.0.1:3000';
+      const apiUrl = window.Api ? window.Api.config.API_BASE : 'https://gilam-api.ecos.uz';
       
       const abortCont = new AbortController();
       const timeoutId = setTimeout(() => abortCont.abort(), 4000);

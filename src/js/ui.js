@@ -292,9 +292,8 @@ const UI = {
   async loadCampaignByLine(lineNumber) {
     try {
       const token = localStorage.getItem('authToken');
-      if (!token) return;
-      
-      const res = await fetch(`http://127.0.0.1:3000/api/campaigns/by-line/${lineNumber}`, {
+      const apiUrl = window.Api ? window.Api.config.API_BASE : 'https://gilam-api.ecos.uz';
+      const res = await fetch(`${apiUrl}/api/campaigns/by-line/${lineNumber}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
