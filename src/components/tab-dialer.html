@@ -48,6 +48,48 @@
             <span class="material-icons-round">close</span>
           </button>
         </div>
+
+        <!-- ═══ ACTIVE CALL OVERLAY (faqat dialer-card ichida) ═══ -->
+        <div id="active-call-overlay" style="display:none;">
+          <div class="call-overlay-bg"></div>
+          <div class="call-overlay-content">
+            <div class="call-status-label" id="call-status-label">Qo'ng'iroq qilinmoqda...</div>
+            <div class="call-target-number" id="call-target-display">—</div>
+            <div class="call-target-name" id="call-target-name"></div>
+            <div class="call-timer" id="call-timer">00:00</div>
+            <div class="call-wave">
+              <div class="wave-ring"></div>
+              <div class="wave-ring delay-1"></div>
+              <div class="wave-ring delay-2"></div>
+              <div class="call-avatar">
+                <span class="material-icons-round">person</span>
+              </div>
+            </div>
+            <div id="recording-indicator" style="display:none; text-align:center; margin-bottom:8px;">
+              <span style="display:inline-flex; align-items:center; gap:5px; padding:3px 12px; background:rgba(239,68,68,0.15); border-radius:20px; font-size:11px; color:var(--red); font-weight:600;">
+                <span class="material-icons-round" style="font-size:12px; animation: pulse 1s infinite;">fiber_manual_record</span>
+                REC
+              </span>
+            </div>
+            <div class="call-overlay-actions">
+              <button class="btn-call-action" id="btn-mute" title="Mikrofon">
+                <span class="material-icons-round">mic</span>
+                <span class="action-label">Mute</span>
+              </button>
+              <button class="btn-call-action" id="btn-hold" title="Kutishda">
+                <span class="material-icons-round">pause</span>
+                <span class="action-label">Hold</span>
+              </button>
+              <button class="btn-call-action" id="btn-record" title="Yozib olish">
+                <span class="material-icons-round">fiber_manual_record</span>
+                <span class="action-label">Yozish</span>
+              </button>
+              <button class="btn-call-hangup" id="btn-hangup">
+                <span class="material-icons-round">call_end</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ═══ QUICK ACTIONS ═══ -->
@@ -103,48 +145,6 @@
           <span class="material-icons-round">schedule</span>
           <span class="ds-val" id="stat-duration">0:00</span>
           <span class="ds-lbl">Umumiy</span>
-        </div>
-      </div>
-
-      <!-- ═══ ACTIVE CALL OVERLAY (dialer-panel ichida) ═══ -->
-      <div id="active-call-overlay" style="display:none;">
-        <div class="call-overlay-bg"></div>
-        <div class="call-overlay-content">
-          <div class="call-status-label" id="call-status-label">Qo'ng'iroq qilinmoqda...</div>
-          <div class="call-target-number" id="call-target-display">—</div>
-          <div class="call-target-name" id="call-target-name"></div>
-          <div class="call-timer" id="call-timer">00:00</div>
-          <div class="call-wave">
-            <div class="wave-ring"></div>
-            <div class="wave-ring delay-1"></div>
-            <div class="wave-ring delay-2"></div>
-            <div class="call-avatar">
-              <span class="material-icons-round">person</span>
-            </div>
-          </div>
-          <div id="recording-indicator" style="display:none; text-align:center; margin-bottom:8px;">
-            <span style="display:inline-flex; align-items:center; gap:5px; padding:3px 12px; background:rgba(239,68,68,0.15); border-radius:20px; font-size:11px; color:var(--red); font-weight:600;">
-              <span class="material-icons-round" style="font-size:12px; animation: pulse 1s infinite;">fiber_manual_record</span>
-              REC
-            </span>
-          </div>
-          <div class="call-overlay-actions">
-            <button class="btn-call-action" id="btn-mute" title="Mikrofon">
-              <span class="material-icons-round">mic</span>
-              <span class="action-label">Mute</span>
-            </button>
-            <button class="btn-call-action" id="btn-hold" title="Kutishda">
-              <span class="material-icons-round">pause</span>
-              <span class="action-label">Hold</span>
-            </button>
-            <button class="btn-call-action" id="btn-record" title="Yozib olish">
-              <span class="material-icons-round">fiber_manual_record</span>
-              <span class="action-label">Yozish</span>
-            </button>
-            <button class="btn-call-hangup" id="btn-hangup">
-              <span class="material-icons-round">call_end</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
