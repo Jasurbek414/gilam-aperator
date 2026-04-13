@@ -533,7 +533,10 @@ const UI = {
         <div class="lc-status">
           <span class="status-badge ${isActive ? 'online' : 'offline'}">${isActive ? 'Faol Liniya' : 'Kutish'}</span>
         </div>
-        <div class="lc-actions">
+        <div class="lc-actions" style="display: flex; gap: 8px;">
+          <button class="btn-icon" title="O'chirish" onclick="window.UI.deleteLine('${acc.id || acc.extension}')" style="color: var(--red);">
+            <span class="material-icons-round">delete_outline</span>
+          </button>
           <button class="${isActive ? 'btn-secondary' : 'btn-primary'}" onclick="window.UI.setActiveLine('${acc.extension}')">
             ${isActive ? '<span class="material-icons-round">check</span> Tanlangan' : 'Buni Tanlash'}
           </button>
@@ -541,6 +544,22 @@ const UI = {
       `;
       list.appendChild(div);
     });
+  },
+
+  deleteLine(id) {
+    if (!confirm('Ushbu liniyani o\'chirishni xohlaysizmi?')) return;
+    let lines = JSON.parse(localStorage.getItem('sip_accounts') || '[]');
+    lines = lines.filter(a => a.id !== id && a.extension !== id);
+    localStorage.setItem('sip_accounts', JSON.stringify(lines));
+    Utils.showToast('Liniya o\'chirildi', 'info');
+    
+    // Agar aktiv o'chgan bo'lsa
+    let active = JSON.parse(localStorage.getItem('sip_account') || '{}');
+    if (active.extension === id) {
+      localStorage.removeItem('sip_account');
+      if (window.SipClient) window.SipClient.disconnectAll();
+    }
+    this.renderCampLinesTab();
   },
 
   renderCallHistory(filter = 'all') {

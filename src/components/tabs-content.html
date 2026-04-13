@@ -5,9 +5,15 @@
   <div class="list-container-centered">
     <div class="tab-header">
       <h2>Kampaniya Liniyalari</h2>
-      <button class="btn-icon-sm" id="btn-refresh-lines" title="Yangilash">
-        <span class="material-icons-round">refresh</span>
-      </button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-primary btn-sm" onclick="document.getElementById('modal-add-sip').style.display='flex'">
+          <span class="material-icons-round">add</span>
+          Yangi liniya
+        </button>
+        <button class="btn-icon-sm" id="btn-refresh-lines" title="Yangilash" onclick="if(window.UI) window.UI.renderCampLinesTab()">
+          <span class="material-icons-round">refresh</span>
+        </button>
+      </div>
     </div>
     <div id="lines-list" class="lines-list">
       <div class="empty-state">
