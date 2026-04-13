@@ -427,7 +427,6 @@ const UI = {
     }
     if (this.ringbackInterval) {
       clearTimeout(this.ringbackInterval);
-      clearInterval(this.ringbackInterval);
       this.ringbackInterval = null;
     }
   },

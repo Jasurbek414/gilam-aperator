@@ -54,6 +54,30 @@ const SipClient = {
     this.renderAccounts();
     this._bindMuteHoldButtons();
     console.log('[SIP] Initialized. Accounts:', this.sipAccounts.length);
+    this._startWatchdog();
+  },
+
+  _startWatchdog() {
+    setInterval(() => {
+      // Tarmoq bo'lmasa qidirib ovora bo'lmaydi
+      if (!navigator.onLine) return; 
+      
+      this.sipAccounts.forEach(acc => {
+        if (!acc.autoConnect) return;
+        
+        const line = this.activeSipLines[acc.id];
+        // Agar umuman engine yaratilmagan yoki engine tushib qolgan bo'lsa
+        if (!line || (!line.isRegistered && !this.currentSession)) {
+           const now = Date.now();
+           // Har safar 15 sekundda birdan ortiq spam urinish qilmaslik uchun
+           if (!acc._lastReconnectAttempt || now - acc._lastReconnectAttempt > 15000) {
+             acc._lastReconnectAttempt = now;
+             console.log(`[SIP Watchdog] 🔄 Tarmoq stabilizatsiyasi: Reconnecting ${acc.extension}...`);
+             this.connect(acc);
+           }
+        }
+      });
+    }, 5000);
   },
 
   // ═══ WEBSOCKET URL BUILDER ══════════════════════════════════════════════
@@ -215,11 +239,16 @@ const SipClient = {
 
     // ─── Start UDP connection ─────────────────────────────────────
     try {
+      let decodedPassword = acc.password;
+      try {
+        decodedPassword = atob(acc.password);
+      } catch(e) {} // Fallback for backward compatibility
+
       engine.connect({
         domain: acc.domain,
         sipPort: 5060,
         extension: acc.extension,
-        password: acc.password,
+        password: decodedPassword,
         name: acc.name || acc.extension,
       });
 
@@ -668,7 +697,7 @@ const SipClient = {
       domain,
       extension,
       username,
-      password,
+      password: btoa(password), // Obfuscate dynamically
       transport,
       autoConnect
     };

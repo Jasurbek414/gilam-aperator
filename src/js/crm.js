@@ -238,15 +238,15 @@ const CRM = {
         const isActive = this.activeSmsNumber === phone;
         
         listHTML += `
-          <div class="tg-chat-item ${isActive ? 'active' : ''}" onclick="window.CRM.activeSmsNumber='${phone}'; document.getElementById('sms-to').value='${phone}'; window.CRM.renderSmsHistory();">
-            <div class="tg-avatar">${phone.substring( phone.length-2 )}</div>
+          <div class="tg-chat-item ${isActive ? 'active' : ''}" onclick="window.CRM.activeSmsNumber='${Utils.escapeHtml(phone)}'; document.getElementById('sms-to').value='${Utils.escapeHtml(phone)}'; window.CRM.renderSmsHistory();">
+            <div class="tg-avatar">${Utils.escapeHtml(phone.substring( phone.length-2 ))}</div>
             <div class="tg-chat-info">
               <div class="tg-chat-top">
-                <h4>${phone}</h4>
+                <h4>${Utils.escapeHtml(phone)}</h4>
                 <span class="tg-time">${Utils.formatTime(lastMsg.time)}</span>
               </div>
               <div class="tg-chat-bottom">
-                <p>${lastMsg.text}</p>
+                <p>${Utils.escapeHtml(lastMsg.text)}</p>
               </div>
             </div>
           </div>
@@ -272,7 +272,7 @@ const CRM = {
         histHTML += `
           <div class="tg-message-row ${rowClass}">
             <div class="tg-bubble">
-              ${sms.text}
+              ${Utils.escapeHtml(sms.text)}
               <span class="tg-bubble-time">${Utils.formatTime(sms.time)}</span>
             </div>
           </div>
