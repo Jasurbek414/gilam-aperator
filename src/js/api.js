@@ -4,7 +4,7 @@
 
 const Api = {
   config: {
-    API_BASE: localStorage.getItem('serverUrl') || 'https://gilam.ecos.uz',
+    API_BASE: localStorage.getItem('serverUrl') || 'https://gilam-api.ecos.uz',
     token: localStorage.getItem('token') || null,
     currentUser: JSON.parse(localStorage.getItem('user') || 'null')
   },
