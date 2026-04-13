@@ -596,20 +596,43 @@ const UI = {
     this.renderCampLinesTab();
   },
 
-  renderCallHistory(filter = 'all') {
+  async renderCallHistory(filter = 'all') {
     const list = Utils.$('calls-list');
     const dashboardList = Utils.$('dashboard-calls-list');
     if (!list && !dashboardList) return;
 
     let history = [];
-    try {
-      history = JSON.parse(localStorage.getItem('call_recordings')) || [];
-    } catch(e) {}
     
-    // Filter logic
+    // BACKEND INTEGRATION: Fetch securely mapped records natively if authenticated
+    if (window.Api && window.Api.config.token) {
+      try {
+        const res = await window.Api.request(`/calls?limit=100${filter !== 'all' ? `&status=${filter}` : ''}`);
+        if (res && res.data) {
+           history = res.data.map(c => ({
+             id: c.id,
+             target: c.callerPhone || c.calledPhone || 'Noma\'lum',
+             type: c.status === 'MISSED' ? 'MISSED' : (c.direction === 'INCOMING' ? 'INCOMING' : 'OUTGOING'),
+             date: c.createdAt,
+             duration: Utils.formatDuration(c.durationSeconds || 0)
+           }));
+           // local storage ga arxivlash (zapas)
+           localStorage.setItem('call_recordings', JSON.stringify(history));
+        }
+      } catch(e) {
+        console.warn('Backenddan calls yuklash xatosi:', e);
+      }
+    }
+
+    if (history.length === 0) {
+      try {
+        history = JSON.parse(localStorage.getItem('call_recordings')) || [];
+      } catch(e) {}
+    }
+    
+    // Local Filter (agar backend ulana olmasa fallback ishlaydi)
     let filtered = history;
-    if (filter !== 'all') {
-      filtered = history.filter(h => h.type === filter || (!h.type && filter === 'INCOMING')); // fallback old recordings to INCOMING
+    if (filter !== 'all' && (!window.Api || !window.Api.config.token)) {
+      filtered = history.filter(h => h.type === filter || (!h.type && filter === 'INCOMING')); // fallback
     }
 
     const emptyHtml = `<div class="empty-state">
