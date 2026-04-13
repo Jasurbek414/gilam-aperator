@@ -534,7 +534,11 @@ class SipUdpEngine extends EventEmitter {
   _sendAck() {
     if (!this.currentCall) return;
     
-    this.cseq++;
+    // RFC 3261: CSeq number in ACK MUST match the INVITE CSeq!
+    // Do NOT increment this.cseq here. 
+    // Instead use the current transaction CSeq or this.cseq if outgoing context matches
+    const ackCseq = this.currentCall.direction === 'outgoing' ? this.cseq : this.currentCall.cseq;
+    
     const branch = this._branch();
     
     let msg = `ACK sip:${this.currentCall.targetExt}@${this.sipServer} SIP/2.0\r\n`;
@@ -543,7 +547,7 @@ class SipUdpEngine extends EventEmitter {
     msg += `From: "${this.displayName}" <sip:${this.extension}@${this.sipServer}>;tag=${this.currentCall.fromTag || this.tag}\r\n`;
     msg += `To: <sip:${this.currentCall.targetExt}@${this.sipServer}>${this.currentCall.toTag ? ';tag=' + this.currentCall.toTag : ''}\r\n`;
     msg += `Call-ID: ${this.currentCall.callId}\r\n`;
-    msg += `CSeq: ${this.cseq} ACK\r\n`;
+    msg += `CSeq: ${ackCseq} ACK\r\n`;
     msg += `User-Agent: GilamOperator/2.0\r\n`;
     msg += `Content-Length: 0\r\n\r\n`;
     
