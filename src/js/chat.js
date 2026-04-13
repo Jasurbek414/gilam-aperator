@@ -53,15 +53,42 @@ const ChatManager = {
 
   async loadConversations() {
      try {
-       const res = await window.Api.request('/messages/conversations');
-       this.elements.driversList.innerHTML = '<span style="font-size: 11px; color: #64748b; margin-right:4px;">Haydovchilar:</span>';
-       if(res && Array.isArray(res)) {
-         res.forEach(user => {
-           this.drivers[user.id] = user;
-           this.addDriverBadge(user);
-         });
+       const userStr = localStorage.getItem('gilam_user');
+       const myProfile = userStr ? JSON.parse(userStr) : null;
+       
+       let drivers = [];
+       if (myProfile && myProfile.companyId) {
+          const ulist = await window.Api.request(`/users/company/${myProfile.companyId}`);
+          if (ulist && Array.isArray(ulist)) {
+             drivers = ulist.filter(u => u.role === 'DRIVER');
+          }
        }
-     } catch(e) { console.error('Load conv error', e); }
+
+       const convs = await window.Api.request('/messages/conversations');
+       const merged = [...drivers, ...(Array.isArray(convs) ? convs : [])];
+       
+       const uniqueUsers = [];
+       const seen = new Set();
+       for(let u of merged) {
+          if (u && u.id && !seen.has(u.id) && u.id !== myProfile?.id) {
+             seen.add(u.id);
+             uniqueUsers.push(u);
+          }
+       }
+
+       this.elements.driversList.innerHTML = '<span style="font-size: 11px; color: #64748b; white-space: nowrap;">Barcha haydovchilar:</span>';
+       
+       if (uniqueUsers.length > 0) {
+          uniqueUsers.forEach(u => {
+             this.drivers[u.id] = u;
+             this.addDriverBadge(u);
+          });
+       } else {
+          this.elements.driversList.innerHTML += '<span style="font-size: 11px; color: #94a3b8; margin-left: 8px;">Topilmadi.</span>';
+       }
+     } catch(e) {
+       console.log('Load conv error', e);
+     }
   },
 
   addDriverBadge(user) {
