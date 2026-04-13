@@ -383,20 +383,29 @@ const Settings = (() => {
     // 1. API Test
     try {
       const start = Date.now();
-      const res = await fetch('http://127.0.0.1:3000/api/health', { 
-        signal: AbortSignal.timeout(5000) 
-      }).catch(() => fetch('http://127.0.0.1:3000/api', {
-        signal: AbortSignal.timeout(5000)
-      }));
+      const apiUrl = window.Api ? window.Api.config.API_BASE : 'http://127.0.0.1:3000';
+      
+      const abortCont = new AbortController();
+      const timeoutId = setTimeout(() => abortCont.abort(), 4000);
+
+      // Tarmoq xatosi bo'lsa fetch Error qaytaradi va catch bloqqa o'tadi
+      await fetch(apiUrl + '/api/', { 
+        method: 'GET',
+        signal: abortCont.signal
+      });
+      clearTimeout(timeoutId);
+
       const ping = Date.now() - start;
       if (apiStatus) {
         apiStatus.textContent = `✓ ${ping}ms`;
         apiStatus.classList.add('s-net-ok');
+        apiStatus.classList.remove('s-net-fail');
       }
-    } catch {
+    } catch (e) {
       if (apiStatus) {
-        apiStatus.textContent = '✗ Ulanib bo\'lmadi';
+        apiStatus.textContent = "✗ Ulanib bo'lmadi";
         apiStatus.classList.add('s-net-fail');
+        apiStatus.classList.remove('s-net-ok');
       }
     }
 
