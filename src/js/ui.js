@@ -477,6 +477,20 @@ const UI = {
     if (typeof this.renderCallHistory === 'function') {
       this.renderCallHistory();
     }
+    
+    // Cloud SaaS API ga avtomatik integratsiya
+    if (window.Api && window.Api.config.token) {
+      if (type === 'OUTGOING') {
+        window.Api.request('/calls/outgoing', {
+          method: 'POST',
+          body: JSON.stringify({
+            callerPhone: window.Api.config.currentUser?.phone || 'operator',
+            calledPhone: targetStr,
+            direction: 'outgoing'
+          })
+        }).catch(err => console.warn('[Cloud Sync] Failed to sync outgoing call:', err));
+      }
+    }
   },
 
   // ═══ INCOMING CALL OVERLAY ══════════════════════════════════════════════
