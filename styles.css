@@ -453,6 +453,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .crm-card-head {
   display: flex; align-items: center; gap: 6px;
