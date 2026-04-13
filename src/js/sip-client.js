@@ -95,139 +95,130 @@ const SipClient = {
   connect(acc) {
     // Agar allaqachon ulangan bo'lsa, avval uzamiz
     if (this.activeSipLines[acc.id] && this.activeSipLines[acc.id].phone) {
-      try { this.activeSipLines[acc.id].phone.stop(); } catch(e) {}
+      try { this.activeSipLines[acc.id].phone.disconnect(); } catch(e) {}
       delete this.activeSipLines[acc.id];
     }
 
-    const wsUrl = this._buildWsUrl(acc);
-    const realm = this._extractRealm(acc.domain);
-    const sipUri = `sip:${acc.extension}@${realm}`;
+    const SipUdpEngine = require('./sip-udp-engine');
+    const engine = new SipUdpEngine();
 
-    console.log(`[SIP] Connecting: ${acc.name}`);
-    console.log(`[SIP]   URI: ${sipUri}`);
-    console.log(`[SIP]   WebSocket: ${wsUrl}`);
-    console.log(`[SIP]   Username: ${acc.extension}`);
+    console.log(`[SIP] Connecting via UDP: ${acc.name}`);
+    console.log(`[SIP]   Server: ${acc.domain}:5060`);
+    console.log(`[SIP]   Extension: ${acc.extension}`);
 
     Utils.showToast(`${acc.name} — ulanilmoqda...`, 'info');
 
-    // WebSocket transport
-    const socket = new JsSIP.WebSocketInterface(wsUrl);
+    // ─── Event Handlers ───────────────────────────────────────────
+    engine.on('registered', () => {
+      console.log(`[SIP] ✅ Registered: ${acc.name} (${acc.extension})`);
+      Utils.showToast(`✅ ${acc.name} — PBX ga muvaffaqiyatli ulandi!`, 'success');
+      this.activeSipLines[acc.id] = {
+        phone: engine,
+        isRegistered: true,
+        acc
+      };
+      this.renderAccounts();
+    });
 
-    // JsSIP konfiguratsiyasi — X-Lite/MicroSIP ga o'xshash
-    const configuration = {
-      sockets: [socket],
-      uri: sipUri,
-      password: acc.password,
-      display_name: acc.name || acc.extension,
-      register: true,
-      register_expires: 300,
-      session_timers: false,
-      // Asterisk uchun authorization_user — ko'pincha extension bilan bir xil
-      // lekin ba'zan alohida username bo'lishi mumkin
-      authorization_user: acc.username || acc.extension,
-      connection_recovery_min_interval: 2,
-      connection_recovery_max_interval: 30,
-      // hack_ip_in_contact xususiyati NAT ortida ishlash uchun
-      contact_uri: null,
-      no_answer_timeout: 60,
-    };
+    engine.on('unregistered', () => {
+      console.log(`[SIP] Unregistered: ${acc.name}`);
+      if (this.activeSipLines[acc.id]) {
+        this.activeSipLines[acc.id].isRegistered = false;
+        this.renderAccounts();
+      }
+    });
 
+    engine.on('disconnected', () => {
+      console.log(`[SIP] Disconnected: ${acc.name}`);
+      if (this.activeSipLines[acc.id]) {
+        this.activeSipLines[acc.id].isRegistered = false;
+        this.renderAccounts();
+      }
+    });
+
+    engine.on('registrationFailed', (data) => {
+      console.error(`[SIP] ❌ Registration failed: ${acc.name}`, data);
+      const cause = data.cause || 'Noma\'lum xatolik';
+      Utils.showToast(`❌ ${acc.name} — Registratsiya rad etildi: ${cause}`, 'error');
+      this.activeSipLines[acc.id] = {
+        phone: engine,
+        isRegistered: false,
+        acc
+      };
+      this.renderAccounts();
+    });
+
+    engine.on('error', (err) => {
+      console.error(`[SIP] Error: ${err.message}`);
+    });
+
+    // ─── Kiruvchi qo'ng'iroq (Incoming Call) ──────────────────────
+    engine.on('incomingCall', (data) => {
+      console.log(`[SIP] 📞 Incoming call from: ${data.callerNumber}`);
+      
+      // Agar boshqa qo'ng'iroq aktiv bo'lsa, band (busy)
+      if (this.currentSession) {
+        console.log('[SIP] Already in call, sending busy');
+        engine.rejectCall();
+        return;
+      }
+      
+      this.currentSession = engine;
+      
+      window.UI.showIncomingCallUI({
+        callerNumber: data.callerNumber,
+        callerName: data.callerName || '',
+        campaignName: acc.name,
+      });
+
+      // CRM panelni avtomatik ochish
+      if (window.CRM) window.CRM.onCallStarted(data.callerNumber, acc.name);
+    });
+
+    engine.on('callAnswered', (data) => {
+      console.log(`[SIP] Call connected: ${data.target}`);
+      window.UI.showActiveCall({ target: data.target });
+    });
+
+    engine.on('callEnded', (data) => {
+      console.log(`[SIP] Call ended: ${data.reason}`);
+      this.currentSession = null;
+      this._cleanupCall();
+    });
+
+    engine.on('ringing', (data) => {
+      console.log(`[SIP] Ringing: ${data.target}`);
+      const label = Utils.$('call-status-label');
+      if (label) label.textContent = 'Jiringlayapti...';
+    });
+
+    engine.on('callFailed', (data) => {
+      console.log(`[SIP] Call failed: ${data.code} ${data.reason}`);
+      this.currentSession = null;
+      this._cleanupCall();
+      Utils.showToast(`❌ Qo'ng'iroq rad etildi: ${data.reason}`, 'error');
+    });
+
+    // ─── Start UDP connection ─────────────────────────────────────
     try {
-      const phone = new JsSIP.UA(configuration);
-
-      // ─── Event Handlers ───────────────────────────────────────────
-      phone.on('connected', () => {
-        console.log(`[SIP] WebSocket connected: ${acc.name}`);
+      engine.connect({
+        domain: acc.domain,
+        sipPort: 5060,
+        extension: acc.extension,
+        password: acc.password,
+        name: acc.name || acc.extension,
       });
-
-      phone.on('disconnected', () => {
-        console.log(`[SIP] WebSocket disconnected: ${acc.name}`);
-        if (this.activeSipLines[acc.id]) {
-          this.activeSipLines[acc.id].isRegistered = false;
-          this.renderAccounts();
-        }
-      });
-
-      phone.on('registered', () => {
-        console.log(`[SIP] ✅ Registered: ${acc.name} (${acc.extension})`);
-        Utils.showToast(`✅ ${acc.name} — PBX ga muvaffaqiyatli ulandi!`, 'success');
-        this.activeSipLines[acc.id] = {
-          phone,
-          isRegistered: true,
-          acc
-        };
-        this.renderAccounts();
-      });
-
-      phone.on('unregistered', () => {
-        console.log(`[SIP] Unregistered: ${acc.name}`);
-        if (this.activeSipLines[acc.id]) {
-          this.activeSipLines[acc.id].isRegistered = false;
-          this.renderAccounts();
-        }
-      });
-
-      phone.on('registrationFailed', (data) => {
-        console.error(`[SIP] ❌ Registration failed: ${acc.name}`, data);
-        const cause = data.cause || 'Noma\'lum xatolik';
-        Utils.showToast(`❌ ${acc.name} — Registratsiya rad etildi: ${cause}`, 'error');
-        this.activeSipLines[acc.id] = {
-          phone,
-          isRegistered: false,
-          acc
-        };
-        this.renderAccounts();
-      });
-
-      // ─── Kiruvchi qo'ng'iroq (Incoming Call) ──────────────────────
-      phone.on('newRTCSession', (data) => {
-        const session = data.session;
-        
-        if (session.direction === 'incoming') {
-          console.log(`[SIP] 📞 Incoming call from: ${session.remote_identity.uri.user}`);
-          
-          // Agar boshqa qo'ng'iroq aktiv bo'lsa, band (busy)
-          if (this.currentSession) {
-            console.log('[SIP] Already in call, sending busy');
-            session.terminate({ status_code: 486, reason_phrase: 'Busy Here' });
-            return;
-          }
-          
-          this.currentSession = session;
-          this._attachSessionEvents(session);
-          
-          const callerNumber = session.remote_identity.uri.user;
-          const callerName = session.remote_identity.display_name || '';
-          
-          window.UI.showIncomingCallUI({
-            callerNumber: callerNumber,
-            callerName: callerName,
-            campaignName: acc.name,
-          });
-
-          // CRM panelni avtomatik ochish
-          if (window.CRM) window.CRM.onCallStarted(callerNumber, acc.name);
-          
-          // Liniya bo'yicha kampaniya va xizmatlarni avtomatik yuklash
-          if (window.UI?.loadCampaignByLine) {
-            window.UI.loadCampaignByLine(acc.name || callerNumber);
-          }
-        }
-      });
-
-      // ─── Start ────────────────────────────────────────────────────
-      phone.start();
 
       // Saqlaymiz (hali register bo'lmagan, lekin connecting)
       this.activeSipLines[acc.id] = {
-        phone,
+        phone: engine,
         isRegistered: false,
         acc
       };
       this.renderAccounts();
 
     } catch (err) {
-      console.error('[SIP] Failed to create UA:', err);
+      console.error('[SIP] Failed to connect:', err);
       Utils.showToast(`❌ ${acc.name} — xatolik: ${err.message}`, 'error');
     }
   },
@@ -339,38 +330,15 @@ const SipClient = {
     }
 
     const line = this.activeSipLines[activeKey];
-    const realm = this._extractRealm(line.acc.domain);
-    const targetUri = `sip:${target}@${realm}`;
 
-    console.log(`[SIP] Making call to: ${targetUri}`);
-
-    // WebRTC call options — MicroSIP/X-Lite kabi
-    const callOptions = {
-      mediaConstraints: {
-        audio: true,   // Mikrofon
-        video: false   // Video kerak emas
-      },
-      pcConfig: {
-        iceServers: [
-          { urls: ['stun:stun.l.google.com:19302'] },
-          { urls: ['stun:stun1.l.google.com:19302'] }
-        ],
-        iceTransportPolicy: 'all'
-      },
-      rtcOfferConstraints: {
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: false
-      }
-    };
+    console.log(`[SIP] Making call to: ${target}`);
 
     try {
-      const session = line.phone.call(targetUri, callOptions);
-      this.currentSession = session;
+      line.phone.makeCall(target);
+      this.currentSession = line.phone;
       this.isMuted = false;
       this.isOnHold = false;
       this._updateMuteHoldUI();
-
-      this._attachSessionEvents(session);
 
       // UI: qo'ng'iroq overlay ko'rsatish
       window.UI.showActiveCall(target, 'Chaqirilmoqda...');
@@ -391,25 +359,14 @@ const SipClient = {
     
     console.log('[SIP] Answering incoming call...');
     
-    this.currentSession.answer({
-      mediaConstraints: {
-        audio: true,
-        video: false
-      },
-      pcConfig: {
-        iceServers: [
-          { urls: ['stun:stun.l.google.com:19302'] }
-        ]
-      }
-    });
+    this.currentSession.answerCall();
 
     this.isMuted = false;
     this.isOnHold = false;
     this._updateMuteHoldUI();
 
-    const caller = this.currentSession.remote_identity.uri.user;
     window.UI.hideIncomingCall();
-    window.UI.showActiveCall(caller, 'Kiruvchi suhbat');
+    window.UI.showActiveCall(this.currentSession.currentCall?.targetExt || '', 'Kiruvchi suhbat');
   },
 
   // ═══ REJECT (Kiruvchi qo'ng'iroqni rad etish) ═══════════════════════════
@@ -417,7 +374,7 @@ const SipClient = {
     if (this.currentSession) {
       console.log('[SIP] Rejecting incoming call');
       try {
-        this.currentSession.terminate({ status_code: 486, reason_phrase: 'Busy Here' });
+        this.currentSession.rejectCall();
       } catch(e) {
         console.error('[SIP] Reject error:', e);
       }
@@ -431,7 +388,7 @@ const SipClient = {
     if (this.currentSession) {
       console.log('[SIP] Hanging up call');
       try {
-        this.currentSession.terminate();
+        this.currentSession.hangup();
       } catch(e) {
         console.error('[SIP] Hangup error:', e);
       }
