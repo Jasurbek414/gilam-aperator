@@ -409,6 +409,16 @@ class SipUdpEngine extends EventEmitter {
       }
     } else if (method === 'INVITE') {
       if (code === 401 || code === 407) {
+        // MUST send ACK for the 401 Unauthorized before resending!
+        const cseqMatchErr = data.match(/CSeq:\s*(\d+)/i);
+        const errCseq = cseqMatchErr ? cseqMatchErr[1] : this.cseq;
+        
+        // Extract original branch from Via for the non-2xx ACK
+        const viaMatch = data.match(/Via:.*?;branch=([^\s;]+)/i);
+        const originalBranch = viaMatch ? viaMatch[1] : this.currentCall.branch;
+        
+        this._sendNon2xxAck(errCseq, originalBranch);
+
         // Auth for INVITE
         const authParams = this._parseWwwAuth(data) || this._parseProxyAuth(data);
         if (authParams && this.currentCall) {
@@ -442,14 +452,30 @@ class SipUdpEngine extends EventEmitter {
             this.mediaEngine.start(this.localPort + 2, rtpIpMatch[1], parseInt(rtpPortMatch[1]));
           }
         }
-        // Send ACK
-        this._sendAck();
+        
+        // PBX sends CSeq: X INVITE, we MUST reply with CSeq: X ACK
+        const cseqMatchOk = data.match(/CSeq:\s*(\d+)/i);
+        const ackCseq = cseqMatchOk ? cseqMatchOk[1] : this.cseq;
+
+        this._sendAck(ackCseq);
         this.emit('callAnswered', { target: this.currentCall?.targetExt });
       } else if (code >= 400) {
         console.log(`[SIP-UDP]    Call failed: ${code} ${reason}`);
-        this.currentCall = null;
-        this.mediaEngine.stop();
-        this.emit('callFailed', { code, reason });
+        
+        if (this.currentCall) {
+          const cseqMatchErr = data.match(/CSeq:\s*(\d+)/i);
+          const errCseq = cseqMatchErr ? cseqMatchErr[1] : this.cseq;
+          const viaMatch = data.match(/Via:.*?;branch=([^\s;]+)/i);
+          const originalBranch = viaMatch ? viaMatch[1] : this.currentCall.branch;
+          
+          const toTagMatch = data.match(/To:.*?;tag=([^\s;>]+)/i);
+          if (toTagMatch) this.currentCall.toTag = toTagMatch[1];
+          
+          this._sendNon2xxAck(errCseq, originalBranch);
+          this.mediaEngine.stop();
+          this.emit('callFailed', { code, reason });
+          this.currentCall = null;
+        }
       }
     } else if (method === 'BYE') {
       if (code === 200) {
@@ -565,13 +591,11 @@ class SipUdpEngine extends EventEmitter {
     }
   }
 
-  _sendAck() {
+  _sendAck(cseqOverride) {
     if (!this.currentCall) return;
     
     // RFC 3261: CSeq number in ACK MUST match the INVITE CSeq!
-    // Do NOT increment this.cseq here. 
-    // Instead use the current transaction CSeq or this.cseq if outgoing context matches
-    const ackCseq = this.currentCall.direction === 'outgoing' ? this.cseq : this.currentCall.cseq;
+    const ackCseq = cseqOverride || (this.currentCall.direction === 'outgoing' ? this.cseq : this.currentCall.cseq);
     
     const branch = this._branch();
     
@@ -585,6 +609,20 @@ class SipUdpEngine extends EventEmitter {
     msg += `User-Agent: GilamOperator/2.0\r\n`;
     msg += `Content-Length: 0\r\n\r\n`;
     
+    this._send(msg);
+  }
+
+  _sendNon2xxAck(cseq, branch) {
+    if (!this.currentCall) return;
+    let msg = `ACK sip:${this.currentCall.targetExt}@${this.sipServer} SIP/2.0\r\n`;
+    msg += `Via: SIP/2.0/UDP ${this.localIp}:${this.localPort};rport;branch=${branch}\r\n`;
+    msg += `Max-Forwards: 70\r\n`;
+    msg += `From: "${this.displayName}" <sip:${this.extension}@${this.sipServer}>;tag=${this.currentCall.fromTag || this.tag}\r\n`;
+    msg += `To: <sip:${this.currentCall.targetExt}@${this.sipServer}>${this.currentCall.toTag ? ';tag=' + this.currentCall.toTag : ''}\r\n`;
+    msg += `Call-ID: ${this.currentCall.callId}\r\n`;
+    msg += `CSeq: ${cseq} ACK\r\n`;
+    msg += `User-Agent: GilamOperator/2.0\r\n`;
+    msg += `Content-Length: 0\r\n\r\n`;
     this._send(msg);
   }
 
