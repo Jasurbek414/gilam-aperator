@@ -448,18 +448,29 @@ class SipUdpEngine extends EventEmitter {
     console.log(`[SIP-UDP] <-- ${method} request`);
 
     if (method === 'INVITE') {
-      // Incoming call
+      // Send 100 Trying immediately
+      const viaMatch = data.match(/Via:\s*(.*)/i);
       const fromMatch = data.match(/From:\s*(.*)/i);
       const toMatch = data.match(/To:\s*(.*)/i);
       const callIdMatch = data.match(/Call-ID:\s*(.*)/i);
-      const viaMatch = data.match(/Via:\s*(.*)/i);
       const cseqMatch = data.match(/CSeq:\s*(\d+)\s+INVITE/i);
-      const callerMatch = data.match(/From:.*?<sip:(\d+)@/i);
+
+      let trying = `SIP/2.0 100 Trying\r\n`;
+      trying += `Via: ${viaMatch ? viaMatch[1].trim() : ''}\r\n`;
+      trying += `From: ${fromMatch ? fromMatch[1].trim() : ''}\r\n`;
+      trying += `To: ${toMatch ? toMatch[1].trim() : ''}\r\n`;
+      trying += `Call-ID: ${callIdMatch ? callIdMatch[1].trim() : ''}\r\n`;
+      trying += `CSeq: ${cseqMatch ? cseqMatch[1] : '1'} INVITE\r\n`;
+      trying += `Content-Length: 0\r\n\r\n`;
+      this._send(trying);
+
+      // Extract details
+      const callerMatch = data.match(/From:.*?[<]?sip:([^\s@>:]+)/i);
       const callerDisplayMatch = data.match(/From:\s*"([^"]+)"/i);
 
       this.currentCall = {
         callId: callIdMatch ? callIdMatch[1].trim() : '',
-        targetExt: callerMatch ? callerMatch[1] : 'unknown',
+        targetExt: callerMatch ? callerMatch[1] : 'Noma\'lum',
         from: fromMatch ? fromMatch[1].trim() : '',
         to: toMatch ? toMatch[1].trim() : '',
         via: viaMatch ? viaMatch[1].trim() : '',
