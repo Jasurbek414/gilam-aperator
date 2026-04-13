@@ -1672,6 +1672,67 @@ textarea.crm-input { resize: none; }
   border-color: rgba(255, 255, 255, 0.15);
 }
 
+/* ═══ SMS COMPOSE ═════════════════════════════════════════════════════ */
+.sms-compose {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  transition: border-color var(--tr);
+}
+.sms-compose:hover {
+  border-color: rgba(99, 102, 241, 0.2);
+}
+.sms-compose .form-group {
+  display: flex;
+  flex-direction: column;
+}
+.sms-compose input, .sms-compose textarea {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-h);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  color: var(--t1);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: all var(--tr);
+}
+.sms-compose input::placeholder, .sms-compose textarea::placeholder {
+  color: var(--t3);
+  font-weight: 500;
+}
+.sms-compose input:focus, .sms-compose textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+}
+.sms-compose textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+}
+.sms-compose .btn-primary {
+  align-self: flex-start;
+  padding: 14px 28px;
+  font-size: 14px;
+  border-radius: var(--r-md);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+  transition: all var(--tr);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.sms-compose .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
+  background: #4f46e5;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: .3; }
