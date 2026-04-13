@@ -97,7 +97,10 @@ const Api = {
       path: '/api/socket.io',
       extraHeaders: {
         Authorization: `Bearer ${this.config.token}`
-      }
+      },
+      reconnectionAttempts: 5,        // Faqat 5 marta urinadi
+      reconnectionDelay: 5000,        // Har 5 soniyada (default juda tez)
+      reconnectionDelayMax: 10000     // Maksimum 10 soniya pauza
     });
 
     this.socket.on('connect', () => {
