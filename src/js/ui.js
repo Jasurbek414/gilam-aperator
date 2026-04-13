@@ -40,10 +40,15 @@ const UI = {
 
   showScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const chatFab = document.getElementById('chat-fab');
+    const chatModal = document.getElementById('chat-modal');
     if (name === 'login') {
       Utils.$('login-screen').classList.add('active');
+      if (chatFab) chatFab.style.display = 'none';
+      if (chatModal) chatModal.style.display = 'none';
     } else {
       Utils.$('app-screen').classList.add('active');
+      if (chatFab) chatFab.style.display = 'flex';
     }
   },
 

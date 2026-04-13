@@ -799,15 +799,11 @@ textarea.crm-input { resize: none; }
 
 /* Chat FAB Fix */
 #chat-fab {
-  z-index: 99999999 !important;
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
+  z-index: 99999999;
 }
 
 #chat-modal {
-  z-index: 99999999 !important;
+  z-index: 99999999;
 }
 
 .call-overlay-actions { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
