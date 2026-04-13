@@ -41,6 +41,7 @@ const Settings = (() => {
     }
     _applyToUI();
     _bindEvents();
+    _loadAudioDevices();
     console.log('[Settings] ✅ Loaded:', _settings);
   }
 
@@ -123,6 +124,15 @@ const Settings = (() => {
     el('setting-ring-volume')?.addEventListener('change', () => {
       save();
     });
+
+    // Logout
+    el('btn-logout')?.addEventListener('click', () => {
+      if (!confirm("Hisobdan chiqishni xohlaysizmi?")) return;
+      if (window.SipClient) window.SipClient.disconnectAll();
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('gilam-user');
+      window.location.reload();
+    });
   }
 
   /**
@@ -130,6 +140,51 @@ const Settings = (() => {
    */
   function get(key) {
     return _settings[key];
+  }
+
+  // ───────────────────────────────────────────────────────
+  // AUDIO DEVICES ENUMERATION
+  // ───────────────────────────────────────────────────────
+  async function _loadAudioDevices() {
+    try {
+      // Mikrofon ruxsatini so'rash (ro'yxatni olish uchun kerak)
+      await navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => stream.getTracks().forEach(t => t.stop())).catch(()=>{});
+      
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      
+      const audioInput = document.getElementById('audio-input');
+      const audioOutput = document.getElementById('audio-output');
+      const audioRing = document.getElementById('audio-ring');
+
+      if (audioInput) audioInput.innerHTML = '';
+      if (audioOutput) audioOutput.innerHTML = '';
+      if (audioRing) audioRing.innerHTML = '';
+
+      devices.forEach(device => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.text = device.label || `${device.kind} (${device.deviceId.slice(0,5)}...)`;
+
+        if (device.kind === 'audioinput') {
+          if (audioInput) audioInput.appendChild(option);
+        } else if (device.kind === 'audiooutput') {
+          if (audioOutput) audioOutput.appendChild(option);
+          // Ringtone uchun ham xuddi shu dynamiklar
+          if (audioRing) {
+            const opt2 = option.cloneNode(true);
+            audioRing.appendChild(opt2);
+          }
+        }
+      });
+
+      // Agar bo'sh qolsa standartni qo'yish
+      if (audioInput && audioInput.options.length === 0) audioInput.innerHTML = '<option value="default">Standart mikrofon</option>';
+      if (audioOutput && audioOutput.options.length === 0) audioOutput.innerHTML = '<option value="default">Standart dinamik</option>';
+      if (audioRing && audioRing.options.length === 0) audioRing.innerHTML = '<option value="default">Standart dinamik</option>';
+
+    } catch(err) {
+      console.warn('[Settings] Audio devices load error:', err);
+    }
   }
 
   // ───────────────────────────────────────────────────────
