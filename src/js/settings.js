@@ -133,6 +133,15 @@ const Settings = (() => {
       localStorage.removeItem('gilam-user');
       window.location.reload();
     });
+
+    // Audio Selectors Persistence
+    ['audio-input', 'audio-output', 'audio-ring'].forEach(id => {
+      el(id)?.addEventListener('change', (e) => {
+        _settings[id] = e.target.value;
+        save();
+        Utils.showToast('Audio moslama tanlandi', 'info');
+      });
+    });
   }
 
   /**
@@ -181,6 +190,11 @@ const Settings = (() => {
       if (audioInput && audioInput.options.length === 0) audioInput.innerHTML = '<option value="default">Standart mikrofon</option>';
       if (audioOutput && audioOutput.options.length === 0) audioOutput.innerHTML = '<option value="default">Standart dinamik</option>';
       if (audioRing && audioRing.options.length === 0) audioRing.innerHTML = '<option value="default">Standart dinamik</option>';
+
+      // Saqlangan qiymatlarni tanlash
+      if (audioInput && _settings['audio-input']) audioInput.value = _settings['audio-input'];
+      if (audioOutput && _settings['audio-output']) audioOutput.value = _settings['audio-output'];
+      if (audioRing && _settings['audio-ring']) audioRing.value = _settings['audio-ring'];
 
     } catch(err) {
       console.warn('[Settings] Audio devices load error:', err);
