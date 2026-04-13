@@ -177,7 +177,8 @@ const SipClient = {
 
     engine.on('callAnswered', (data) => {
       console.log(`[SIP] Call connected: ${data.target}`);
-      window.UI.showActiveCall({ target: data.target });
+      window.UI.showActiveCall(data.target, 'Suhbat ketyapti');
+      window.UI.startCallTimer();
     });
 
     engine.on('callEnded', (data) => {
