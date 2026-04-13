@@ -647,6 +647,7 @@ const SipClient = {
 
   // ═══ ACCOUNT MANAGEMENT ═════════════════════════════════════════════════
   saveAccount() {
+    const campaignName = document.getElementById('sip-campaign')?.value?.trim() || 'Umumiy Kampaniya';
     const name = document.getElementById('sip-name')?.value?.trim() || `Liniya ${this.sipAccounts.length + 1}`;
     const domain = document.getElementById('sip-domain')?.value?.trim();
     const extension = document.getElementById('sip-extension')?.value?.trim();
@@ -655,13 +656,14 @@ const SipClient = {
     const transport = document.getElementById('sip-transport')?.value || 'ws';
     const autoConnect = document.getElementById('sip-autoconnect')?.checked ?? true;
 
-    if (!name || !domain || !extension || !password) {
-      Utils.showToast('Barcha maydonlarni to\'ldiring!', 'error');
+    if (!domain || !extension || !password) {
+      Utils.showToast('PBX Server, Raqam va Parolni to\'ldirish shart!', 'error');
       return;
     }
 
     const newAccount = {
       id: 'sip_' + Date.now(),
+      campaignName,
       name,
       domain,
       extension,
@@ -678,7 +680,7 @@ const SipClient = {
     const modal = document.getElementById('modal-add-sip');
     if (modal) modal.style.display = 'none';
     
-    ['sip-name', 'sip-domain', 'sip-extension', 'sip-username', 'sip-password'].forEach(id => {
+    ['sip-campaign', 'sip-name', 'sip-domain', 'sip-extension', 'sip-username', 'sip-password'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
