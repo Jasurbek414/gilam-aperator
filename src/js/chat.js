@@ -57,8 +57,9 @@ const ChatManager = {
        const myProfile = userStr ? JSON.parse(userStr) : null;
        
        let drivers = [];
-       if (myProfile && myProfile.companyId) {
-          const ulist = await window.Api.request(`/users/company/${myProfile.companyId}`);
+       if (myProfile) {
+          // /users returns all users for Super Admin, and only company users for Operators/Company Admins.
+          const ulist = await window.Api.request(`/users`);
           if (ulist && Array.isArray(ulist)) {
              drivers = ulist.filter(u => u.role === 'DRIVER');
           }
