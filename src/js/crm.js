@@ -16,13 +16,15 @@ const CRM = {
   },
 
   async loadContacts(query = '') {
-    if (!window.Api.config.currentUser?.companyId) return;
+    const isGlobal = !window.Api.config.currentUser?.companyId;
     
     try {
       if (query) {
-        this.allContacts = await window.Api.request(`/customers/search/${window.Api.config.currentUser.companyId}?q=${encodeURIComponent(query)}`) || [];
+        const path = isGlobal ? `/customers/search/global?q=${encodeURIComponent(query)}` : `/customers/search/${window.Api.config.currentUser.companyId}?q=${encodeURIComponent(query)}`;
+        this.allContacts = await window.Api.request(path) || [];
       } else {
-        this.allContacts = await window.Api.request(`/customers/company/${window.Api.config.currentUser.companyId}`) || [];
+        const path = isGlobal ? `/customers` : `/customers/company/${window.Api.config.currentUser.companyId}`;
+        this.allContacts = await window.Api.request(path) || [];
       }
       this.renderContacts(this.allContacts);
     } catch (err) {
@@ -31,16 +33,17 @@ const CRM = {
   },
 
   async loadServices() {
-    if (!window.Api.config.currentUser?.companyId) return;
+    const isGlobal = !window.Api.config.currentUser?.companyId;
     try {
-      this.services = await window.Api.request(`/services/company/${window.Api.config.currentUser.companyId}`) || [];
+      const path = isGlobal ? `/services` : `/services/company/${window.Api.config.currentUser.companyId}`;
+      this.services = await window.Api.request(path) || [];
       const select = Utils.$('quick-order-product');
       if (select) {
         select.innerHTML = '<option value="">Xizmat tanlang</option>';
         this.services.forEach(s => {
           const opt = document.createElement('option');
           opt.value = s.id;
-          opt.textContent = `${s.name} (${s.price} s'om)`;
+          opt.textContent = `${s.name} (${s.price} s'om)${s.company ? ' — ' + s.company.name : ''}`;
           select.appendChild(opt);
         });
       }
@@ -422,9 +425,15 @@ const CRM = {
     }
 
     try {
-      // Haydovchi tanlangan bo'lsa, uning kompaniyasini aniqlash
+      // Haydovchi yoki xizmat orqali kompaniyani aniqlash
       const selectedDriverId = Utils.$('quick-order-driver')?.value || null;
       let resolvedCompanyId = window.Api.config.currentUser.companyId;
+      
+      const selService = this.services?.find(s => s.id === serviceId);
+      if (selService && selService.companyId) {
+        resolvedCompanyId = selService.companyId;
+      }
+      
       if (selectedDriverId && this.allDrivers) {
         const selDriver = this.allDrivers.find(d => d.id === selectedDriverId);
         if (selDriver && selDriver.companyId) {
@@ -454,8 +463,13 @@ const CRM = {
       // 2. Buyurtma yaratish
       const driverId = Utils.$('quick-order-driver')?.value || null;
 
-      // Tanlangan haydovchining kompaniyasini aniqlash
+      // Tanlangan haydovchining kompaniyasini aniqlash (yoki xizmatdan)
       let targetCompanyId = window.Api.config.currentUser.companyId;
+
+      if (selService && selService.companyId) {
+        targetCompanyId = selService.companyId;
+      }
+
       if (driverId && this.allDrivers) {
         const selectedDriver = this.allDrivers.find(d => d.id === driverId);
         if (selectedDriver && selectedDriver.companyId) {
