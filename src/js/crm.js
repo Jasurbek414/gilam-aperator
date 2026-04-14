@@ -12,6 +12,7 @@ const CRM = {
     this.bindEvents();
     this.renderSmsHistory();
     this.loadServices();
+    this.loadDrivers();
   },
 
   async loadContacts(query = '') {
@@ -45,6 +46,28 @@ const CRM = {
       }
     } catch (err) {
       console.error('Load services error:', err);
+    }
+  },
+
+  async loadDrivers() {
+    try {
+      const ulist = await window.Api.request('/users');
+      if (ulist && Array.isArray(ulist)) {
+        this.allDrivers = ulist.filter(u => u.role === 'DRIVER');
+        const select = Utils.$('quick-order-driver');
+        if (select) {
+          select.innerHTML = '<option value="">Haydovchi tanlang...</option>';
+          this.allDrivers.forEach(d => {
+            const companyName = d.company?.name || '';
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = `${d.fullName}${companyName ? ' — ' + companyName : ''}`;
+            select.appendChild(opt);
+          });
+        }
+      }
+    } catch(e) {
+      console.warn('[CRM] Haydovchilarni yuklash xatoligi:', e);
     }
   },
 
@@ -399,6 +422,16 @@ const CRM = {
     }
 
     try {
+      // Haydovchi tanlangan bo'lsa, uning kompaniyasini aniqlash
+      const selectedDriverId = Utils.$('quick-order-driver')?.value || null;
+      let resolvedCompanyId = window.Api.config.currentUser.companyId;
+      if (selectedDriverId && this.allDrivers) {
+        const selDriver = this.allDrivers.find(d => d.id === selectedDriverId);
+        if (selDriver && selDriver.companyId) {
+          resolvedCompanyId = selDriver.companyId;
+        }
+      }
+
       let customerId = null;
       // 1. Mijozni qidirish yoki yaratish
       const existing = this.allContacts.find(c => c.phone1 === phone || c.phone2 === phone);
@@ -411,7 +444,7 @@ const CRM = {
             fullName: name || "Noma'lum",
             phone1: phone,
             address: address || undefined,
-            companyId: window.Api.config.currentUser.companyId,
+            companyId: resolvedCompanyId,
           })
         });
         customerId = newCust.id;
@@ -419,8 +452,19 @@ const CRM = {
       }
 
       // 2. Buyurtma yaratish
+      const driverId = Utils.$('quick-order-driver')?.value || null;
+
+      // Tanlangan haydovchining kompaniyasini aniqlash
+      let targetCompanyId = window.Api.config.currentUser.companyId;
+      if (driverId && this.allDrivers) {
+        const selectedDriver = this.allDrivers.find(d => d.id === driverId);
+        if (selectedDriver && selectedDriver.companyId) {
+          targetCompanyId = selectedDriver.companyId;
+        }
+      }
+
       const orderData = {
-        companyId: window.Api.config.currentUser.companyId,
+        companyId: targetCompanyId,
         customerId: customerId,
         operatorId: window.Api.config.currentUser.id,
         notes: note,
@@ -437,6 +481,19 @@ const CRM = {
         method: 'POST',
         body: JSON.stringify(orderData)
       });
+
+      // 3. Haydovchini tayinlash (push notification ham avtomatik ketadi)
+      if (driverId && newOrder && newOrder.id) {
+        try {
+          await window.Api.request(`/orders/${newOrder.id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ driverId })
+          });
+          console.log('[CRM] Haydovchi tayinlandi:', driverId);
+        } catch(assignErr) {
+          console.warn('[CRM] Haydovchi tayinlash xatoligi:', assignErr);
+        }
+      }
       
       Utils.showToast("Buyurtma saqlandi!", 'success');
       
@@ -451,7 +508,7 @@ const CRM = {
       localStorage.setItem('orders', JSON.stringify(orders));
       
       // Formani tozalash
-      ['quick-order-product', 'quick-order-price', 'quick-crm-note'].forEach(id => {
+      ['quick-order-product', 'quick-order-price', 'quick-crm-note', 'quick-order-driver'].forEach(id => {
         const el = Utils.$(id);
         if (el) el.value = '';
       });
