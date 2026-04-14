@@ -69,8 +69,13 @@
        <div style="align-self: center; font-size: 12px; color: #94a3b8; margin-top: auto; margin-bottom: auto; text-align: center;">Haydovchini yuqoridan tanlang yoki ularning yozishini kuting</div>
     </div>
     
-    <div style="padding: 12px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 8px;">
+    <div style="padding: 12px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; align-items: center;">
       <input id="chat-input" type="text" placeholder="Xabar yozing..." disabled style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-family: 'Inter', sans-serif;">
+      
+      <button id="chat-record" title="Ovoz yozish / Yuborish" style="background: none; border: none; color: #64748b; cursor: pointer; display: flex; justify-content: center; align-items: center; width: 36px; height: 36px; border-radius: 18px; transition: 0.2s;">
+        <span class="material-icons-round" id="chat-record-icon" style="font-size: 22px;">mic</span>
+      </button>
+
       <button id="chat-send" disabled style="background: #94a3b8; color: white; border: none; width: 36px; height: 36px; border-radius: 18px; cursor: not-allowed; display: flex; justify-content: center; align-items: center;">
         <span class="material-icons-round" style="font-size: 18px;">send</span>
       </button>
