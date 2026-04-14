@@ -11,6 +11,7 @@ const CRM = {
   init() {
     this.bindEvents();
     this.renderSmsHistory();
+    this.loadCompanies();
     this.loadServices();
     this.loadDrivers();
   },
@@ -32,24 +33,56 @@ const CRM = {
     }
   },
 
+  async loadCompanies() {
+    try {
+      const isGlobal = !window.Api.config.currentUser?.companyId;
+      if (isGlobal) {
+        this.companies = await window.Api.request('/public/companies') || [];
+      } else {
+        const comp = await window.Api.request(`/companies/${window.Api.config.currentUser.companyId}`);
+        this.companies = comp ? [comp] : [];
+      }
+      const select = Utils.$('quick-crm-campaign');
+      if (select) {
+        select.innerHTML = '<option value="">Kampaniya tanlang...</option>';
+        this.companies.forEach(company => {
+          const opt = document.createElement('option');
+          opt.value = company.id;
+          opt.textContent = company.name;
+          select.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.warn('[CRM] Load companies error:', err);
+    }
+  },
+
   async loadServices() {
     const isGlobal = !window.Api.config.currentUser?.companyId;
     try {
       const path = isGlobal ? `/services` : `/services/company/${window.Api.config.currentUser.companyId}`;
       this.services = await window.Api.request(path) || [];
-      const select = Utils.$('quick-order-product');
-      if (select) {
-        select.innerHTML = '<option value="">Xizmat tanlang</option>';
-        this.services.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.id;
-          opt.textContent = `${s.name} (${s.price} s'om)${s.company ? ' — ' + s.company.name : ''}`;
-          select.appendChild(opt);
-        });
-      }
+      this.renderServices();
     } catch (err) {
       console.error('Load services error:', err);
     }
+  },
+
+  renderServices(companyId = null) {
+    const select = Utils.$('quick-order-product');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Xizmat tanlang</option>';
+    
+    // Agar companyId tanlangan bo'lsa, faqat o'sha kampaniyaning xizmatlari chiqsin
+    const filteredServices = companyId ? this.services.filter(s => s.companyId === companyId || s.company?.id === companyId) : this.services;
+    
+    filteredServices.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = `${s.name} (${s.price} s'om)${s.company ? ' — ' + s.company.name : ''}`;
+      select.appendChild(opt);
+    });
   },
 
   async loadDrivers() {
@@ -130,6 +163,26 @@ const CRM = {
 
     Utils.$('btn-close-customer-modal')?.addEventListener('click', () => Utils.$('modal-new-customer').style.display = 'none');
     Utils.$('btn-cancel-customer')?.addEventListener('click', () => Utils.$('modal-new-customer').style.display = 'none');
+
+    // Kampaniya tanlanganda unga tegishli Xizmatlarni filtrlash
+    Utils.$('quick-crm-campaign')?.addEventListener('change', (e) => {
+      const selectedCompanyId = e.target.value;
+      this.renderServices(selectedCompanyId);
+      
+      // Ixtiyoriy ravishda Haydovchilarni ham ushbu kampaniyaga moslab qoldirish kerakmi degan masala:
+      if (this.allDrivers && Utils.$('quick-order-driver')) {
+          const dSelect = Utils.$('quick-order-driver');
+          dSelect.innerHTML = '<option value="">Haydovchi tanlang...</option>';
+          const filteredDrivers = selectedCompanyId ? this.allDrivers.filter(d => d.companyId === selectedCompanyId || d.company?.id === selectedCompanyId) : this.allDrivers;
+          filteredDrivers.forEach(d => {
+            const companyName = d.company?.name || '';
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = `${d.fullName}${companyName ? ' — ' + companyName : ''}`;
+            dSelect.appendChild(opt);
+          });
+      }
+    });
 
     Utils.$('form-new-customer')?.addEventListener('submit', async (e) => {
       e.preventDefault();
