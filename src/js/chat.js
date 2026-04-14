@@ -33,7 +33,7 @@ const ChatManager = {
 
   async connect() {
     try {
-      const token = localStorage.getItem('gilam_token');
+      const token = localStorage.getItem('token');
       if(!token) return;
 
       this.socket = io('wss://gilam-api.ecos.uz/chat', { query: { token } });
@@ -53,7 +53,7 @@ const ChatManager = {
 
   async loadConversations() {
      try {
-       const userStr = localStorage.getItem('gilam_user');
+       const userStr = localStorage.getItem('user');
        const myProfile = userStr ? JSON.parse(userStr) : null;
        
        let drivers = [];
@@ -157,7 +157,7 @@ const ChatManager = {
      const val = this.elements.input.value.trim();
      if(!val || !this.activeChatUserId) return;
 
-     const userStr = localStorage.getItem('gilam_user');
+     const userStr = localStorage.getItem('user');
      const me = userStr ? JSON.parse(userStr) : {};
 
      const msgPayload = {
@@ -176,7 +176,7 @@ const ChatManager = {
   },
 
   renderMessage(m) {
-     const userStr = localStorage.getItem('gilam_user');
+     const userStr = localStorage.getItem('user');
      const myId = userStr ? JSON.parse(userStr).id : null;
      const isMe = m.senderId === myId;
 
