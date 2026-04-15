@@ -23,12 +23,13 @@ const UI = {
       if (!window.Api) return;
       const res = await window.Api.getCampaigns();
       const select = Utils.$('sip-campaign');
-      if (select && res && Array.isArray(res.data)) {
-        // Asosiy default option qolaveradi
-        select.innerHTML = `<option value="Umumiy Kampaniya" selected>Umumiy Kampaniya</option>`;
-        res.data.forEach(camp => {
+      // Backend returns a raw array (not {data: [...]})
+      const campaigns = Array.isArray(res) ? res : (res?.data || []);
+      if (select && campaigns.length > 0) {
+        select.innerHTML = `<option value="" selected>Kampaniya tanlang</option>`;
+        campaigns.forEach(camp => {
           let opt = document.createElement('option');
-          opt.value = camp.name;
+          opt.value = camp.id || camp.name;
           opt.textContent = camp.name;
           select.appendChild(opt);
         });
@@ -287,62 +288,38 @@ const UI = {
     Utils.$('map-modal-close')?.addEventListener('click', closeMap);
   },
 
-  // ═══ CAMPAIGN AUTO-LOAD ═══════════════════════════════════════════════
-  // Liniya bo'yicha kampaniya ma'lumotlarini avtomatik yuklash
   async loadCampaignByLine(lineNumber) {
     try {
       const token = localStorage.getItem('authToken');
       const apiUrl = window.Api ? window.Api.config.API_BASE : 'https://gilam-api.ecos.uz';
-      const res = await fetch(`${apiUrl}/api/campaigns/by-line/${lineNumber}`, {
+      const res = await fetch(`${apiUrl}/api/campaigns/by-line/${encodeURIComponent(lineNumber)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (!res.ok) return;
       const campaign = await res.json();
-      
-      if (campaign && campaign.data) {
-        const c = campaign.data;
-        
-        // Kampaniya nomini ko'rsatish
+
+      // Backend returns direct campaign object (not {data: campaign})
+      if (campaign && campaign.id) {
+        const c = campaign;
+
         const badge = Utils.$('campaign-name-badge');
         const info = Utils.$('active-campaign-info');
         if (badge) badge.textContent = c.name || '—';
         if (info) info.style.display = '';
-        
-        // Xizmat turlarini to'ldirish
-        const productSelect = Utils.$('quick-order-product');
-        if (productSelect && c.products) {
-          productSelect.innerHTML = '<option value="">Xizmat tanlang</option>';
-          c.products.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id || p.name;
-            opt.textContent = `${p.name} — ${p.price?.toLocaleString() || '—'} so'm`;
-            opt.dataset.price = p.price || '';
-            productSelect.appendChild(opt);
-          });
-        }
-        
-        // Kampaniya selectni to'ldirish
+
         const campSelect = Utils.$('quick-crm-campaign');
         if (campSelect) {
           campSelect.innerHTML = `<option value="${c.id}" selected>${c.name}</option>`;
         }
-        
-        // Narxni avtomatik to'ldirish (xizmat tanlanganda)
-        productSelect?.addEventListener('change', () => {
-          const sel = productSelect.options[productSelect.selectedIndex];
-          const priceField = Utils.$('quick-order-price');
-          if (sel?.dataset?.price && priceField) {
-            priceField.value = sel.dataset.price;
-          }
-        });
-        
+
         Utils.showToast(`Kampaniya: ${c.name}`, "success");
       }
     } catch (e) {
       console.warn('Campaign load error:', e);
     }
   },
+
 
   // ═══ ACTIVE CALL OVERLAY ════════════════════════════════════════════════
   ringbackOscillator: null,
@@ -611,8 +588,10 @@ const UI = {
     if (window.Api && window.Api.config.token) {
       try {
         const res = await window.Api.request(`/calls?limit=100${filter !== 'all' ? `&status=${filter}` : ''}`);
-        if (res && res.data) {
-           history = res.data.map(c => ({
+        // Backend returns a raw array (not {data: [...]})
+        const records = Array.isArray(res) ? res : (res?.data || []);
+        if (records.length > 0) {
+           history = records.map(c => ({
              id: c.id,
              target: c.callerPhone || c.calledPhone || 'Noma\'lum',
              type: c.status === 'MISSED' ? 'MISSED' : (c.direction === 'INCOMING' ? 'INCOMING' : 'OUTGOING'),
