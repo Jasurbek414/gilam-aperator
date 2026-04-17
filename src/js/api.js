@@ -115,6 +115,24 @@ const Api = {
         // Shuning uchun bu yerda faqat UI ni bekitish kifoya qilishi mumkin
       }
     });
+
+    // 📦 Yangi buyurtma kelganda (real-time)
+    this.socket.on('order:new', (order) => {
+      console.log('[API/Socket] Yangi buyurtma!', order);
+      Utils.showToast(`🆕 Yangi buyurtma: ${order.customer?.fullName || ''}`, 'success');
+      // Agar UI da orders paneli ochiq bo'lsa, refresh qilamiz
+      if (window.UI && typeof window.UI.refreshOrders === 'function') {
+        window.UI.refreshOrders();
+      }
+    });
+
+    // 🔄 Buyurtma holati o'zgarganda (real-time)
+    this.socket.on('order:updated', (order) => {
+      console.log('[API/Socket] Buyurtma yangilandi:', order);
+      if (window.UI && typeof window.UI.refreshOrders === 'function') {
+        window.UI.refreshOrders();
+      }
+    });
   },
 
   disconnectSocket() {
