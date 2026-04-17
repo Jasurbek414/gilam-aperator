@@ -22,38 +22,19 @@
       "renderer.js",
       "styles.css",
       "assets/**",
-      "src/**",
       "node_modules/**",
       "!node_modules/electron/**",
       "!node_modules/.cache/**"
-    ],
-    "extraResources": [
-      {
-        "from": "../gilam-platforma-main/backend",
-        "to": "backend",
-        "filter": [
-          "dist/**",
-          "node_modules/**",
-          "firebase-service-account.json",
-          "!node_modules/.cache/**"
-        ]
-      },
-      {
-        "from": "cloudflared.exe",
-        "to": "cloudflared.exe"
-      }
     ],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ],
       "icon": "assets/icon.ico",
-      "requestedExecutionLevel": "requireAdministrator"
+      "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
       "oneClick": false,
@@ -63,7 +44,6 @@
       "shortcutName": "Gilam Operator",
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico",
-      "installerHeader": "assets/icon.ico",
       "runAfterFinish": true,
       "perMachine": false
     }
@@ -74,7 +54,7 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
-    "electron": "^33.4.11",
+    "electron": "^33.0.0",
     "electron-builder": "^25.1.8"
   },
   "author": "Gilam Team",
