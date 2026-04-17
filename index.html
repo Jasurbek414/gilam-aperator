@@ -52,39 +52,7 @@
     </div>
   </div>
 
-  <div id="chat-modal" style="display:none; position: fixed; right: 20px; bottom: 85px; width: 350px; height: 500px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 999999; flex-direction: column; overflow: hidden;">
-    <div style="background: #1e293b; color: white; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-         <span class="material-icons-round">support_agent</span>
-         <span id="chat-title" style="font-weight: 600;">Haydovchilar bilan aloqa</span>
-      </div>
-      <button id="chat-close" style="background:none; border:none; color:white; cursor:pointer;"><span class="material-icons-round">close</span></button>
-    </div>
-    
-    <div id="chat-drivers-list" style="display: flex; gap: 8px; padding: 8px 12px; background: #f1f5f9; overflow-x: auto; border-bottom: 1px solid #e2e8f0; min-height: 48px; align-items: center;">
-       <span style="font-size: 11px; color: #64748b; white-space: nowrap;">Aktiv suhbatlar:</span>
-    </div>
 
-    <div id="chat-messages" style="flex: 1; padding: 16px; overflow-y: auto; background: #f8fafc; display: flex; flex-direction: column; gap: 8px;">
-       <div style="align-self: center; font-size: 12px; color: #94a3b8; margin-top: auto; margin-bottom: auto; text-align: center;">Haydovchini yuqoridan tanlang yoki ularning yozishini kuting</div>
-    </div>
-    
-    <div style="padding: 12px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; align-items: center;">
-      <input id="chat-input" type="text" placeholder="Xabar yozing..." disabled style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-family: 'Inter', sans-serif;">
-      
-      <button id="chat-record" title="Ovoz yozish / Yuborish" style="background: none; border: none; color: #64748b; cursor: pointer; display: flex; justify-content: center; align-items: center; width: 36px; height: 36px; border-radius: 18px; transition: 0.2s;">
-        <span class="material-icons-round" id="chat-record-icon" style="font-size: 22px;">mic</span>
-      </button>
-
-      <button id="chat-send" disabled style="background: #94a3b8; color: white; border: none; width: 36px; height: 36px; border-radius: 18px; cursor: not-allowed; display: flex; justify-content: center; align-items: center;">
-        <span class="material-icons-round" style="font-size: 18px;">send</span>
-      </button>
-    </div>
-  </div>
-
-  <button id="chat-fab" style="position: fixed; right: 20px; bottom: 20px; width: 56px; height: 56px; border-radius: 28px; background: #10b981; color: white; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); z-index: 999999; display: flex; justify-content: center; align-items: center;">
-    <span class="material-icons-round">chat</span>
-  </button>
 
   <!-- ═══ SCRIPTS ══════════════════════════════════════════════════════ -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
