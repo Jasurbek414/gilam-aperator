@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
   window.SipClient.init();
   window.CRM.init();
   window.Settings.load();
+  if (window.ChatManager) window.ChatManager.init();
+
 
   // ═══ LOGIN ════════════════════════════════════════════════════════════
   Utils.$('login-form')?.addEventListener('submit', async (e) => {
@@ -100,6 +102,15 @@ function startApp(user) {
     }
   } catch(e) {
     console.warn('[App] Backend WebSocket ulanishi imkonsiz:', e.message);
+  }
+
+  // Chat WebSocket ga ulanish
+  try {
+    if (window.ChatManager && window.Api.config.token !== 'mock_token') {
+      window.ChatManager.connect();
+    }
+  } catch(e) {
+    console.warn('[App] Chat WebSocket ulanishi imkonsiz:', e.message);
   }
 
   // Operator info
