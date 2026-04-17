@@ -554,7 +554,7 @@ const CRM = {
         try {
           await window.Api.request(`/orders/${newOrder.id}/status`, {
             method: 'PATCH',
-            body: JSON.stringify({ driverId })
+            body: JSON.stringify({ status: 'DRIVER_ASSIGNED', driverId })
           });
           console.log('[CRM] Haydovchi tayinlandi:', driverId);
         } catch(assignErr) {
