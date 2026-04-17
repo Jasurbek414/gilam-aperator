@@ -1,11 +1,72 @@
 {
   "name": "gilam-operator",
-  "version": "2.0.0",
-  "description": "Gilam Operator - SIP Dispetcher Desktop Application",
+  "version": "2.1.0",
+  "description": "Gilam Operator - Professional Dispatch Desktop Application",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron . --dev"
+    "dev": "electron . --dev",
+    "dist": "electron-builder --win --x64",
+    "dist:dir": "electron-builder --win --x64 --dir"
+  },
+  "build": {
+    "appId": "uz.ecos.gilam.operator",
+    "productName": "Gilam Operator",
+    "copyright": "Copyright © 2026 Gilam Team",
+    "directories": {
+      "output": "dist-installer"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "renderer.js",
+      "styles.css",
+      "assets/**",
+      "src/**",
+      "node_modules/**",
+      "!node_modules/electron/**",
+      "!node_modules/.cache/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../gilam-platforma-main/backend",
+        "to": "backend",
+        "filter": [
+          "dist/**",
+          "node_modules/**",
+          "firebase-service-account.json",
+          "!node_modules/.cache/**"
+        ]
+      },
+      {
+        "from": "cloudflared.exe",
+        "to": "cloudflared.exe"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Gilam Operator",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeader": "assets/icon.ico",
+      "runAfterFinish": true,
+      "perMachine": false
+    }
   },
   "dependencies": {
     "jssip": "^3.13.6",
@@ -13,7 +74,8 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
-    "electron": "^41.2.0"
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
   },
   "author": "Gilam Team",
   "license": "MIT"
