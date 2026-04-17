@@ -37,32 +37,6 @@ const Api = {
   },
 
   async login(phone, password) {
-    // UI TEST BYPASS
-    const ph = String(phone || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const pw = String(password || '').toLowerCase().trim();
-    
-    if (ph.includes('test') && pw.includes('test')) {
-      const mockUser = { id: 999, fullName: 'Test Operator', phone: '+998000000000', role: 'OPERATOR' };
-      this.config.token = 'mock_token';
-      this.config.currentUser = mockUser;
-      localStorage.setItem('token', 'mock_token');
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      
-      // Real SIP account — Asterisk server
-      const realSipAccounts = [
-        { id: 'sip_real_101', extension: '101', username: '101', name: 'Asosiy Liniya (101)', domain: '10.100.100.1', password: 'a1234567a', transport: 'ws', autoConnect: true, campaignName: 'Gilam Yuvish' }
-      ];
-      
-      // Agar mavjud SIP accountlar bo'lsa, ustiga yozmaymiz
-      const existing = JSON.parse(localStorage.getItem('sip_accounts') || '[]');
-      const hasReal = existing.some(a => a.extension === '101' && a.domain === '10.100.100.1');
-      if (!hasReal) {
-        localStorage.setItem('sip_accounts', JSON.stringify(realSipAccounts));
-      }
-      
-      return mockUser;
-    }
-
     const data = await this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ phone, password }),
