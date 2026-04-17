@@ -114,16 +114,34 @@ const ChatManager = {
       const token = localStorage.getItem('token');
       if(!token) return;
 
-      this.socket = io('wss://gilam-api.ecos.uz/chat', { query: { token } });
+      // /chat namespace'ga to'g'ridan-to'g'ri ulanish
+      // Cloudflare tunnel WebSocket Upgrade'ni qo'llab-quvvatlaydi
+      this.socket = io('https://gilam-api.ecos.uz/chat', {
+        path: '/socket.io',
+        query: { token },
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
+      });
 
       this.socket.on('connect', () => {
-        console.log('[Chat] Connected to WebSocket');
+        console.log('[Chat] /chat namespace ga ulandi');
         this.loadConversations();
+      });
+
+      this.socket.on('connect_error', (err) => {
+        console.error('[Chat] Ulanish xatoligi:', err.message);
       });
 
       this.socket.on('newMessage', (msg) => {
         this.handleIncomingMessage(msg);
       });
+
+      this.socket.on('messageSent', (msg) => {
+        // Server tasdiqladi — optimistic kopyasi allaqachon ko'ringan
+        console.log('[Chat] Server xabarni tasdiqladi:', msg?.id);
+      });
+
     } catch (err) {
       console.error('Chat connect error:', err);
     }
