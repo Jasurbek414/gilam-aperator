@@ -455,7 +455,7 @@ body {
   min-width: 0;
 }
 .crm-input::placeholder { color: var(--t3); }
-select.crm-input { cursor: pointer; -webkit-appearance: none; }
+select.crm-input { cursor: pointer; -webkit-appearance: none; appearance: none; }
 select.crm-input option { background: var(--bg-1); color: var(--t1); }
 textarea.crm-input { resize: none; }
 
@@ -869,7 +869,7 @@ textarea.crm-input { resize: none; }
 }
 .operator-info { display: flex; align-items: center; gap: 6px; color: var(--t3); }
 .operator-info .material-icons-round { font-size: 14px; }
-.operator-status { }
+.operator-status { display: inline; }
 #operator-status-text { color: var(--green); font-weight: 600; }
 
 /* ═══ MODALS ═══════════════════════════════════════════════════════════ */
