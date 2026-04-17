@@ -2354,3 +2354,134 @@ textarea.crm-input { resize: none; }
 .chat-send-btn:hover { transform: scale(1.08); box-shadow: 0 6px 16px rgba(16,185,129,0.45); }
 .chat-send-btn:active { transform: scale(0.95); }
 .chat-send-btn .material-icons-round { color: #fff; font-size: 20px; }
+
+/* ─── Chat toolbar + rasm/lokatsiya ───────────────────────────────────────── */
+.chat-toolbar {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 0 4px 6px;
+  border-right: 1px solid var(--border);
+  margin-right: 4px;
+  align-self: flex-end;
+}
+.chat-tool-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.chat-tool-btn .material-icons-round { font-size: 20px; }
+.chat-tool-btn:hover {
+  color: var(--accent);
+  background: rgba(16,185,129,0.1);
+  border-color: rgba(16,185,129,0.25);
+}
+
+/* ─── Image bubble ─────────────────────────────────────────────────────────── */
+.chat-bubble-image {
+  padding: 4px !important;
+  background: var(--bg-1) !important;
+  border: 1px solid var(--border);
+  max-width: 220px;
+}
+.chat-img-thumb {
+  width: 100%; max-width: 210px;
+  border-radius: 10px;
+  display: block;
+  cursor: zoom-in;
+  transition: opacity 0.15s;
+}
+.chat-img-thumb:hover { opacity: 0.88; }
+
+/* ─── Location bubble ──────────────────────────────────────────────────────── */
+.chat-bubble-location {
+  padding: 8px !important;
+  background: var(--bg-1) !important;
+  border: 1px solid var(--border);
+  min-width: 220px;
+  max-width: 280px;
+}
+.chat-location-map { margin-bottom: 8px; }
+.chat-location-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 4px 2px;
+  border-radius: 6px;
+  transition: opacity 0.15s;
+}
+.chat-location-link:hover { opacity: 0.8; }
+
+/* ─── Image fullscreen modal ──────────────────────────────────────────────── */
+.chat-image-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  cursor: zoom-out;
+}
+.chat-image-modal-close {
+  position: absolute; top: 16px; right: 20px;
+  background: rgba(255,255,255,0.1);
+  border: none; color: #fff;
+  width: 40px; height: 40px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.chat-image-modal-close:hover { background: rgba(255,255,255,0.2); }
+.chat-image-modal-img {
+  max-width: 90vw; max-height: 85vh;
+  border-radius: 10px;
+  object-fit: contain;
+  cursor: default;
+}
+
+/* ─── Location picker modal ───────────────────────────────────────────────── */
+.chat-map-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 99998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-map-modal-box {
+  width: min(700px, 95vw);
+  height: min(540px, 90vh);
+  background: var(--bg-1);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.chat-map-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600; font-size: 14px;
+}
+.chat-map-modal-header .btn-icon { margin-left: auto; }
+.chat-map-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-1);
+}

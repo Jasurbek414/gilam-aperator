@@ -1,7 +1,11 @@
 const ChatManager = {
   socket: null,
   activeChatUserId: null,
-  drivers: {}, // userId -> UserObj
+  drivers: {},
+  _lastSenderId: null,
+  _chatMap: null,
+  _chatMapMarker: null,
+  _chatMapCoords: null,
 
   init() {
     this.el = {
@@ -18,6 +22,9 @@ const ChatManager = {
       statusDot:     document.getElementById('chat-status-dot'),
       driversCount:  document.getElementById('chat-drivers-count'),
       searchInput:   document.getElementById('chat-search'),
+      fileInput:     document.getElementById('chat-file-input'),
+      btnImage:      document.getElementById('chat-btn-image'),
+      btnLocation:   document.getElementById('chat-btn-location'),
     };
 
     if (!this.el.driversList) return;
@@ -27,14 +34,18 @@ const ChatManager = {
     this.el.input?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); }
     });
-    // textarea auto-resize
     this.el.input?.addEventListener('input', (e) => {
       e.target.style.height = '';
       e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
     });
-
-    // Search filter
     this.el.searchInput?.addEventListener('input', (e) => this.filterDrivers(e.target.value));
+
+    // Rasm yuborish
+    this.el.btnImage?.addEventListener('click', () => this.el.fileInput?.click());
+    this.el.fileInput?.addEventListener('change', (e) => this.handleImageFile(e));
+
+    // Lokatsiya yuborish
+    this.el.btnLocation?.addEventListener('click', () => this.openLocationModal());
 
     // Chat tab ochilganda ulanish
     document.addEventListener('click', (e) => {
@@ -45,13 +56,13 @@ const ChatManager = {
 
   filterDrivers(query) {
     const q = (query || '').toLowerCase();
-    this.el.driversList.querySelectorAll('.chat-driver-item').forEach(el => {
+    this.el.driversList?.querySelectorAll('.chat-driver-item').forEach(el => {
       const name = el.querySelector('.chat-driver-name')?.textContent?.toLowerCase() || '';
       el.style.display = name.includes(q) ? '' : 'none';
     });
   },
 
-  // ─── WebSocket ulanish ─────────────────────────────────────────────────────
+  // ─── WebSocket ulanish ──────────────────────────────────────────────────────
   async connect() {
     try {
       const token = localStorage.getItem('token');
@@ -78,16 +89,10 @@ const ChatManager = {
         this._setStatus('offline');
       });
 
-      this.socket.on('disconnect', () => {
-        this._setStatus('offline');
-      });
+      this.socket.on('disconnect', () => this._setStatus('offline'));
 
-      this.socket.on('newMessage', (msg) => {
-        this.handleIncomingMessage(msg);
-      });
-
+      this.socket.on('newMessage', (msg) => this.handleIncomingMessage(msg));
       this.socket.on('messageSent', (msg) => {
-        // Server tasdiqladi — optimistic xabar allaqachon ko'rsatilgan
         console.log('[Chat] Server tasdiqladi:', msg?.id);
       });
 
@@ -100,10 +105,10 @@ const ChatManager = {
   _setStatus(state) {
     const dot = this.el.statusDot;
     if (!dot) return;
-    dot.className = 'status-dot ' + state;
+    dot.className = 'chat-online-badge ' + state;
   },
 
-  // ─── Haydovchilar ro'yxatini yuklash ──────────────────────────────────────
+  // ─── Haydovchilar ro'yxati ──────────────────────────────────────────────────
   async loadDrivers() {
     try {
       const ulist = await window.Api.request('/users');
@@ -112,13 +117,11 @@ const ChatManager = {
       const myId = window.Api.config.currentUser?.id;
       const drivers = ulist.filter(u => u.role === 'DRIVER' && u.id !== myId);
 
-      // Suhbat tarixdan ham foydalanuvchilarni olamiz
       let convUsers = [];
       try {
         convUsers = await window.Api.request('/messages/conversations') || [];
       } catch(_) {}
 
-      // Barcha unique users
       const seen = new Set();
       const allUsers = [...drivers, ...convUsers].filter(u => {
         if (!u || !u.id || seen.has(u.id) || u.id === myId) return false;
@@ -166,17 +169,14 @@ const ChatManager = {
     this.el.driversList.appendChild(div);
   },
 
-  // ─── Chat tanlash ──────────────────────────────────────────────────────────
+  // ─── Chat tanlash ────────────────────────────────────────────────────────────
   async selectChat(userId) {
     this.activeChatUserId = userId;
 
-    // Sidebar: active class
     this.el.driversList.querySelectorAll('.chat-driver-item').forEach(el => {
       el.classList.toggle('active', el.id === `driver-item-${userId}`);
     });
-    // Unread badge olib tashlash
-    const driverEl = document.getElementById(`driver-item-${userId}`);
-    driverEl?.querySelector('.chat-unread-badge')?.remove();
+    document.getElementById(`driver-item-${userId}`)?.querySelector('.chat-unread-badge')?.remove();
 
     const user = this.drivers[userId];
     const initials = (user?.fullName || '?').charAt(0).toUpperCase();
@@ -190,11 +190,10 @@ const ChatManager = {
 
     this.el.input?.focus();
 
-    // Tarixni yuklash
     try {
       const history = await window.Api.request(`/messages/history/${userId}`);
       if (this.el.messagesBox) this.el.messagesBox.innerHTML = '';
-      this._lastSenderId = null; // reset grouping
+      this._lastSenderId = null;
       if (history && Array.isArray(history)) {
         history.forEach(m => this.renderMessage(m));
       }
@@ -209,10 +208,10 @@ const ChatManager = {
     this._lastSenderId = null;
     if (this.el.panel)       this.el.panel.style.display       = 'none';
     if (this.el.placeholder) this.el.placeholder.style.display = 'flex';
-    this.el.driversList.querySelectorAll('.chat-driver-item').forEach(el => el.classList.remove('active'));
+    this.el.driversList?.querySelectorAll('.chat-driver-item').forEach(el => el.classList.remove('active'));
   },
 
-  // ─── Xabar yuborish ────────────────────────────────────────────────────────
+  // ─── Matn xabari yuborish ────────────────────────────────────────────────────
   sendMessage() {
     const val = this.el.input?.value?.trim();
     if (!val || !this.activeChatUserId || !this.socket) return;
@@ -225,7 +224,6 @@ const ChatManager = {
       companyId: me.companyId,
     });
 
-    // Optimistic render
     this.renderMessage({
       text: val,
       senderId: me.id,
@@ -238,7 +236,110 @@ const ChatManager = {
     this.scrollToBottom();
   },
 
-  // ─── Kiruvchi xabar ───────────────────────────────────────────────────────
+  // ─── Raw emit (rasm/lokatsiya) ───────────────────────────────────────────────
+  _sendRaw(text) {
+    if (!this.activeChatUserId || !this.socket) return;
+    const me = window.Api.config.currentUser || {};
+    this.socket.emit('sendMessage', {
+      text,
+      recipientId: this.activeChatUserId,
+      companyId: me.companyId,
+    });
+  },
+
+  // ─── Rasm yuborish ───────────────────────────────────────────────────────────
+  handleImageFile(e) {
+    const file = e.target.files?.[0];
+    if (!file || !this.activeChatUserId) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      window.Utils?.showToast('Rasm 5MB dan katta bo\'lmasin', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      this._sendRaw('[IMAGE]:' + base64);
+      this.renderMessage({
+        text: '[IMAGE]:' + base64,
+        senderId: window.Api.config.currentUser?.id,
+        sender: window.Api.config.currentUser,
+        createdAt: new Date().toISOString(),
+      });
+      this.scrollToBottom();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  },
+
+  // ─── Lokatsiya modali ─────────────────────────────────────────────────────────
+  openLocationModal() {
+    if (!this.activeChatUserId) return;
+    const modal = document.getElementById('chat-map-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    setTimeout(() => {
+      if (!this._chatMap) {
+        this._chatMap = L.map('chat-map-container', { zoomControl: true })
+          .setView([41.2995, 69.2401], 12);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '© OpenStreetMap © CARTO', maxZoom: 19
+        }).addTo(this._chatMap);
+
+        this._chatMap.on('click', (ev) => {
+          this._chatMapCoords = ev.latlng;
+          if (this._chatMapMarker) this._chatMapMarker.setLatLng(ev.latlng);
+          else this._chatMapMarker = L.marker(ev.latlng, { draggable: true }).addTo(this._chatMap);
+          this._chatMapMarker.on('dragend', () => {
+            this._chatMapCoords = this._chatMapMarker.getLatLng();
+            this._updateMapCoordsLabel();
+          });
+          this._updateMapCoordsLabel();
+          const sendBtn = document.getElementById('chat-map-send');
+          if (sendBtn) sendBtn.disabled = false;
+        });
+      } else {
+        this._chatMap.invalidateSize();
+      }
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => this._chatMap.setView([pos.coords.latitude, pos.coords.longitude], 15),
+          () => {},
+          { timeout: 4000 }
+        );
+      }
+    }, 150);
+
+    document.getElementById('chat-map-close').onclick = () => { modal.style.display = 'none'; };
+
+    document.getElementById('chat-map-send').onclick = () => {
+      if (!this._chatMapCoords) return;
+      const { lat, lng } = this._chatMapCoords;
+      const payload = `[LOCATION]:${lat.toFixed(6)},${lng.toFixed(6)}`;
+      this._sendRaw(payload);
+      this.renderMessage({
+        text: payload,
+        senderId: window.Api.config.currentUser?.id,
+        sender: window.Api.config.currentUser,
+        createdAt: new Date().toISOString(),
+      });
+      this.scrollToBottom();
+      modal.style.display = 'none';
+      document.getElementById('chat-map-send').disabled = true;
+    };
+  },
+
+  _updateMapCoordsLabel() {
+    if (!this._chatMapCoords) return;
+    const { lat, lng } = this._chatMapCoords;
+    const el = document.getElementById('chat-map-coords');
+    if (el) el.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  },
+
+  // ─── Kiruvchi xabar ──────────────────────────────────────────────────────────
   handleIncomingMessage(msg) {
     if (!this.drivers[msg.senderId] && msg.sender) {
       this.drivers[msg.senderId] = msg.sender;
@@ -249,10 +350,12 @@ const ChatManager = {
       this.renderMessage(msg);
       this.scrollToBottom();
     } else {
+      const preview = msg.text?.startsWith('[IMAGE]:')    ? '📷 Rasm'
+                    : msg.text?.startsWith('[LOCATION]:') ? '📍 Lokatsiya'
+                    : msg.text?.substring(0, 40);
       if (window.Utils?.showToast) {
-        window.Utils.showToast(`💬 ${msg.sender?.fullName || 'Haydovchi'}: ${msg.text?.substring(0, 40)}`, 'info');
+        window.Utils.showToast(`💬 ${msg.sender?.fullName || 'Haydovchi'}: ${preview}`, 'info');
       }
-      // Badge qo'shish
       const driverEl = document.getElementById(`driver-item-${msg.senderId}`);
       if (driverEl) {
         let badge = driverEl.querySelector('.chat-unread-badge');
@@ -264,11 +367,14 @@ const ChatManager = {
         } else {
           badge.textContent = String((parseInt(badge.textContent) || 0) + 1);
         }
+        // Oxirgi xabar preview ni yangilash
+        const lastEl = driverEl.querySelector('.chat-driver-last');
+        if (lastEl) lastEl.textContent = preview;
       }
     }
   },
 
-  // ─── Xabar render (guruhli) ────────────────────────────────────────────────
+  // ─── Xabar render ────────────────────────────────────────────────────────────
   renderMessage(m) {
     if (!this.el.messagesBox) return;
     const myId = window.Api.config.currentUser?.id;
@@ -276,16 +382,13 @@ const ChatManager = {
     const side = isMe ? 'me' : 'other';
     const timeStr = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Guruh — ketma-ket bir xil yuboruvchi uchun yangi wrapper ochmaslik
     const isSameGroup = this._lastSenderId === m.senderId;
     this._lastSenderId = m.senderId;
 
     let group;
     if (isSameGroup) {
-      // Oxirgi guruhga qo'shish
       const groups = this.el.messagesBox.querySelectorAll(`.chat-msg-group.${side}`);
       group = groups[groups.length - 1];
-      // Vaqt labelini yangilash
       const timeEl = group?.querySelector('.chat-msg-time');
       if (timeEl) timeEl.textContent = timeStr;
     }
@@ -304,19 +407,73 @@ const ChatManager = {
       const timeEl = document.createElement('div');
       timeEl.className = 'chat-msg-time';
       timeEl.textContent = timeStr;
-
-      // Time oxirida qo'shiladi
-      group._timeEl = timeEl;
       this.el.messagesBox.appendChild(group);
       group.appendChild(timeEl);
     }
 
-    // Bubble ni time dan oldin qo'shish
-    const bubble = document.createElement('div');
-    bubble.className = 'chat-bubble';
-    bubble.textContent = m.text;
     const timeEl = group.querySelector('.chat-msg-time');
-    group.insertBefore(bubble, timeEl);
+
+    // ── Kontent turini aniqlash ──
+    if (m.text?.startsWith('[IMAGE]:')) {
+      const src = m.text.slice(8); // '[IMAGE]:' olib tashlash
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'chat-bubble chat-bubble-image';
+      const img = document.createElement('img');
+      img.src = src;
+      img.className = 'chat-img-thumb';
+      img.alt = 'Rasm';
+      img.loading = 'lazy';
+      img.addEventListener('click', () => {
+        const modal = document.getElementById('chat-image-modal');
+        const modalImg = document.getElementById('chat-image-modal-img');
+        if (modal && modalImg) { modalImg.src = src; modal.style.display = 'flex'; }
+      });
+      imgWrap.appendChild(img);
+      group.insertBefore(imgWrap, timeEl);
+
+    } else if (m.text?.startsWith('[LOCATION]:')) {
+      const coords = m.text.slice(11);
+      const [lat, lng] = coords.split(',').map(Number);
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const googleUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+      const locBubble = document.createElement('div');
+      locBubble.className = 'chat-bubble chat-bubble-location';
+
+      const mapContainer = document.createElement('div');
+      mapContainer.className = 'chat-location-map';
+      mapContainer.style.cssText = 'height:150px;border-radius:10px;overflow:hidden;cursor:pointer;';
+
+      const link = document.createElement('a');
+      link.href = googleUrl;
+      link.target = '_blank';
+      link.className = 'chat-location-link';
+      link.innerHTML = `<span class="material-icons-round" style="font-size:14px;">open_in_new</span> ${lat.toFixed(4)}, ${lng.toFixed(4)} — Google Maps`;
+
+      locBubble.appendChild(mapContainer);
+      locBubble.appendChild(link);
+      group.insertBefore(locBubble, timeEl);
+
+      // Mini Leaflet xarita render
+      setTimeout(() => {
+        if (window.L) {
+          const miniMap = L.map(mapContainer, { zoomControl: false, dragging: false, scrollWheelZoom: false })
+            .setView([lat, lng], 14);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '', maxZoom: 19
+          }).addTo(miniMap);
+          L.marker([lat, lng]).addTo(miniMap);
+          mapContainer.addEventListener('click', () => window.open(googleUrl, '_blank'));
+        }
+      }, 300);
+
+    } else {
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble';
+      bubble.textContent = m.text;
+      group.insertBefore(bubble, timeEl);
+    }
   },
 
   scrollToBottom() {

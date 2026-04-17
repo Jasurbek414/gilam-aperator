@@ -1,7 +1,7 @@
 <!-- CHAT TAB - Haydovchilar bilan real-time chat -->
 <div class="tab-content" id="tab-chat">
 
-  <!-- LEFT SIDEBAR: Haydovchilar ro'yxati -->
+  <!-- LEFT SIDEBAR -->
   <div class="chat-sidebar">
     <div class="chat-sidebar-header">
       <div class="chat-sidebar-title">
@@ -59,20 +59,61 @@
 
       <!-- Input zone -->
       <div class="chat-input-zone">
+
+        <!-- Toolbar: rasm + lokatsiya tugmalari -->
+        <div class="chat-toolbar">
+          <button id="chat-btn-image" class="chat-tool-btn" title="Rasm yuborish">
+            <span class="material-icons-round">image</span>
+          </button>
+          <button id="chat-btn-location" class="chat-tool-btn" title="Lokatsiya yuborish">
+            <span class="material-icons-round">location_on</span>
+          </button>
+        </div>
+
         <div class="chat-input-wrap">
           <textarea
             id="chat-input"
             class="chat-textarea"
             rows="1"
-            placeholder="Xabar yozing... (Enter — yuborish, Shift+Enter — yangi qator)"
+            placeholder="Xabar yozing... (Enter — yuborish)"
           ></textarea>
         </div>
+
         <button id="chat-send-btn" class="chat-send-btn" title="Yuborish (Enter)">
           <span class="material-icons-round">send</span>
         </button>
       </div>
 
+      <!-- Hidden file input -->
+      <input type="file" id="chat-file-input" accept="image/*" style="display:none;">
+
     </div>
   </div>
 
+</div>
+
+<!-- Rasm kattalashtirish modali -->
+<div id="chat-image-modal" class="chat-image-modal" style="display:none;" onclick="this.style.display='none'">
+  <button class="chat-image-modal-close" onclick="document.getElementById('chat-image-modal').style.display='none'">
+    <span class="material-icons-round">close</span>
+  </button>
+  <img id="chat-image-modal-img" src="" alt="Rasm" class="chat-image-modal-img">
+</div>
+
+<!-- Chat lokatsiya mini-xaritasi modali -->
+<div id="chat-map-modal" class="chat-map-modal" style="display:none;">
+  <div class="chat-map-modal-box">
+    <div class="chat-map-modal-header">
+      <span class="material-icons-round" style="color:var(--accent)">location_on</span>
+      <span>Lokatsiyani tanlang va yuboring</span>
+      <button class="btn-icon" id="chat-map-close"><span class="material-icons-round">close</span></button>
+    </div>
+    <div id="chat-map-container" style="flex:1; min-height:0;"></div>
+    <div class="chat-map-modal-footer">
+      <div id="chat-map-coords" style="font-size:12px;color:var(--text-secondary);">Xaritadan joy tanlang...</div>
+      <button id="chat-map-send" class="btn-primary" disabled>
+        <span class="material-icons-round">send</span> Lokatsiyani yuboring
+      </button>
+    </div>
+  </div>
 </div>
