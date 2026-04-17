@@ -1,0 +1,78 @@
+<!-- CHAT TAB - Haydovchilar bilan real-time chat -->
+<div class="tab-content" id="tab-chat">
+
+  <!-- LEFT SIDEBAR: Haydovchilar ro'yxati -->
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-header">
+      <div class="chat-sidebar-title">
+        <div class="chat-sidebar-icon">
+          <span class="material-icons-round">support_agent</span>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div class="chat-sidebar-name">Haydovchilar</div>
+          <div class="chat-sidebar-sub" id="chat-drivers-count">Yuklanmoqda...</div>
+        </div>
+        <div id="chat-status-dot" class="chat-online-badge offline" title="Ulanish holati"></div>
+      </div>
+      <div class="chat-search-wrap">
+        <span class="material-icons-round chat-search-icon">search</span>
+        <input id="chat-search" type="text" placeholder="Qidirish..." class="chat-search-input">
+      </div>
+    </div>
+    <div id="chat-drivers-list" class="chat-drivers-list">
+      <div class="chat-list-loading">
+        <span class="material-icons-round">hourglass_empty</span>
+        <span>Yuklanmoqda...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Chat asosiy qismi -->
+  <div class="chat-main">
+
+    <!-- Bo'sh holat -->
+    <div id="chat-placeholder" class="chat-placeholder">
+      <div class="chat-placeholder-icon">
+        <span class="material-icons-round">forum</span>
+      </div>
+      <div class="chat-placeholder-title">Suhbatni boshlang</div>
+      <div class="chat-placeholder-sub">Chap tarafdagi haydovchini tanlang</div>
+    </div>
+
+    <!-- Aktiv chat paneli -->
+    <div id="chat-panel" class="chat-panel" style="display:none;">
+
+      <!-- Header -->
+      <div class="chat-panel-header">
+        <div class="chat-panel-avatar" id="chat-panel-avatar">?</div>
+        <div class="chat-panel-info">
+          <div class="chat-panel-name" id="chat-panel-name">-</div>
+          <div class="chat-panel-status" id="chat-panel-role">Haydovchi</div>
+        </div>
+        <button class="btn-icon" id="btn-close-chat-panel" title="Yopish">
+          <span class="material-icons-round">keyboard_arrow_left</span>
+        </button>
+      </div>
+
+      <!-- Xabarlar -->
+      <div id="chat-messages-list" class="chat-messages-list"></div>
+
+      <!-- Input zone -->
+      <div class="chat-input-zone">
+        <div class="chat-input-wrap">
+          <textarea
+            id="chat-input"
+            class="chat-textarea"
+            rows="1"
+            placeholder="Xabar yozing... (Enter — yuborish, Shift+Enter — yangi qator)"
+          ></textarea>
+        </div>
+        <button id="chat-send-btn" class="chat-send-btn" title="Yuborish (Enter)">
+          <span class="material-icons-round">send</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>

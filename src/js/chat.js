@@ -16,26 +16,38 @@ const ChatManager = {
       panelAvatar:   document.getElementById('chat-panel-avatar'),
       closePanelBtn: document.getElementById('btn-close-chat-panel'),
       statusDot:     document.getElementById('chat-status-dot'),
+      driversCount:  document.getElementById('chat-drivers-count'),
+      searchInput:   document.getElementById('chat-search'),
     };
 
-    if (!this.el.driversList) return; // chat tab DOM'da yo'q
+    if (!this.el.driversList) return;
 
-    // Panel yopish
     this.el.closePanelBtn?.addEventListener('click', () => this.closePanel());
-
-    // Xabar yuborish
     this.el.sendBtn?.addEventListener('click', () => this.sendMessage());
     this.el.input?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        this.sendMessage();
-      }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); }
     });
+    // textarea auto-resize
+    this.el.input?.addEventListener('input', (e) => {
+      e.target.style.height = '';
+      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+    });
+
+    // Search filter
+    this.el.searchInput?.addEventListener('input', (e) => this.filterDrivers(e.target.value));
 
     // Chat tab ochilganda ulanish
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-tab="chat"]');
       if (btn && !this.socket) this.connect();
+    });
+  },
+
+  filterDrivers(query) {
+    const q = (query || '').toLowerCase();
+    this.el.driversList.querySelectorAll('.chat-driver-item').forEach(el => {
+      const name = el.querySelector('.chat-driver-name')?.textContent?.toLowerCase() || '';
+      el.style.display = name.includes(q) ? '' : 'none';
     });
   },
 
@@ -117,13 +129,11 @@ const ChatManager = {
       this.el.driversList.innerHTML = '';
 
       if (allUsers.length === 0) {
-        this.el.driversList.innerHTML = `
-          <div class="empty-state">
-            <span class="material-icons-round">people_outline</span>
-            <p>Haydovchilar topilmadi</p>
-          </div>`;
+        this.el.driversList.innerHTML = `<div class="chat-list-loading"><span class="material-icons-round">people_outline</span><span>Haydovchilar topilmadi</span></div>`;
         return;
       }
+
+      if (this.el.driversCount) this.el.driversCount.textContent = `${allUsers.length} ta haydovchi`;
 
       allUsers.forEach(u => {
         this.drivers[u.id] = u;
@@ -141,30 +151,18 @@ const ChatManager = {
     const initials = (user.fullName || '?').charAt(0).toUpperCase();
     const div = document.createElement('div');
     div.id = `driver-item-${user.id}`;
-    div.style = `
-      display:flex; align-items:center; gap:10px;
-      padding:10px 12px; border-radius:10px; cursor:pointer;
-      margin-bottom:4px; transition:background 0.15s;
-    `;
+    div.className = 'chat-driver-item';
     div.innerHTML = `
-      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);
-        display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;flex-shrink:0;">
-        ${initials}
+      <div class="chat-driver-avatar">${initials}</div>
+      <div class="chat-driver-info">
+        <div class="chat-driver-name">${user.fullName || user.phone}</div>
+        <div class="chat-driver-last">Haydovchi</div>
       </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:600;font-size:14px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          ${user.fullName || user.phone}
-        </div>
-        <div style="font-size:11px;color:var(--text-secondary);">Haydovchi</div>
+      <div class="chat-driver-meta">
+        <div class="chat-driver-time" id="driver-time-${user.id}"></div>
       </div>
     `;
     div.addEventListener('click', () => this.selectChat(user.id));
-    div.addEventListener('mouseenter', () => {
-      if (this.activeChatUserId !== user.id) div.style.background = 'var(--bg-hover, rgba(0,0,0,0.05))';
-    });
-    div.addEventListener('mouseleave', () => {
-      if (this.activeChatUserId !== user.id) div.style.background = '';
-    });
     this.el.driversList.appendChild(div);
   },
 
@@ -172,22 +170,21 @@ const ChatManager = {
   async selectChat(userId) {
     this.activeChatUserId = userId;
 
-    // Sidebar highlight
-    this.el.driversList.querySelectorAll('[id^="driver-item-"]').forEach(el => {
-      el.style.background = el.id === `driver-item-${userId}`
-        ? 'var(--accent-soft, rgba(16,185,129,0.12))'
-        : '';
+    // Sidebar: active class
+    this.el.driversList.querySelectorAll('.chat-driver-item').forEach(el => {
+      el.classList.toggle('active', el.id === `driver-item-${userId}`);
     });
+    // Unread badge olib tashlash
+    const driverEl = document.getElementById(`driver-item-${userId}`);
+    driverEl?.querySelector('.chat-unread-badge')?.remove();
 
     const user = this.drivers[userId];
     const initials = (user?.fullName || '?').charAt(0).toUpperCase();
 
-    // Panel header
-    if (this.el.panelName)   this.el.panelName.textContent   = user?.fullName  || '-';
-    if (this.el.panelRole)   this.el.panelRole.textContent   = 'Haydovchi';
+    if (this.el.panelName)   this.el.panelName.textContent   = user?.fullName || '-';
+    if (this.el.panelRole)   this.el.panelRole.textContent   = 'Haydovchi • Online';
     if (this.el.panelAvatar) this.el.panelAvatar.textContent = initials;
 
-    // Panel ko'rsatish
     if (this.el.panel)       this.el.panel.style.display       = 'flex';
     if (this.el.placeholder) this.el.placeholder.style.display = 'none';
 
@@ -197,6 +194,7 @@ const ChatManager = {
     try {
       const history = await window.Api.request(`/messages/history/${userId}`);
       if (this.el.messagesBox) this.el.messagesBox.innerHTML = '';
+      this._lastSenderId = null; // reset grouping
       if (history && Array.isArray(history)) {
         history.forEach(m => this.renderMessage(m));
       }
@@ -208,12 +206,10 @@ const ChatManager = {
 
   closePanel() {
     this.activeChatUserId = null;
+    this._lastSenderId = null;
     if (this.el.panel)       this.el.panel.style.display       = 'none';
     if (this.el.placeholder) this.el.placeholder.style.display = 'flex';
-    // Barcha highlights olib tashlash
-    this.el.driversList.querySelectorAll('[id^="driver-item-"]').forEach(el => {
-      el.style.background = '';
-    });
+    this.el.driversList.querySelectorAll('.chat-driver-item').forEach(el => el.classList.remove('active'));
   },
 
   // ─── Xabar yuborish ────────────────────────────────────────────────────────
@@ -256,50 +252,71 @@ const ChatManager = {
       if (window.Utils?.showToast) {
         window.Utils.showToast(`💬 ${msg.sender?.fullName || 'Haydovchi'}: ${msg.text?.substring(0, 40)}`, 'info');
       }
-      // Badge qo'shish (xabar soni)
+      // Badge qo'shish
       const driverEl = document.getElementById(`driver-item-${msg.senderId}`);
-      if (driverEl && !driverEl.querySelector('.unread-badge')) {
-        const badge = document.createElement('div');
-        badge.className = 'unread-badge';
-        badge.style = 'width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;';
-        driverEl.appendChild(badge);
+      if (driverEl) {
+        let badge = driverEl.querySelector('.chat-unread-badge');
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'chat-unread-badge';
+          badge.textContent = '1';
+          driverEl.querySelector('.chat-driver-meta')?.appendChild(badge);
+        } else {
+          badge.textContent = String((parseInt(badge.textContent) || 0) + 1);
+        }
       }
     }
   },
 
-  // ─── Xabar render ──────────────────────────────────────────────────────────
+  // ─── Xabar render (guruhli) ────────────────────────────────────────────────
   renderMessage(m) {
     if (!this.el.messagesBox) return;
     const myId = window.Api.config.currentUser?.id;
     const isMe = m.senderId === myId;
+    const side = isMe ? 'me' : 'other';
+    const timeStr = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    const wrapper = document.createElement('div');
-    wrapper.style = `display:flex; flex-direction:column; align-items:${isMe ? 'flex-end' : 'flex-start'}; gap:2px;`;
+    // Guruh — ketma-ket bir xil yuboruvchi uchun yangi wrapper ochmaslik
+    const isSameGroup = this._lastSenderId === m.senderId;
+    this._lastSenderId = m.senderId;
 
-    if (!isMe && m.sender?.fullName) {
-      const name = document.createElement('span');
-      name.style = 'font-size:10px; color:var(--text-secondary); padding:0 4px; font-weight:600;';
-      name.textContent = m.sender.fullName;
-      wrapper.appendChild(name);
+    let group;
+    if (isSameGroup) {
+      // Oxirgi guruhga qo'shish
+      const groups = this.el.messagesBox.querySelectorAll(`.chat-msg-group.${side}`);
+      group = groups[groups.length - 1];
+      // Vaqt labelini yangilash
+      const timeEl = group?.querySelector('.chat-msg-time');
+      if (timeEl) timeEl.textContent = timeStr;
     }
 
+    if (!group) {
+      group = document.createElement('div');
+      group.className = `chat-msg-group ${side}`;
+
+      if (!isMe && m.sender?.fullName) {
+        const sender = document.createElement('div');
+        sender.className = 'chat-msg-sender';
+        sender.textContent = m.sender.fullName;
+        group.appendChild(sender);
+      }
+
+      const timeEl = document.createElement('div');
+      timeEl.className = 'chat-msg-time';
+      timeEl.textContent = timeStr;
+
+      // Time oxirida qo'shiladi
+      group._timeEl = timeEl;
+      this.el.messagesBox.appendChild(group);
+      group.appendChild(timeEl);
+    }
+
+    // Bubble ni time dan oldin qo'shish
     const bubble = document.createElement('div');
-    bubble.style = `
-      max-width:75%; padding:9px 14px; border-radius:${isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};
-      font-size:14px; line-height:1.4;
-      color:${isMe ? '#fff' : 'var(--text-primary)'};
-      background:${isMe ? 'var(--accent)' : 'var(--bg-2, #e2e8f0)'};
-      word-break:break-word;
-    `;
+    bubble.className = 'chat-bubble';
     bubble.textContent = m.text;
-    wrapper.appendChild(bubble);
-
-    const time = document.createElement('span');
-    time.style = 'font-size:10px; color:var(--text-secondary); padding:0 4px;';
-    time.textContent = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    wrapper.appendChild(time);
-
-    this.el.messagesBox.appendChild(wrapper);
+    const timeEl = group.querySelector('.chat-msg-time');
+    group.insertBefore(bubble, timeEl);
   },
 
   scrollToBottom() {
