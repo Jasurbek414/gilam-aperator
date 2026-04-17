@@ -15,11 +15,17 @@ let campaigns = [];
 let activeCampaign = null;
 let sipSocket = null;
 let callsSocket = null;
+let chatSocket = null;
 let sipRegistered = false;
 let activeCallTimer = null;
 let activeCallSeconds = 0;
 let currentFilter = 'all';
 let incomingCallData = null;
+
+// ─── CHAT STATE ──────────────────────────────────────────────────────────────
+let activeChatDriver = null;
+let chatMessages = [];
+let onlineDrivers = new Set();
 
 // ─── UTILITY FUNCTIONS ─────────────────────────────────────────────────────
 
@@ -111,6 +117,7 @@ $$('.tab').forEach(tab => {
     if (tabName === 'lines') loadCampaigns();
     if (tabName === 'calls') loadCallHistory();
     if (tabName === 'contacts') loadContacts();
+    if (tabName === 'chat') loadDrivers();
   });
 });
 
@@ -198,8 +205,10 @@ function initApp() {
   updateUserInfo();
   connectSipSocket();
   connectCallsSocket();
+  connectChatSocket();
   loadCampaigns();
   loadCallHistory();
+  loadDrivers();
 }
 
 function updateUserInfo() {
@@ -894,6 +903,7 @@ $('btn-logout').addEventListener('click', () => {
   
   if (sipSocket) { sipSocket.disconnect(); sipSocket = null; }
   if (callsSocket) { callsSocket.disconnect(); callsSocket = null; }
+  if (chatSocket) { chatSocket.disconnect(); chatSocket = null; }
   
   showScreen('login');
   showToast('Tizimdan chiqdingiz', 'info');
@@ -1142,3 +1152,225 @@ function connectSipAccount(acc) {
     showToast(`✅ ${acc.name} test rejimda muammosiz ulandi!`, 'success');
   }
 }
+// ─── CHAT SOCKET ────────────────────────────────────────────────────────────
+
+function connectChatSocket() {
+  if (chatSocket) { chatSocket.disconnect(); chatSocket = null; }
+  if (!token) return;
+
+  try {
+    const io = require('socket.io-client');
+    chatSocket = io(`${API_BASE}/chat`, {
+      transports: ['polling', 'websocket'],
+      auth: { token },
+      query: { token },
+      extraHeaders: { authorization: `Bearer ${token}` },
+      reconnection: true,
+      reconnectionDelay: 3000,
+    });
+
+    chatSocket.on('connect', () => {
+      console.log('✅ Chat socket connected');
+      updateChatStatus(true);
+    });
+
+    chatSocket.on('disconnect', () => {
+      console.log('❌ Chat socket disconnected');
+      updateChatStatus(false);
+    });
+
+    chatSocket.on('newMessage', (msg) => {
+      console.log('💬 New message:', msg);
+      chatMessages.push(msg);
+      if (activeChatDriver && msg.senderId === activeChatDriver.id) {
+        renderChatMessages();
+        // Show notification if chat tab not active
+        const chatTab = document.querySelector('.tab[data-tab="chat"]');
+        if (!chatTab.classList.contains('active')) {
+          updateDriverUnread(msg.senderId);
+          new Notification('Yangi xabar 💬', {
+            body: `${activeChatDriver.fullName}: ${msg.text}`,
+          });
+        }
+      }
+      // Update driver list unread badge
+      updateDriverList();
+    });
+
+    chatSocket.on('messageSent', (msg) => {
+      // Replace temp message with confirmed one
+      const idx = chatMessages.findIndex(m => m._temp);
+      if (idx >= 0) chatMessages[idx] = msg;
+      else chatMessages.push(msg);
+      renderChatMessages();
+    });
+
+  } catch (err) {
+    console.error('Chat socket error:', err);
+  }
+}
+
+function updateChatStatus(online) {
+  const el = $('chat-status-dot');
+  if (el) el.className = 'status-dot ' + (online ? 'online' : 'offline');
+}
+
+// ─── DRIVERS LIST ────────────────────────────────────────────────────────────
+
+let drivers = [];
+let driverUnread = {}; // driverId -> count
+
+async function loadDrivers() {
+  if (!currentUser?.companyId) return;
+  try {
+    const result = await apiRequest(`/users/company/${currentUser.companyId}`) || [];
+    drivers = result.filter(u => ['DRIVER','WASHER','FINISHER'].includes(u.role));
+    updateDriverList();
+  } catch (err) {
+    console.error('Load drivers error:', err);
+  }
+}
+
+function updateDriverList() {
+  const container = $('chat-drivers-list');
+  if (!container) return;
+
+  if (drivers.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <span class="material-icons-round">people_outline</span>
+        <p>Haydovchilar topilmadi</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = drivers.map(d => {
+    const initials = (d.fullName || '?').charAt(0).toUpperCase();
+    const isActive = activeChatDriver?.id === d.id;
+    const unread = driverUnread[d.id] || 0;
+    const roleLabel = { DRIVER: '🚗 Haydovchi', WASHER: '🧹 Yuvuvchi', FINISHER: '✨ Ishlovchi' }[d.role] || d.role;
+
+    return `
+      <div class="driver-chat-item ${isActive ? 'active' : ''}" onclick="openDriverChat('${d.id}')">
+        <div class="driver-avatar">${initials}</div>
+        <div class="driver-info">
+          <div class="driver-name">${d.fullName || 'Noma\'lum'}</div>
+          <div class="driver-role">${roleLabel}</div>
+        </div>
+        ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function updateDriverUnread(driverId) {
+  driverUnread[driverId] = (driverUnread[driverId] || 0) + 1;
+  updateDriverList();
+}
+
+window.openDriverChat = async function(driverId) {
+  activeChatDriver = drivers.find(d => d.id === driverId);
+  if (!activeChatDriver) return;
+
+  // Reset unread
+  driverUnread[driverId] = 0;
+  updateDriverList();
+
+  // Show chat panel
+  const panel = $('chat-panel');
+  if (panel) {
+    panel.style.display = 'flex';
+    $('chat-panel-name').textContent = activeChatDriver.fullName;
+    $('chat-panel-role').textContent = { DRIVER: 'Haydovchi', WASHER: 'Yuvuvchi', FINISHER: 'Ishlovchi' }[activeChatDriver.role] || activeChatDriver.role;
+  }
+
+  // Load message history
+  try {
+    const history = await apiRequest(`/messages/${driverId}`) || [];
+    chatMessages = history;
+    renderChatMessages();
+  } catch (err) {
+    console.error('Load messages error:', err);
+    chatMessages = [];
+    renderChatMessages();
+  }
+};
+
+function renderChatMessages() {
+  const container = $('chat-messages-list');
+  if (!container) return;
+
+  if (chatMessages.length === 0) {
+    container.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);gap:12px;">
+        <span class="material-icons-round" style="font-size:48px;opacity:0.3">chat_bubble_outline</span>
+        <span>Hali xabar yo'q</span>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = chatMessages.map(msg => {
+    const isMe = msg.senderId === currentUser?.id;
+    const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : '';
+    return `
+      <div class="chat-message ${isMe ? 'outgoing' : 'incoming'}">
+        <div class="chat-bubble">
+          <div class="chat-text">${msg.text || ''}</div>
+          <div class="chat-time">${time} ${isMe ? (msg._temp ? '⏳' : '✓✓') : ''}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Scroll to bottom
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendChatMessage() {
+  const input = $('chat-input');
+  const text = input?.value?.trim();
+  if (!text || !activeChatDriver || !chatSocket) return;
+
+  const tempMsg = {
+    id: Date.now().toString(),
+    text,
+    senderId: currentUser?.id,
+    recipientId: activeChatDriver.id,
+    createdAt: new Date().toISOString(),
+    _temp: true,
+  };
+
+  chatMessages.push(tempMsg);
+  renderChatMessages();
+  input.value = '';
+
+  chatSocket.emit('sendMessage', {
+    recipientId: activeChatDriver.id,
+    text,
+    companyId: currentUser?.companyId,
+  });
+}
+
+// Chat input handler — fires when page is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const sendBtn = $('chat-send-btn');
+  const chatInput = $('chat-input');
+
+  if (sendBtn) sendBtn.addEventListener('click', sendChatMessage);
+  if (chatInput) {
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+  }
+
+  const closeChatBtn = $('btn-close-chat-panel');
+  if (closeChatBtn) closeChatBtn.addEventListener('click', () => {
+    const panel = $('chat-panel');
+    if (panel) panel.style.display = 'none';
+    activeChatDriver = null;
+    chatMessages = [];
+  });
+});
