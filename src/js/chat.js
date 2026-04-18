@@ -7,6 +7,11 @@ const ChatManager = {
   _attachCoords: null,
   _attachSelectedCustomerId: null,
   _allCustomers: [],
+  
+  // Xabarni uzatish (Forward)
+  _forwardMessageText: null,
+  _forwardSelectedUserId: null,
+  _allDriversArray: [],
 
   init() {
     this.el = {
@@ -48,6 +53,11 @@ const ChatManager = {
     document.getElementById('chat-attach-close')?.addEventListener('click', () => this._closeAttachModal());
     document.getElementById('chat-attach-search')?.addEventListener('input', (e) => this._filterCustomers(e.target.value));
     document.getElementById('chat-attach-confirm')?.addEventListener('click', () => this._confirmAttach());
+
+    // Xabarni uzatish event'lari
+    document.getElementById('chat-forward-close')?.addEventListener('click', () => this._closeForwardModal());
+    document.getElementById('chat-forward-search')?.addEventListener('input', (e) => this._filterForwardDrivers(e.target.value));
+    document.getElementById('chat-forward-confirm')?.addEventListener('click', () => this._confirmForward());
 
     // Chat tab ochilganda ulanish
     document.addEventListener('click', (e) => {
@@ -455,6 +465,128 @@ const ChatManager = {
     }
   },
 
+  // ─── Xabarni uzatish (Forward) ──────────────────────────────────────────────
+  async openForwardModal(text) {
+    this._forwardMessageText = text;
+    this._forwardSelectedUserId = null;
+
+    const modal = document.getElementById('chat-forward-modal');
+    if (!modal) return;
+
+    const confirmBtn = document.getElementById('chat-forward-confirm');
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    const statusEl = document.getElementById('chat-forward-status');
+    if (statusEl) statusEl.textContent = '';
+
+    modal.style.display = 'flex';
+
+    await this._loadForwardDrivers();
+    this._renderForwardDrivers(this._allDriversArray);
+
+    const search = document.getElementById('chat-forward-search');
+    if (search) search.value = '';
+  },
+
+  _closeForwardModal() {
+    const modal = document.getElementById('chat-forward-modal');
+    if (modal) modal.style.display = 'none';
+    this._forwardMessageText = null;
+    this._forwardSelectedUserId = null;
+  },
+
+  async _loadForwardDrivers() {
+    const listEl = document.getElementById('chat-forward-drivers-list');
+    if (listEl) listEl.innerHTML = '<div class="chat-attach-loading"><span class="material-icons-round">hourglass_empty</span> Yuklanmoqda...</div>';
+
+    try {
+      const ulist = await window.Api.request('/users');
+      if (!ulist || !Array.isArray(ulist)) return;
+
+      const myId = window.Api.config.currentUser?.id;
+      // Faqat boshqa haydovchilar yoki xodimlar
+      const usersList = ulist.filter(u => u.id !== myId);
+      this._allDriversArray = usersList;
+    } catch (e) {
+      console.warn('[Chat] Forward users yuklashda xato:', e);
+      this._allDriversArray = [];
+    }
+  },
+
+  _renderForwardDrivers(list) {
+    const listEl = document.getElementById('chat-forward-drivers-list');
+    if (!listEl) return;
+
+    if (!list || list.length === 0) {
+      listEl.innerHTML = '<div class="chat-attach-loading">Foydalanuvchilar topilmadi</div>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    list.forEach(u => {
+      const item = document.createElement('div');
+      item.className = 'chat-attach-customer-item';
+      item.dataset.id = u.id;
+      item.innerHTML = `
+        <div class="chat-attach-customer-avatar">${(u.fullName || '?')[0].toUpperCase()}</div>
+        <div class="chat-attach-customer-info">
+          <div class="chat-attach-customer-name">${u.fullName || '-'}</div>
+          <div class="chat-attach-customer-phone">${u.role || 'Haydovchi'} · ${u.phone}</div>
+        </div>
+      `;
+
+      item.addEventListener('click', () => {
+        listEl.querySelectorAll('.chat-attach-customer-item').forEach(el => el.classList.remove('selected'));
+        item.classList.add('selected');
+        this._forwardSelectedUserId = u.id;
+        const confirmBtn = document.getElementById('chat-forward-confirm');
+        if (confirmBtn) confirmBtn.disabled = false;
+        const statusEl = document.getElementById('chat-forward-status');
+        if (statusEl) statusEl.textContent = `✓ Tanlandi: ${u.fullName}`;
+      });
+      listEl.appendChild(item);
+    });
+  },
+
+  _filterForwardDrivers(query) {
+    const q = (query || '').toLowerCase();
+    const filtered = this._allDriversArray.filter(u =>
+      (u.fullName || '').toLowerCase().includes(q) ||
+      (u.phone || '').includes(q)
+    );
+    this._renderForwardDrivers(filtered);
+  },
+
+  _confirmForward() {
+    if (!this._forwardMessageText || !this._forwardSelectedUserId) return;
+
+    // Save current active chat so we can send to another user properly
+    const me = window.Api.config.currentUser || {};
+    
+    // We send via socket directly to recipient
+    if (this.socket) {
+      this.socket.emit('sendMessage', {
+        text: this._forwardMessageText,
+        recipientId: this._forwardSelectedUserId,
+        companyId: me.companyId,
+      });
+    }
+
+    // Agar uzatilgan xabar hozirgi ochiq chatdagi odamga bo'lsa render qilamiz
+    if (this.activeChatUserId === this._forwardSelectedUserId) {
+      this.renderMessage({
+        text: this._forwardMessageText,
+        senderId: me.id,
+        sender: me,
+        createdAt: new Date().toISOString(),
+      });
+      this.scrollToBottom();
+    }
+
+    window.Utils?.showToast('Xabar muvaffaqiyatli uzatildi', 'success');
+    this._closeForwardModal();
+  },
+
   // ─── Xabar render ────────────────────────────────────────────────────────────
   renderMessage(m) {
     if (!this.el.messagesBox) return;
@@ -494,11 +626,23 @@ const ChatManager = {
 
     const timeEl = group.querySelector('.chat-msg-time');
 
+    // ── Bubble & Actions Wrapper ──
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-bubble-wrap';
+
+    // Actions button
+    const actions = document.createElement('div');
+    actions.className = 'chat-bubble-actions';
+    actions.innerHTML = `<button class="btn-icon" title="Uzatish (Forward)"><span class="material-icons-round" style="font-size:16px;">forward</span></button>`;
+    actions.addEventListener('click', () => this.openForwardModal(m.text));
+
+    let bubbleEl = null;
+
     // ── Rasm ──
     if (m.text?.startsWith('[IMAGE]:')) {
       const src = m.text.slice(8);
-      const imgWrap = document.createElement('div');
-      imgWrap.className = 'chat-bubble chat-bubble-image';
+      bubbleEl = document.createElement('div');
+      bubbleEl.className = 'chat-bubble chat-bubble-image';
       const img = document.createElement('img');
       img.src = src;
       img.className = 'chat-img-thumb';
@@ -509,8 +653,7 @@ const ChatManager = {
         const modalImg = document.getElementById('chat-image-modal-img');
         if (modal && modalImg) { modalImg.src = src; modal.style.display = 'flex'; }
       });
-      imgWrap.appendChild(img);
-      group.insertBefore(imgWrap, timeEl);
+      bubbleEl.appendChild(img);
 
     // ── Lokatsiya (faqat haydovchidan kelganda biriktirish tugmasi) ──
     } else if (m.text?.startsWith('[LOCATION]:')) {
@@ -519,8 +662,8 @@ const ChatManager = {
       if (isNaN(lat) || isNaN(lng)) return;
 
       const googleUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-      const locBubble = document.createElement('div');
-      locBubble.className = 'chat-bubble chat-bubble-location';
+      bubbleEl = document.createElement('div');
+      bubbleEl.className = 'chat-bubble chat-bubble-location';
 
       const mapContainer = document.createElement('div');
       mapContainer.className = 'chat-location-map';
@@ -539,7 +682,7 @@ const ChatManager = {
       if (!isMe) {
         const attachBtn = document.createElement('button');
         attachBtn.className = 'chat-attach-btn';
-        attachBtn.innerHTML = `<span class="material-icons-round" style="font-size:14px;">person_pin</span> Mijozga biriktir`;
+        attachBtn.innerHTML = `<span class="material-icons-round" style="font-size:14px;">person_pin</span> Biriktir`;
         attachBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           this.openAttachModal(lat, lng);
@@ -547,9 +690,8 @@ const ChatManager = {
         bottomRow.appendChild(attachBtn);
       }
 
-      locBubble.appendChild(mapContainer);
-      locBubble.appendChild(bottomRow);
-      group.insertBefore(locBubble, timeEl);
+      bubbleEl.appendChild(mapContainer);
+      bubbleEl.appendChild(bottomRow);
 
       // Mini Leaflet xarita
       setTimeout(() => {
@@ -566,11 +708,20 @@ const ChatManager = {
 
     // ── Oddiy matn ──
     } else {
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-bubble';
-      bubble.textContent = m.text;
-      group.insertBefore(bubble, timeEl);
+      bubbleEl = document.createElement('div');
+      bubbleEl.className = 'chat-bubble';
+      bubbleEl.textContent = m.text;
     }
+
+    if (m.senderId === myId) {
+      wrap.appendChild(actions); // My messages: actions on the left
+      wrap.appendChild(bubbleEl);
+    } else {
+      wrap.appendChild(bubbleEl); // Other messages: actions on the right
+      wrap.appendChild(actions);
+    }
+
+    group.insertBefore(wrap, timeEl);
   },
 
   scrollToBottom() {
