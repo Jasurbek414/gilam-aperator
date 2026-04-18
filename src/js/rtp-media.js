@@ -183,61 +183,55 @@ class RtpMediaEngine {
         outputBuffer[outIdx++] = 0;
       }
 
-      // 2. Microphone Capture
+      // 2. Microphone Capture (and send)
       if (micInputAvailable) {
         const inputData = e.inputBuffer.getChannelData(0);
         for (let i = 0; i < inputData.length; i++) {
           this.sendBuffer.push(inputData[i]);
         }
+        
+        // Bu joyda `sendBuffer` ichida qancha to'lgan bo'lsa darhol 160 talik bo'laklarga ajaratib yuboramiz.
+        // Bu algoritm timer(setInterval)ga nisbatan aniqroq, hardware audio clock ga suyanadi!
+        while (this.sendBuffer.length >= 160) {
+          let chunk = new Float32Array(160);
+          for (let i = 0; i < 160; i++) {
+            chunk[i] = this.sendBuffer.shift();
+          }
+
+          const rtpPacket = Buffer.alloc(12 + 160);
+          rtpPacket[0] = 0x80; // V=2
+          rtpPacket[1] = 0x00; // PT=0 (PCMU)
+          rtpPacket.writeUInt16BE(this.seq & 0xFFFF, 2); // Seq
+          rtpPacket.writeUInt32BE(this.ts >>> 0, 4); // TS
+          rtpPacket.writeUInt32BE(this.ssrc >>> 0, 8); // SSRC
+
+          for (let i = 0; i < 160; i++) {
+            let pcmInt = chunk[i] * 32767;
+            
+            // Mutening / Hold logikasi
+            if (this.isMuted || this.isHold) {
+              pcmInt = 0;
+            } else {
+              // Mijozga balandroq eshitilishi uchun ovozni kuchaytiramiz.
+              pcmInt = pcmInt * 1.8; 
+              if (pcmInt > 32767) pcmInt = 32767;
+              if (pcmInt < -32768) pcmInt = -32768;
+            }
+            
+            rtpPacket[12 + i] = ulawEncode[pcmInt & 0xFFFF];
+          }
+
+          if (this.rtpSocket && this.remoteIp && this.remotePort) {
+            this.rtpSocket.send(rtpPacket, 0, rtpPacket.length, this.remotePort, this.remoteIp);
+          }
+
+          this.seq++;
+          this.ts += 160;
+        }
       }
     };
 
     this.scriptProcessor.connect(this.audioCtx.destination);
-
-    // Smooth network transmission (20ms)
-    this.sendInterval = setInterval(() => {
-      // Create silent 160-sample array if no mic or buffer depleted
-      let chunk = new Float32Array(160);
-      if (this.sendBuffer.length >= 160) {
-        for (let i = 0; i < 160; i++) {
-          chunk[i] = this.sendBuffer.shift();
-        }
-      } else if (micInputAvailable) {
-        // Buffer starvation, wait for next tick
-        return;
-      }
-      
-      const rtpPacket = Buffer.alloc(12 + 160);
-      
-      rtpPacket[0] = 0x80; // V=2
-      rtpPacket[1] = 0x00; // PT=0 (PCMU)
-      rtpPacket.writeUInt16BE(this.seq & 0xFFFF, 2); // Seq
-      rtpPacket.writeUInt32BE(this.ts >>> 0, 4); // TS
-      rtpPacket.writeUInt32BE(this.ssrc >>> 0, 8); // SSRC
-
-      for (let i = 0; i < 160; i++) {
-        let pcmInt = chunk[i] * 32767;
-        
-        // Mutening logic
-        if (this.isMuted || this.isHold) {
-          pcmInt = 0;
-        } else {
-          // Amplify voice slightly
-          pcmInt = pcmInt * 1.5; 
-          if (pcmInt > 32767) pcmInt = 32767;
-          if (pcmInt < -32768) pcmInt = -32768;
-        }
-        
-        rtpPacket[12 + i] = ulawEncode[pcmInt & 0xFFFF];
-      }
-
-      if (this.rtpSocket && this.remoteIp && this.remotePort) {
-        this.rtpSocket.send(rtpPacket, 0, rtpPacket.length, this.remotePort, this.remoteIp);
-      }
-
-      this.seq++;
-      this.ts += 160;
-    }, 20); // Exactly every 20ms
   }
 
   setMute(isMuted) {
