@@ -33,6 +33,7 @@ class SipUdpEngine extends EventEmitter {
     this.displayName = '';
     this.isRegistered = false;
     this.registerTimer = null;
+    this.keepAliveTimer = null;
     this.callId = '';
     this.tag = '';
     this.cseq = 0;
@@ -205,6 +206,7 @@ class SipUdpEngine extends EventEmitter {
     this._send(msg);
     this.isRegistered = false;
     clearInterval(this.registerTimer);
+    clearInterval(this.keepAliveTimer);
     this.emit('unregistered');
   }
 
@@ -213,6 +215,7 @@ class SipUdpEngine extends EventEmitter {
       this.unregister();
     }
     clearInterval(this.registerTimer);
+    clearInterval(this.keepAliveTimer);
     if (this.socket) {
       try { this.socket.close(); } catch(e) {}
       this.socket = null;
@@ -405,6 +408,15 @@ class SipUdpEngine extends EventEmitter {
           this.tag = this._tag();
           this._register();
         }, 280000);
+
+        // NAT Keep-Alive (every 20s to keep UDP port open for incoming calls)
+        clearInterval(this.keepAliveTimer);
+        this.keepAliveTimer = setInterval(() => {
+          if (this.socket) {
+            const ping = Buffer.from('\r\n\r\n');
+            this.socket.send(ping, 0, ping.length, this.sipPort, this.sipServer);
+          }
+        }, 20000);
       } else if (code === 403) {
         console.error(`[SIP-UDP] ❌ Registration 403 Forbidden`);
         this.emit('registrationFailed', { cause: 'Parol noto\'g\'ri (403)' });
