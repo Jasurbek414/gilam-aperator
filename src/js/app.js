@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════════════════════
  * app.js — Application Entry Point & Lifecycle Controller
  * ═══════════════════════════════════════════════════════════════════════════
@@ -51,15 +51,15 @@ document.addEventListener('DOMContentLoaded', () => {
   window.Settings.load();
   if (window.ChatManager) window.ChatManager.init();
 
-  // ESC → rasm modalini yopish
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      const imgModal = document.getElementById('chat-image-modal');
-      if (imgModal) imgModal.style.display = 'none';
-      const mapModal = document.getElementById('chat-map-modal');
-      if (mapModal) mapModal.style.display = 'none';
-    }
-  });
+
+  // ═══ LOGIN ════════════════════════════════════════════════════════════
+  Utils.$('login-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = Utils.$('login-phone')?.value?.trim();
+    const password = Utils.$('login-password')?.value?.trim();
+
+    if (!phone || !password) {
+      Utils.$('login-error').textContent = 'Telefon va parolni kiriting';
       Utils.$('login-error').style.display = 'block';
       return;
     }
@@ -181,3 +181,13 @@ async function loadAudioDevices() {
     console.warn('[App] Audio devices error:', e);
   }
 }
+
+// ESC → chat modallarini yopish
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const imgModal = document.getElementById('chat-image-modal');
+    if (imgModal && imgModal.style.display !== 'none') imgModal.style.display = 'none';
+    const mapModal = document.getElementById('chat-map-modal');
+    if (mapModal && mapModal.style.display !== 'none') mapModal.style.display = 'none';
+  }
+});
