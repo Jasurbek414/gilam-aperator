@@ -1,4 +1,4 @@
-﻿const ChatManager = {
+const ChatManager = {
   socket: null,
   activeChatUserId: null,
   drivers: {},
@@ -524,9 +524,7 @@
 
       const mapContainer = document.createElement('div');
       mapContainer.className = 'chat-location-map';
-      mapContainer.className = 'chat-location-map';
-      mapContainer.style.cssText = '';
-      const bottomRow = document.createElement('div');
+      
       const bottomRow = document.createElement('div');
       bottomRow.className = 'chat-location-bottom';
       const link = document.createElement('a');
