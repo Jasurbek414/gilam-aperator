@@ -446,7 +446,8 @@ const ChatManager = {
       await window.Api.request(`/customers/${this._attachSelectedCustomerId}`, {
         method: 'PUT',
         body: JSON.stringify({
-          location: { lat, lng },
+          // PostgreSQL & TypeORM 'point' expects {x, y} format (x = lng, y = lat)
+          location: { x: lng, y: lat },
           address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
         })
       });
