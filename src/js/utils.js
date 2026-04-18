@@ -38,7 +38,66 @@ const Utils = {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  },
+
+  _getCrypto() {
+    return (typeof require !== 'undefined') ? require('crypto') : null;
+  },
+
+  encryptData(text) {
+    if (!text) return text;
+    try {
+      const crypto = this._getCrypto();
+      if (!crypto) return btoa(text);
+      const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from('G1lamS3cur3K3y!@987654321012345'), Buffer.from('G1lamInv3ctor123'));
+      let encrypted = cipher.update(text, 'utf8', 'hex');
+      encrypted += cipher.final('hex');
+      return encrypted;
+    } catch(e) { 
+      try { return btoa(text); } catch { return text; }
+    }
+  },
+
+  decryptData(hexStr) {
+    if (!hexStr) return hexStr;
+    try {
+      const crypto = this._getCrypto();
+      if (!crypto) return atob(hexStr);
+      // Ochiq JWT matnlari kelsa decrypt qilishdan saqlanish:
+      if (hexStr.includes('eyJ') && !/^[0-9a-fA-F]+$/.test(hexStr)) return hexStr;
+      
+      const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from('G1lamS3cur3K3y!@987654321012345'), Buffer.from('G1lamInv3ctor123'));
+      let decrypted = decipher.update(hexStr, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch(e) {
+      try { return atob(hexStr); } catch { return hexStr; }
+    }
+  },
+
+  secureStorageInit() {
+    const originalSet = Storage.prototype.setItem;
+    const originalGet = Storage.prototype.getItem;
+    // Faqat shaxsiy va kiber xavfsizlikka aloqador maydonlarni shifrlash
+    const secureKeys = ['token', 'user', 'sip_accounts', 'sip_account', 'authToken'];
+
+    Storage.prototype.setItem = function(key, value) {
+      if (secureKeys.includes(key)) {
+        value = Utils.encryptData(value);
+      }
+      originalSet.call(this, key, value);
+    };
+
+    Storage.prototype.getItem = function(key) {
+      let value = originalGet.call(this, key);
+      if (value && secureKeys.includes(key)) {
+        value = Utils.decryptData(value);
+      }
+      return value;
+    };
   }
 };
 
 window.Utils = Utils;
+// Avtomatik ravishda barcha xavfsizlik interceptorlarini ishga tushiramiz
+window.Utils.secureStorageInit();
