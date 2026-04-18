@@ -42,7 +42,32 @@ function createUlawTables() {
   return { encodeTable, decodeTable };
 }
 
+/**
+ * G.711 PCMA (A-law) Codec lookup tables
+ */
+function createAlawTables() {
+  const alawToLinear = (alawByte) => {
+    alawByte ^= 0x55;
+    let sign = (alawByte & 0x80);
+    let exponent = (alawByte & 0x70) >> 4;
+    let mantissa = alawByte & 0x0f;
+    let sample = (mantissa << 4) + 8;
+    if (exponent !== 0) {
+      sample += 0x100;
+      sample <<= (exponent - 1);
+    }
+    return sign === 0 ? sample : -sample;
+  };
+
+  const decodeTable = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    decodeTable[i] = alawToLinear(i) / 32768.0;
+  }
+  return { decodeTable };
+}
+
 const { encodeTable: ulawEncode, decodeTable: ulawDecode } = createUlawTables();
+const { decodeTable: alawDecode } = createAlawTables();
 
 class RtpMediaEngine {
   constructor() {
@@ -79,16 +104,19 @@ class RtpMediaEngine {
       // Decode incoming RTP packets
       if (msg.length <= 12) return;
       const pt = msg[1] & 0x7F;
-      // PCMU is PT=0, PCMA is PT=8. We only decode PCMU (0) for now.
-      if (pt === 0) {
+      // PCMU (0) and PCMA (8) support
+      if (pt === 0 || pt === 8) {
         const payload = msg.slice(12);
         const pcmFloat = new Float32Array(payload.length);
+        const decoder = (pt === 0) ? ulawDecode : alawDecode;
+        
         for (let i = 0; i < payload.length; i++) {
-          pcmFloat[i] = ulawDecode[payload[i]];
+          pcmFloat[i] = decoder[payload[i]];
         }
+        
         this.jitterBuffer.push(pcmFloat);
-        // Keep buffer from growing too large (latency control)
-        if (this.jitterBuffer.length > 10) {
+        // Dynamic jitter buffer sizing (10 ~ 200ms at 20ms chunks)
+        if (this.jitterBuffer.length > 15) {
           this.jitterBuffer.shift();
         }
       }
