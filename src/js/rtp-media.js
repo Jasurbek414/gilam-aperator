@@ -212,8 +212,7 @@ class RtpMediaEngine {
             if (this.isMuted || this.isHold) {
               pcmInt = 0;
             } else {
-              // Mijozga balandroq eshitilishi uchun ovozni kuchaytiramiz.
-              pcmInt = pcmInt * 1.8; 
+              // Asl mikrofon ovozi qo'yib yuboriladi (AGC avtomat to'g'irlaydi)
               if (pcmInt > 32767) pcmInt = 32767;
               if (pcmInt < -32768) pcmInt = -32768;
             }
