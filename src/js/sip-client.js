@@ -203,6 +203,8 @@ const SipClient = {
       console.log(`[SIP] Call connected: ${data.target}`);
       window.UI.showActiveCall(data.target, 'Suhbat ketyapti');
       window.UI.startCallTimer();
+      // Yozib olishni boshlash
+      setTimeout(() => this._startRecording(), 1000);
     });
 
     engine.on('callEnded', (data) => {
@@ -549,9 +551,9 @@ const SipClient = {
         const target = prompt("Yo'naltirish uchun raqamni yoki ichki raqamni kiriting:");
         if (target) this.transfer(target);
       }
-      // RECORD (mock)
+      // RECORD
       if (e.target.closest('#btn-record')) {
-        Utils.showToast("Yozib olish ATS apparati orqali serverda avtomat saqlanadi", "info");
+        this.toggleRecord();
       }
     });
 
@@ -567,32 +569,13 @@ const SipClient = {
   _startRecording() {
     if (!this.currentSession || this.isRecording) return;
     try {
-      const pc = this.currentSession.connection;
-      if (!pc) return;
+      if (!this.currentSession.mediaEngine) return;
 
-      this.audioContext = new AudioContext();
-      const dest = this.audioContext.createMediaStreamDestination();
-
-      // Remote audio stream
-      pc.getReceivers().forEach(r => {
-        if (r.track && r.track.kind === 'audio') {
-          const remoteStream = new MediaStream([r.track]);
-          const remoteSource = this.audioContext.createMediaStreamSource(remoteStream);
-          remoteSource.connect(dest);
-        }
-      });
-
-      // Local audio stream (mikrofon)
-      pc.getSenders().forEach(s => {
-        if (s.track && s.track.kind === 'audio') {
-          const localStream = new MediaStream([s.track]);
-          const localSource = this.audioContext.createMediaStreamSource(localStream);
-          localSource.connect(dest);
-        }
-      });
+      const mixedStream = this.currentSession.mediaEngine.getMixedStream();
+      if (!mixedStream) return;
 
       this.recordedChunks = [];
-      this.mediaRecorder = new MediaRecorder(dest.stream, { mimeType: 'audio/webm;codecs=opus' });
+      this.mediaRecorder = new window.MediaRecorder(mixedStream, { mimeType: 'audio/webm;codecs=opus' });
 
       this.mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) this.recordedChunks.push(e.data);
@@ -606,7 +589,7 @@ const SipClient = {
       this.mediaRecorder.start(1000); // har 1 soniyada data
       this.isRecording = true;
       this._updateRecordUI();
-      console.log('[SIP] Recording started');
+      console.log('[SIP] Recording started via RTP stream');
     } catch(e) {
       console.error('[SIP] Recording start error:', e);
     }

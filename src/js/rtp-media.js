@@ -220,6 +220,20 @@ class RtpMediaEngine {
     this.isHold = isHold;
   }
 
+  getMixedStream() {
+    if (!this.audioCtx) return null;
+    const dest = this.audioCtx.createMediaStreamDestination();
+    // scriptProcessor'ning ulanishi "remote audio" ni yozib oladi
+    if (this.scriptProcessor) {
+      this.scriptProcessor.connect(dest);
+    }
+    // sourceNode'ning ulanishi "mikrofon (local audio)" ni yozib oladi
+    if (this.sourceNode) {
+      this.sourceNode.connect(dest);
+    }
+    return dest.stream;
+  }
+
   stop() {
     console.log('[RTP] Stopping media engine.');
     if (this.sendInterval) {
