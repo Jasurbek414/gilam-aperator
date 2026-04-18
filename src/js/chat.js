@@ -1,11 +1,12 @@
-﻿const ChatManager = {
+const ChatManager = {
   socket: null,
   activeChatUserId: null,
   drivers: {},
   _lastSenderId: null,
-  _chatMap: null,
-  _chatMapMarker: null,
-  _chatMapCoords: null,
+  // "Biriktirish" uchun tanlangan lokatsiya
+  _attachCoords: null,
+  _attachSelectedCustomerId: null,
+  _allCustomers: [],
 
   init() {
     this.el = {
@@ -24,7 +25,6 @@
       searchInput:   document.getElementById('chat-search'),
       fileInput:     document.getElementById('chat-file-input'),
       btnImage:      document.getElementById('chat-btn-image'),
-      btnLocation:   document.getElementById('chat-btn-location'),
     };
 
     if (!this.el.driversList) return;
@@ -40,12 +40,14 @@
     });
     this.el.searchInput?.addEventListener('input', (e) => this.filterDrivers(e.target.value));
 
-    // Rasm yuborish
     // Rasm yuborish — Electron native dialog yoki web fallback
     this.el.btnImage?.addEventListener('click', () => this.handleImageFile(null));
     this.el.fileInput?.addEventListener('change', (e) => this.handleImageFile(e));
-    // Lokatsiya yuborish
-    this.el.btnLocation?.addEventListener('click', () => this.openLocationModal());
+
+    // Biriktirish modali event'lari
+    document.getElementById('chat-attach-close')?.addEventListener('click', () => this._closeAttachModal());
+    document.getElementById('chat-attach-search')?.addEventListener('input', (e) => this._filterCustomers(e.target.value));
+    document.getElementById('chat-attach-confirm')?.addEventListener('click', () => this._confirmAttach());
 
     // Chat tab ochilganda ulanish
     document.addEventListener('click', (e) => {
@@ -90,7 +92,6 @@
       });
 
       this.socket.on('disconnect', () => this._setStatus('offline'));
-
       this.socket.on('newMessage', (msg) => this.handleIncomingMessage(msg));
       this.socket.on('messageSent', (msg) => {
         console.log('[Chat] Server tasdiqladi:', msg?.id);
@@ -118,15 +119,12 @@
       const drivers = ulist.filter(u => u.role === 'DRIVER' && u.id !== myId);
 
       let convUsers = [];
-      try {
-        convUsers = await window.Api.request('/messages/conversations') || [];
-      } catch(_) {}
+      try { convUsers = await window.Api.request('/messages/conversations') || []; } catch(_) {}
 
       const seen = new Set();
       const allUsers = [...drivers, ...convUsers].filter(u => {
         if (!u || !u.id || seen.has(u.id) || u.id === myId) return false;
-        seen.add(u.id);
-        return true;
+        seen.add(u.id); return true;
       });
 
       this.el.driversList.innerHTML = '';
@@ -137,11 +135,7 @@
       }
 
       if (this.el.driversCount) this.el.driversCount.textContent = `${allUsers.length} ta haydovchi`;
-
-      allUsers.forEach(u => {
-        this.drivers[u.id] = u;
-        this._addDriverItem(u);
-      });
+      allUsers.forEach(u => { this.drivers[u.id] = u; this._addDriverItem(u); });
 
     } catch (e) {
       console.error('[Chat] Drivers yuklash xatoligi:', e);
@@ -150,7 +144,6 @@
 
   _addDriverItem(user) {
     if (document.getElementById(`driver-item-${user.id}`)) return;
-
     const initials = (user.fullName || '?').charAt(0).toUpperCase();
     const div = document.createElement('div');
     div.id = `driver-item-${user.id}`;
@@ -184,8 +177,7 @@
     if (this.el.panelName)   this.el.panelName.textContent   = user?.fullName || '-';
     if (this.el.panelRole)   this.el.panelRole.textContent   = 'Haydovchi • Online';
     if (this.el.panelAvatar) this.el.panelAvatar.textContent = initials;
-
-    if (this.el.panel)       this.el.panel.style.display       = 'flex';
+    if (this.el.panel)       this.el.panel.style.display     = 'flex';
     if (this.el.placeholder) this.el.placeholder.style.display = 'none';
 
     this.el.input?.focus();
@@ -217,7 +209,6 @@
     if (!val || !this.activeChatUserId || !this.socket) return;
 
     const me = window.Api.config.currentUser || {};
-
     this.socket.emit('sendMessage', {
       text: val,
       recipientId: this.activeChatUserId,
@@ -236,7 +227,6 @@
     this.scrollToBottom();
   },
 
-  // ─── Raw emit (rasm/lokatsiya) ───────────────────────────────────────────────
   _sendRaw(text) {
     if (!this.activeChatUserId || !this.socket) return;
     const me = window.Api.config.currentUser || {};
@@ -247,10 +237,11 @@
     });
   },
 
-
-  // --- Rasm yuborish (Electron native dialog) ---
+  // ─── Rasm yuborish (Electron native dialog) ─────────────────────────────────
   async handleImageFile(e) {
     if (!this.activeChatUserId) return;
+
+    // Electron native dialog orqali
     if (window.require) {
       try {
         const { ipcRenderer } = window.require('electron');
@@ -261,6 +252,8 @@
         return;
       } catch (_) {}
     }
+
+    // Web fallback
     const file = e && e.target && e.target.files ? e.target.files[0] : null;
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
@@ -270,7 +263,7 @@
     const reader = new FileReader();
     reader.onload = (ev) => this._sendImageBase64(ev.target.result);
     reader.readAsDataURL(file);
-    if (e && e.target) e.target.value = "";
+    if (e && e.target) e.target.value = '';
   },
 
   _sendImageBase64(base64) {
@@ -286,72 +279,6 @@
     this.scrollToBottom();
   },
 
-  // ─── Lokatsiya modali ─────────────────────────────────────────────────────────
-  openLocationModal() {
-    if (!this.activeChatUserId) return;
-    const modal = document.getElementById('chat-map-modal');
-    if (!modal) return;
-    modal.style.display = 'flex';
-
-    setTimeout(() => {
-      if (!this._chatMap) {
-        this._chatMap = L.map('chat-map-container', { zoomControl: true })
-          .setView([41.2995, 69.2401], 12);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          attribution: '© OpenStreetMap © CARTO', maxZoom: 19
-        }).addTo(this._chatMap);
-
-        this._chatMap.on('click', (ev) => {
-          this._chatMapCoords = ev.latlng;
-          if (this._chatMapMarker) this._chatMapMarker.setLatLng(ev.latlng);
-          else this._chatMapMarker = L.marker(ev.latlng, { draggable: true }).addTo(this._chatMap);
-          this._chatMapMarker.on('dragend', () => {
-            this._chatMapCoords = this._chatMapMarker.getLatLng();
-            this._updateMapCoordsLabel();
-          });
-          this._updateMapCoordsLabel();
-          const sendBtn = document.getElementById('chat-map-send');
-          if (sendBtn) sendBtn.disabled = false;
-        });
-      } else {
-        this._chatMap.invalidateSize();
-      }
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => this._chatMap.setView([pos.coords.latitude, pos.coords.longitude], 15),
-          () => {},
-          { timeout: 4000 }
-        );
-      }
-    }, 150);
-
-    document.getElementById('chat-map-close').onclick = () => { modal.style.display = 'none'; };
-
-    document.getElementById('chat-map-send').onclick = () => {
-      if (!this._chatMapCoords) return;
-      const { lat, lng } = this._chatMapCoords;
-      const payload = `[LOCATION]:${lat.toFixed(6)},${lng.toFixed(6)}`;
-      this._sendRaw(payload);
-      this.renderMessage({
-        text: payload,
-        senderId: window.Api.config.currentUser?.id,
-        sender: window.Api.config.currentUser,
-        createdAt: new Date().toISOString(),
-      });
-      this.scrollToBottom();
-      modal.style.display = 'none';
-      document.getElementById('chat-map-send').disabled = true;
-    };
-  },
-
-  _updateMapCoordsLabel() {
-    if (!this._chatMapCoords) return;
-    const { lat, lng } = this._chatMapCoords;
-    const el = document.getElementById('chat-map-coords');
-    if (el) el.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  },
-
   // ─── Kiruvchi xabar ──────────────────────────────────────────────────────────
   handleIncomingMessage(msg) {
     if (!this.drivers[msg.senderId] && msg.sender) {
@@ -363,8 +290,8 @@
       this.renderMessage(msg);
       this.scrollToBottom();
     } else {
-      const preview = msg.text?.startsWith('[IMAGE]:')    ? '📷 Rasm'
-                    : msg.text?.startsWith('[LOCATION]:') ? '📍 Lokatsiya'
+      const preview = msg.text?.startsWith('[IMAGE]:')?    '📷 Rasm'
+                    : msg.text?.startsWith('[LOCATION]:')?  '📍 Lokatsiya'
                     : msg.text?.substring(0, 40);
       if (window.Utils?.showToast) {
         window.Utils.showToast(`💬 ${msg.sender?.fullName || 'Haydovchi'}: ${preview}`, 'info');
@@ -380,10 +307,151 @@
         } else {
           badge.textContent = String((parseInt(badge.textContent) || 0) + 1);
         }
-        // Oxirgi xabar preview ni yangilash
         const lastEl = driverEl.querySelector('.chat-driver-last');
         if (lastEl) lastEl.textContent = preview;
       }
+    }
+  },
+
+  // ─── Lokatsiyani mijozga biriktirish ─────────────────────────────────────────
+  async openAttachModal(lat, lng) {
+    this._attachCoords = { lat, lng };
+    this._attachSelectedCustomerId = null;
+
+    const modal = document.getElementById('chat-attach-modal');
+    if (!modal) return;
+
+    // Coords ko'rsatish
+    const coordsEl = document.getElementById('chat-attach-coords');
+    if (coordsEl) coordsEl.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+    const gmapsEl = document.getElementById('chat-attach-gmaps');
+    if (gmapsEl) gmapsEl.href = `https://www.google.com/maps?q=${lat},${lng}`;
+
+    // Confirm tugmasini o'chirish
+    const confirmBtn = document.getElementById('chat-attach-confirm');
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    const statusEl = document.getElementById('chat-attach-status');
+    if (statusEl) statusEl.textContent = '';
+
+    modal.style.display = 'flex';
+
+    // Mijozlarni yuklash
+    await this._loadCustomers();
+    this._renderCustomers(this._allCustomers);
+
+    // Qidiruv inputini tozalash
+    const search = document.getElementById('chat-attach-search');
+    if (search) search.value = '';
+  },
+
+  _closeAttachModal() {
+    const modal = document.getElementById('chat-attach-modal');
+    if (modal) modal.style.display = 'none';
+    this._attachCoords = null;
+    this._attachSelectedCustomerId = null;
+  },
+
+  async _loadCustomers() {
+    const listEl = document.getElementById('chat-attach-customers-list');
+    if (listEl) listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px;">Yuklanmoqda...</div>';
+
+    try {
+      const myUser = window.Api.config.currentUser;
+      const companyId = myUser?.companyId;
+      let customers = [];
+
+      if (companyId) {
+        customers = await window.Api.request(`/customers/company/${companyId}`) || [];
+      } else {
+        customers = await window.Api.request('/customers') || [];
+      }
+
+      this._allCustomers = customers;
+    } catch (e) {
+      console.warn('[Chat] Customers yuklashda xato:', e);
+      this._allCustomers = [];
+    }
+  },
+
+  _renderCustomers(list) {
+    const listEl = document.getElementById('chat-attach-customers-list');
+    if (!listEl) return;
+
+    if (!list || list.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px;">Mijozlar topilmadi</div>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    list.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'chat-attach-customer-item';
+      item.dataset.id = c.id;
+      item.innerHTML = `
+        <div class="chat-attach-customer-avatar">${(c.fullName || '?')[0].toUpperCase()}</div>
+        <div class="chat-attach-customer-info">
+          <div class="chat-attach-customer-name">${c.fullName || '-'}</div>
+          <div class="chat-attach-customer-phone">${c.phone1 || ''} ${c.address ? '· ' + c.address.substring(0, 30) : ''}</div>
+        </div>
+        ${c.location ? '<span class="material-icons-round" style="font-size:14px;color:var(--accent);" title="Manzil mavjud">location_on</span>' : ''}
+      `;
+
+      item.addEventListener('click', () => {
+        listEl.querySelectorAll('.chat-attach-customer-item').forEach(el => el.classList.remove('selected'));
+        item.classList.add('selected');
+        this._attachSelectedCustomerId = c.id;
+        const confirmBtn = document.getElementById('chat-attach-confirm');
+        if (confirmBtn) confirmBtn.disabled = false;
+        const statusEl = document.getElementById('chat-attach-status');
+        if (statusEl) statusEl.textContent = `✓ Tanlandi: ${c.fullName}`;
+      });
+
+      listEl.appendChild(item);
+    });
+  },
+
+  _filterCustomers(query) {
+    const q = (query || '').toLowerCase();
+    const filtered = this._allCustomers.filter(c =>
+      (c.fullName || '').toLowerCase().includes(q) ||
+      (c.phone1 || '').includes(q) ||
+      (c.phone2 || '').includes(q) ||
+      (c.address || '').toLowerCase().includes(q)
+    );
+    this._renderCustomers(filtered);
+  },
+
+  async _confirmAttach() {
+    if (!this._attachCoords || !this._attachSelectedCustomerId) return;
+
+    const { lat, lng } = this._attachCoords;
+    const confirmBtn = document.getElementById('chat-attach-confirm');
+    const statusEl = document.getElementById('chat-attach-status');
+
+    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Saqlanmoqda...'; }
+
+    try {
+      await window.Api.request(`/customers/${this._attachSelectedCustomerId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          location: { lat, lng },
+          address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+        })
+      });
+
+      if (statusEl) statusEl.textContent = '✅ Muvaffaqiyatli birikirildi!';
+      if (statusEl) statusEl.style.color = 'var(--accent)';
+      window.Utils?.showToast('📍 Lokatsiya mijoz manziliga biriktirildi', 'success');
+
+      setTimeout(() => this._closeAttachModal(), 1500);
+
+    } catch (e) {
+      console.error('[Chat] Biriktirish xatoligi:', e);
+      if (statusEl) statusEl.textContent = '❌ Xatolik: ' + (e.message || 'Saqlashda xato');
+      if (statusEl) statusEl.style.color = '#f87171';
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = '<span class="material-icons-round">check</span> Biriktirish'; }
     }
   },
 
@@ -426,9 +494,9 @@
 
     const timeEl = group.querySelector('.chat-msg-time');
 
-    // ── Kontent turini aniqlash ──
+    // ── Rasm ──
     if (m.text?.startsWith('[IMAGE]:')) {
-      const src = m.text.slice(8); // '[IMAGE]:' olib tashlash
+      const src = m.text.slice(8);
       const imgWrap = document.createElement('div');
       imgWrap.className = 'chat-bubble chat-bubble-image';
       const img = document.createElement('img');
@@ -444,13 +512,13 @@
       imgWrap.appendChild(img);
       group.insertBefore(imgWrap, timeEl);
 
+    // ── Lokatsiya (faqat haydovchidan kelganda biriktirish tugmasi) ──
     } else if (m.text?.startsWith('[LOCATION]:')) {
       const coords = m.text.slice(11);
       const [lat, lng] = coords.split(',').map(Number);
       if (isNaN(lat) || isNaN(lng)) return;
 
       const googleUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-
       const locBubble = document.createElement('div');
       locBubble.className = 'chat-bubble chat-bubble-location';
 
@@ -458,17 +526,34 @@
       mapContainer.className = 'chat-location-map';
       mapContainer.style.cssText = 'height:150px;border-radius:10px;overflow:hidden;cursor:pointer;';
 
+      const bottomRow = document.createElement('div');
+      bottomRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 2px 0;gap:8px;';
+
       const link = document.createElement('a');
       link.href = googleUrl;
       link.target = '_blank';
       link.className = 'chat-location-link';
-      link.innerHTML = `<span class="material-icons-round" style="font-size:14px;">open_in_new</span> ${lat.toFixed(4)}, ${lng.toFixed(4)} — Google Maps`;
+      link.innerHTML = `<span class="material-icons-round" style="font-size:14px;">open_in_new</span> ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+      bottomRow.appendChild(link);
+
+      // Faqat haydovchidan kelgan lokatsiyaga "biriktir" tugmasi
+      if (!isMe) {
+        const attachBtn = document.createElement('button');
+        attachBtn.className = 'chat-attach-btn';
+        attachBtn.innerHTML = `<span class="material-icons-round" style="font-size:14px;">person_pin</span> Mijozga biriktir`;
+        attachBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.openAttachModal(lat, lng);
+        });
+        bottomRow.appendChild(attachBtn);
+      }
 
       locBubble.appendChild(mapContainer);
-      locBubble.appendChild(link);
+      locBubble.appendChild(bottomRow);
       group.insertBefore(locBubble, timeEl);
 
-      // Mini Leaflet xarita render
+      // Mini Leaflet xarita
       setTimeout(() => {
         if (window.L) {
           const miniMap = L.map(mapContainer, { zoomControl: false, dragging: false, scrollWheelZoom: false })
@@ -481,6 +566,7 @@
         }
       }, 300);
 
+    // ── Oddiy matn ──
     } else {
       const bubble = document.createElement('div');
       bubble.className = 'chat-bubble';

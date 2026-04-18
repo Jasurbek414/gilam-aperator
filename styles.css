@@ -2556,3 +2556,70 @@ textarea.crm-input { resize: none; }
   align-items: flex-end;
 }
 
+
+/* ─── Lokatsiya "Biriktir" tugmasi ─────────────────────────────────────────── */
+.chat-attach-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.35);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.chat-attach-btn:hover {
+  background: rgba(16,185,129,0.25);
+  transform: scale(1.03);
+}
+
+/* ─── Biriktirish modali — mijoz kartochkasi ───────────────────────────────── */
+.chat-attach-customer-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+  margin-bottom: 3px;
+}
+.chat-attach-customer-item:hover {
+  background: var(--bg-2);
+}
+.chat-attach-customer-item.selected {
+  background: rgba(16,185,129,0.1);
+  border-color: rgba(16,185,129,0.4);
+}
+.chat-attach-customer-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.chat-attach-customer-info { flex: 1; min-width: 0; }
+.chat-attach-customer-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-attach-customer-phone {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

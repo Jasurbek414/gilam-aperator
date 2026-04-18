@@ -1,4 +1,4 @@
-﻿<!-- CHAT TAB - Haydovchilar bilan real-time chat -->
+<!-- CHAT TAB - Haydovchilar bilan real-time chat -->
 <div class="tab-content" id="tab-chat">
 
   <!-- LEFT SIDEBAR -->
@@ -57,19 +57,14 @@
       <!-- Xabarlar -->
       <div id="chat-messages-list" class="chat-messages-list"></div>
 
-      <!-- Input zone -->
-      <!-- Input zone -->
+      <!-- Input zone: faqat rasm + matn -->
       <div class="chat-input-zone">
 
-        <!-- Toolbar: rasm + lokatsiya -->
+        <!-- Toolbar: FAQAT rasm yuborish -->
         <div class="chat-toolbar">
           <button id="chat-btn-image" class="chat-tool-btn" title="Rasm yuborish">
             <span class="material-icons-round">image</span>
-            <span class="chat-tool-label">Rasm</span>
-          </button>
-          <button id="chat-btn-location" class="chat-tool-btn" title="Lokatsiya yuborish">
-            <span class="material-icons-round">location_on</span>
-            <span class="chat-tool-label">Lokatsiya</span>
+            <span class="chat-tool-label">Rasm yuborish</span>
           </button>
         </div>
 
@@ -106,19 +101,49 @@
   <img id="chat-image-modal-img" src="" alt="Rasm" class="chat-image-modal-img">
 </div>
 
-<!-- Chat lokatsiya mini-xaritasi modali -->
-<div id="chat-map-modal" class="chat-map-modal" style="display:none;">
-  <div class="chat-map-modal-box">
+<!-- Lokatsiyani mijozga biriktirish modali -->
+<div id="chat-attach-modal" class="chat-map-modal" style="display:none;">
+  <div class="chat-map-modal-box" style="max-width:480px; height:auto; max-height:80vh;">
     <div class="chat-map-modal-header">
-      <span class="material-icons-round" style="color:var(--accent)">location_on</span>
-      <span>Lokatsiyani tanlang va yuboring</span>
-      <button class="btn-icon" id="chat-map-close"><span class="material-icons-round">close</span></button>
+      <span class="material-icons-round" style="color:var(--accent)">person_pin_circle</span>
+      <span>Mijozga buyurtma manzilini biriktirish</span>
+      <button class="btn-icon" id="chat-attach-close">
+        <span class="material-icons-round">close</span>
+      </button>
     </div>
-    <div id="chat-map-container" style="flex:1; min-height:0;"></div>
-    <div class="chat-map-modal-footer">
-      <div id="chat-map-coords" style="font-size:12px;color:var(--text-secondary);">Xaritadan joy tanlang...</div>
-      <button id="chat-map-send" class="btn-primary" disabled>
-        <span class="material-icons-round">send</span> Lokatsiyani yuboring
+
+    <!-- Lokatsiya preview -->
+    <div id="chat-attach-preview" style="padding:12px 16px; border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);">
+        <span class="material-icons-round" style="color:var(--accent);font-size:18px;">location_on</span>
+        <span id="chat-attach-coords">-</span>
+        <a id="chat-attach-gmaps" href="#" target="_blank" style="color:var(--accent);font-size:11px;margin-left:auto;">
+          Google Maps ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- Mijoz qidirish -->
+    <div style="padding:12px 16px 8px;">
+      <div style="position:relative;">
+        <span class="material-icons-round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text-secondary);">search</span>
+        <input id="chat-attach-search" type="text" placeholder="Mijoz ismi yoki raqami..."
+          style="width:100%;padding:9px 12px 9px 36px;background:var(--bg-0);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);font-size:13px;box-sizing:border-box;">
+      </div>
+    </div>
+
+    <!-- Mijozlar ro'yxati -->
+    <div id="chat-attach-customers-list"
+      style="overflow-y:auto;max-height:300px;padding:0 8px 8px;">
+      <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px;">
+        Yuklanmoqda...
+      </div>
+    </div>
+
+    <div class="chat-map-modal-footer" style="padding:12px 16px;">
+      <div id="chat-attach-status" style="font-size:12px;color:var(--text-secondary);"></div>
+      <button id="chat-attach-confirm" class="btn-primary" disabled>
+        <span class="material-icons-round">check</span> Biriktirish
       </button>
     </div>
   </div>
