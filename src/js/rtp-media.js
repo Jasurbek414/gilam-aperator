@@ -230,7 +230,15 @@ class RtpMediaEngine {
       }
     };
 
-    this.scriptProcessor.connect(this.audioCtx.destination);
+    // WebRTC AEC (Echo Cancellation) ning ishlashi uchun AudioContext.destination
+    // emas, balki oddiy HTML5 <audio> tagini ishlatamiz. Shunda brauzer 
+    // kalonkadagi ovozni mikrofon oqimi bilan solishtirib echo ni qirqadi.
+    const outDest = this.audioCtx.createMediaStreamDestination();
+    this.scriptProcessor.connect(outDest);
+    
+    this.speakerAudio = new Audio();
+    this.speakerAudio.srcObject = outDest.stream;
+    this.speakerAudio.play().catch(e => console.error('[RTP] Playback failed:', e));
   }
 
   setMute(isMuted) {
@@ -262,6 +270,11 @@ class RtpMediaEngine {
       this.sendInterval = null;
     }
     this.sendBuffer = [];
+    if (this.speakerAudio) {
+      this.speakerAudio.pause();
+      this.speakerAudio.srcObject = null;
+      this.speakerAudio = null;
+    }
     if (this.scriptProcessor) {
       this.scriptProcessor.disconnect();
       this.scriptProcessor = null;
