@@ -237,6 +237,9 @@ class RtpMediaEngine {
     this.scriptProcessor.connect(outDest);
     
     this.speakerAudio = new Audio();
+    this.speakerAudio.style.display = 'none';
+    document.body.appendChild(this.speakerAudio);
+    
     this.speakerAudio.srcObject = outDest.stream;
     this.speakerAudio.play().catch(e => console.error('[RTP] Playback failed:', e));
   }
@@ -273,6 +276,9 @@ class RtpMediaEngine {
     if (this.speakerAudio) {
       this.speakerAudio.pause();
       this.speakerAudio.srcObject = null;
+      if (this.speakerAudio.parentNode) {
+        this.speakerAudio.parentNode.removeChild(this.speakerAudio);
+      }
       this.speakerAudio = null;
     }
     if (this.scriptProcessor) {
