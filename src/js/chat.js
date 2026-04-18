@@ -1,4 +1,4 @@
-const ChatManager = {
+﻿const ChatManager = {
   socket: null,
   activeChatUserId: null,
   drivers: {},
@@ -524,11 +524,11 @@ const ChatManager = {
 
       const mapContainer = document.createElement('div');
       mapContainer.className = 'chat-location-map';
-      mapContainer.style.cssText = 'height:150px;border-radius:10px;overflow:hidden;cursor:pointer;';
-
+      mapContainer.className = 'chat-location-map';
+      mapContainer.style.cssText = '';
       const bottomRow = document.createElement('div');
-      bottomRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 2px 0;gap:8px;';
-
+      const bottomRow = document.createElement('div');
+      bottomRow.className = 'chat-location-bottom';
       const link = document.createElement('a');
       link.href = googleUrl;
       link.target = '_blank';

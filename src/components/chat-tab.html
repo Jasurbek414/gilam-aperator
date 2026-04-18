@@ -57,32 +57,31 @@
       <!-- Xabarlar -->
       <div id="chat-messages-list" class="chat-messages-list"></div>
 
-      <!-- Input zone: faqat rasm + matn -->
+      <!-- Input zone: rasm tugmasi + textarea + send — bitta qatorda -->
       <div class="chat-input-zone">
+        <div class="chat-input-row">
 
-        <!-- Toolbar: FAQAT rasm yuborish -->
-        <div class="chat-toolbar">
-          <button id="chat-btn-image" class="chat-tool-btn" title="Rasm yuborish">
+          <!-- Rasm yuborish tugmasi (ikonka) -->
+          <button id="chat-btn-image" class="chat-icon-btn" title="Rasm yuborish">
             <span class="material-icons-round">image</span>
-            <span class="chat-tool-label">Rasm yuborish</span>
           </button>
-        </div>
 
-        <!-- Xabar input + send tugmasi -->
-        <div class="chat-input-bottom-row">
+          <!-- Matn kiritish -->
           <div class="chat-input-wrap">
             <textarea
               id="chat-input"
               class="chat-textarea"
               rows="1"
-              placeholder="Xabar yozing... (Enter — yuborish, Shift+Enter — yangi qator)"
+              placeholder="Xabar yozing..."
             ></textarea>
           </div>
+
+          <!-- Yuborish tugmasi -->
           <button id="chat-send-btn" class="chat-send-btn" title="Yuborish (Enter)">
             <span class="material-icons-round">send</span>
           </button>
-        </div>
 
+        </div>
       </div>
 
       <!-- Hidden file input (web fallback) -->
@@ -103,47 +102,44 @@
 
 <!-- Lokatsiyani mijozga biriktirish modali -->
 <div id="chat-attach-modal" class="chat-map-modal" style="display:none;">
-  <div class="chat-map-modal-box" style="max-width:480px; height:auto; max-height:80vh;">
-    <div class="chat-map-modal-header">
-      <span class="material-icons-round" style="color:var(--accent)">person_pin_circle</span>
-      <span>Mijozga buyurtma manzilini biriktirish</span>
+  <div class="chat-attach-modal-box">
+    <div class="chat-attach-modal-header">
+      <div class="chat-attach-modal-header-icon">
+        <span class="material-icons-round">person_pin_circle</span>
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:14px;">Mijozga biriktirish</div>
+        <div id="chat-attach-coords" style="font-size:11px;color:var(--text-secondary);margin-top:2px;">-</div>
+      </div>
+      <a id="chat-attach-gmaps" href="#" target="_blank" class="chat-attach-gmaps-btn" title="Google Maps">
+        <span class="material-icons-round" style="font-size:16px;">open_in_new</span>
+      </a>
       <button class="btn-icon" id="chat-attach-close">
         <span class="material-icons-round">close</span>
       </button>
     </div>
 
-    <!-- Lokatsiya preview -->
-    <div id="chat-attach-preview" style="padding:12px 16px; border-bottom:1px solid var(--border);">
-      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);">
-        <span class="material-icons-round" style="color:var(--accent);font-size:18px;">location_on</span>
-        <span id="chat-attach-coords">-</span>
-        <a id="chat-attach-gmaps" href="#" target="_blank" style="color:var(--accent);font-size:11px;margin-left:auto;">
-          Google Maps ↗
-        </a>
-      </div>
-    </div>
-
-    <!-- Mijoz qidirish -->
-    <div style="padding:12px 16px 8px;">
-      <div style="position:relative;">
-        <span class="material-icons-round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text-secondary);">search</span>
-        <input id="chat-attach-search" type="text" placeholder="Mijoz ismi yoki raqami..."
-          style="width:100%;padding:9px 12px 9px 36px;background:var(--bg-0);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);font-size:13px;box-sizing:border-box;">
-      </div>
+    <!-- Qidirish -->
+    <div class="chat-attach-search-wrap">
+      <span class="material-icons-round chat-attach-search-icon">search</span>
+      <input id="chat-attach-search" type="text" class="chat-attach-search-input"
+        placeholder="Mijoz ismi, telefon yoki manzil...">
     </div>
 
     <!-- Mijozlar ro'yxati -->
-    <div id="chat-attach-customers-list"
-      style="overflow-y:auto;max-height:300px;padding:0 8px 8px;">
-      <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px;">
+    <div id="chat-attach-customers-list" class="chat-attach-customers-list">
+      <div class="chat-attach-loading">
+        <span class="material-icons-round">hourglass_empty</span>
         Yuklanmoqda...
       </div>
     </div>
 
-    <div class="chat-map-modal-footer" style="padding:12px 16px;">
-      <div id="chat-attach-status" style="font-size:12px;color:var(--text-secondary);"></div>
+    <!-- Footer -->
+    <div class="chat-attach-modal-footer">
+      <div id="chat-attach-status" class="chat-attach-status"></div>
       <button id="chat-attach-confirm" class="btn-primary" disabled>
-        <span class="material-icons-round">check</span> Biriktirish
+        <span class="material-icons-round">check_circle</span>
+        Biriktirish
       </button>
     </div>
   </div>
