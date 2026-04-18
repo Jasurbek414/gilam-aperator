@@ -2485,3 +2485,74 @@ textarea.crm-input { resize: none; }
   border-top: 1px solid var(--border);
   background: var(--bg-1);
 }
+
+/* ─── Operator Chat — rasm/lokatsiya qo'shimcha stillari ──────────────────── */
+
+/* Rasm bubble hover effekti */
+.chat-bubble-image .chat-img-thumb {
+  transition: transform 0.2s ease, opacity 0.2s;
+  cursor: zoom-in;
+}
+.chat-bubble-image:hover .chat-img-thumb {
+  transform: scale(1.02);
+  opacity: 0.92;
+}
+
+/* Rasm bubble — o'ng (me) tomonda yaxlit ko'rinish */
+.chat-msg-group.me .chat-bubble-image {
+  border: none;
+  background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(14,165,233,0.10)) !important;
+}
+
+/* Lokatsiya bubble — o'ng (me) */
+.chat-msg-group.me .chat-bubble-location {
+  border: 1px solid rgba(16,185,129,0.3) !important;
+}
+
+/* Location map interactive */
+.chat-location-map { transition: opacity 0.15s; }
+.chat-location-map:hover { opacity: 0.88; }
+
+/* Image modal — keyboard ESC close hint */
+.chat-image-modal::after {
+  content: 'ESC — yopish  •  Kattalashtirish uchun bosing';
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  pointer-events: none;
+}
+
+/* Chat toolbar — yuqorida, input — pastda */
+.chat-toolbar {
+  border-right: none;
+  border-bottom: 1px solid var(--border);
+  padding: 0 0 8px;
+  margin: 0 0 8px;
+  flex-direction: row;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.chat-tool-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 3px;
+}
+
+/* Input zone layout — toolbar ustida, input pastda */
+.chat-input-zone {
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 12px 16px !important;
+}
+
+/* Toolbar + input row */
+.chat-input-bottom-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+

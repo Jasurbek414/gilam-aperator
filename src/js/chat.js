@@ -1,4 +1,4 @@
-const ChatManager = {
+﻿const ChatManager = {
   socket: null,
   activeChatUserId: null,
   drivers: {},
@@ -41,9 +41,9 @@ const ChatManager = {
     this.el.searchInput?.addEventListener('input', (e) => this.filterDrivers(e.target.value));
 
     // Rasm yuborish
-    this.el.btnImage?.addEventListener('click', () => this.el.fileInput?.click());
+    // Rasm yuborish — Electron native dialog yoki web fallback
+    this.el.btnImage?.addEventListener('click', () => this.handleImageFile(null));
     this.el.fileInput?.addEventListener('change', (e) => this.handleImageFile(e));
-
     // Lokatsiya yuborish
     this.el.btnLocation?.addEventListener('click', () => this.openLocationModal());
 
@@ -247,30 +247,43 @@ const ChatManager = {
     });
   },
 
-  // ─── Rasm yuborish ───────────────────────────────────────────────────────────
-  handleImageFile(e) {
-    const file = e.target.files?.[0];
-    if (!file || !this.activeChatUserId) return;
 
+  // --- Rasm yuborish (Electron native dialog) ---
+  async handleImageFile(e) {
+    if (!this.activeChatUserId) return;
+    if (window.require) {
+      try {
+        const { ipcRenderer } = window.require('electron');
+        const result = await ipcRenderer.invoke('pick-image');
+        if (!result) return;
+        if (result.error) { window.Utils?.showToast(result.error, 'warning'); return; }
+        this._sendImageBase64(result.base64);
+        return;
+      } catch (_) {}
+    }
+    const file = e && e.target && e.target.files ? e.target.files[0] : null;
+    if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      window.Utils?.showToast('Rasm 5MB dan katta bo\'lmasin', 'warning');
+      window.Utils?.showToast('Rasm 5MB dan katta bolmasin', 'warning');
       return;
     }
-
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target.result;
-      this._sendRaw('[IMAGE]:' + base64);
-      this.renderMessage({
-        text: '[IMAGE]:' + base64,
-        senderId: window.Api.config.currentUser?.id,
-        sender: window.Api.config.currentUser,
-        createdAt: new Date().toISOString(),
-      });
-      this.scrollToBottom();
-    };
+    reader.onload = (ev) => this._sendImageBase64(ev.target.result);
     reader.readAsDataURL(file);
-    e.target.value = '';
+    if (e && e.target) e.target.value = "";
+  },
+
+  _sendImageBase64(base64) {
+    if (!base64 || !this.activeChatUserId) return;
+    const text = '[IMAGE]:' + base64;
+    this._sendRaw(text);
+    this.renderMessage({
+      text,
+      senderId: window.Api.config.currentUser && window.Api.config.currentUser.id,
+      sender: window.Api.config.currentUser,
+      createdAt: new Date().toISOString(),
+    });
+    this.scrollToBottom();
   },
 
   // ─── Lokatsiya modali ─────────────────────────────────────────────────────────

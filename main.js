@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 let mainWindow;
 let tray;
@@ -71,6 +72,29 @@ ipcMain.on('window-maximize', () => {
 ipcMain.on('window-close', () => mainWindow && mainWindow.hide());
 ipcMain.on('window-quit', () => app.exit(0));
 ipcMain.on('open-external', (_, url) => shell.openExternal(url));
+
+// ── Rasm tanlash (native dialog) ──
+ipcMain.handle('pick-image', async () => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Rasm tanlang',
+    filters: [{ name: 'Rasmlar', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || !result.filePaths.length) return null;
+  try {
+    const filePath = result.filePaths[0];
+    const stat = fs.statSync(filePath);
+    if (stat.size > 5 * 1024 * 1024) return { error: 'Rasm 5MB dan katta bo\'lmasin' };
+    const buffer = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase().replace('.', '') || 'jpeg';
+    const mime = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+    const base64 = `data:${mime};base64,${buffer.toString('base64')}`;
+    return { base64 };
+  } catch (e) {
+    return { error: e.message };
+  }
+});
 
 app.on('window-all-closed', () => {});
 app.on('activate', () => {

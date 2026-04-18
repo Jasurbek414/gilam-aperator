@@ -514,33 +514,39 @@
       <div id="chat-messages-list" class="chat-messages-list"></div>
 
       <!-- Input zone -->
+      <!-- Input zone -->
       <div class="chat-input-zone">
 
-        <!-- Toolbar: rasm + lokatsiya tugmalari -->
+        <!-- Toolbar: rasm + lokatsiya -->
         <div class="chat-toolbar">
           <button id="chat-btn-image" class="chat-tool-btn" title="Rasm yuborish">
             <span class="material-icons-round">image</span>
+            <span class="chat-tool-label">Rasm</span>
           </button>
           <button id="chat-btn-location" class="chat-tool-btn" title="Lokatsiya yuborish">
             <span class="material-icons-round">location_on</span>
+            <span class="chat-tool-label">Lokatsiya</span>
           </button>
         </div>
 
-        <div class="chat-input-wrap">
-          <textarea
-            id="chat-input"
-            class="chat-textarea"
-            rows="1"
-            placeholder="Xabar yozing... (Enter — yuborish)"
-          ></textarea>
+        <!-- Xabar input + send tugmasi -->
+        <div class="chat-input-bottom-row">
+          <div class="chat-input-wrap">
+            <textarea
+              id="chat-input"
+              class="chat-textarea"
+              rows="1"
+              placeholder="Xabar yozing... (Enter — yuborish, Shift+Enter — yangi qator)"
+            ></textarea>
+          </div>
+          <button id="chat-send-btn" class="chat-send-btn" title="Yuborish (Enter)">
+            <span class="material-icons-round">send</span>
+          </button>
         </div>
 
-        <button id="chat-send-btn" class="chat-send-btn" title="Yuborish (Enter)">
-          <span class="material-icons-round">send</span>
-        </button>
       </div>
 
-      <!-- Hidden file input -->
+      <!-- Hidden file input (web fallback) -->
       <input type="file" id="chat-file-input" accept="image/*" style="display:none;">
 
     </div>
